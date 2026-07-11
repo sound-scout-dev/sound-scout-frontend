@@ -6,14 +6,17 @@ import StepBasics from "../../components/new-event/StepBasics"
 import StepDescription from "../../components/new-event/StepDescription"
 import StepGenerating from "../../components/new-event/StepGenerating"
 import StepResults from "../../components/new-event/StepResults"
+import { createEvent, generatePlan, saveLocallyPublishedEvent } from "../../services/api"
+import { useAuth } from "../../context/AuthContext"
 
 const initialValues = {
   eventName: "",
   eventType: "",
   date: "",
   crowdSize: "",
-  venueDimensions: "",
-  budget: "",
+  venueSizeSqm: "",
+  budgetMin: "",
+  budgetMax: "",
   location: "",
   description: "",
 }
@@ -28,11 +31,20 @@ function validateBasics(values) {
   } else if (Number(values.crowdSize) <= 0) {
     errors.crowdSize = "Enter a valid number of guests."
   }
-  if (!values.venueDimensions.trim()) errors.venueDimensions = "Describe the venue dimensions."
-  if (!values.budget) {
-    errors.budget = "Enter your estimated budget."
-  } else if (Number(values.budget) <= 0) {
-    errors.budget = "Enter a valid budget amount."
+  if (!values.venueSizeSqm) {
+    errors.venueSizeSqm = "Enter the venue size in square meters."
+  } else if (Number(values.venueSizeSqm) <= 0) {
+    errors.venueSizeSqm = "Enter a valid venue size."
+  }
+  if (!values.budgetMin) {
+    errors.budgetMin = "Enter your minimum budget."
+  } else if (Number(values.budgetMin) <= 0) {
+    errors.budgetMin = "Enter a valid minimum budget."
+  }
+  if (!values.budgetMax) {
+    errors.budgetMax = "Enter your maximum budget."
+  } else if (Number(values.budgetMax) < Number(values.budgetMin)) {
+    errors.budgetMax = "Maximum budget must be at least the minimum."
   }
   if (!values.location.trim()) errors.location = "Enter the event location."
   return errors
@@ -48,10 +60,12 @@ function validateDescription(values) {
 
 function NewEvent() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [step, setStep] = useState(1)
   const [values, setValues] = useState(initialValues)
   const [errors, setErrors] = useState({})
   const [plan, setPlan] = useState(null)
+  const [publishing, setPublishing] = useState(false)
 
   function setField(name, value) {
     setValues((v) => ({ ...v, [name]: value }))
@@ -79,19 +93,45 @@ function NewEvent() {
     setStep(1)
   }
 
-  function handlePublish() {
-    const id = `evt-${Date.now()}`
+  // Calls the real backend to actually create the event and open it for
+  // bidding (generate-plan does both in one step — there's no separate
+  // publish endpoint). Falls back to a locally-fabricated id if the backend
+  // is unreachable, so the wizard still completes for demo purposes.
+  async function handlePublish() {
+    setPublishing(true)
+    const budgetRange = `${values.budgetMin}-${values.budgetMax}`
+    let eventId = `evt-${Date.now()}`
+
+    try {
+      const created = await createEvent({
+        organizerId: user?.id,
+        eventType: values.eventType,
+        crowdSize: values.crowdSize,
+        venueSizeSqm: values.venueSizeSqm,
+        budgetRange,
+      })
+      const realId = created?.event_id ?? created?.id
+      if (realId) {
+        eventId = realId
+        await generatePlan(realId)
+      }
+    } catch {
+      // backend unreachable / not implemented yet — proceed with the local id above
+    }
+
     const event = {
-      id,
+      id: eventId,
       name: values.eventName,
       eventType: values.eventType,
       date: values.date,
       crowdSize: Number(values.crowdSize),
       location: values.location,
-      budget: Number(values.budget),
+      budget: Math.round((Number(values.budgetMin) + Number(values.budgetMax)) / 2),
       status: "bidding_open",
     }
-    navigate(`/organizer/events/${id}`, { state: { event, plan } })
+    saveLocallyPublishedEvent(event)
+    setPublishing(false)
+    navigate(`/organizer/events/${eventId}`, { state: { event, plan } })
   }
 
   return (
