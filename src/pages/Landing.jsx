@@ -101,7 +101,7 @@ function Landing() {
       </section>
 
       {/* How it works */}
-      <section id="how-it-works" className="bg-paper">
+      <section id="how-it-works" className="scroll-mt-20 bg-paper">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
           <h2 className="font-display text-2xl font-semibold text-ink-navy sm:text-3xl">
             How it works
