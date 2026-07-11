@@ -126,7 +126,7 @@ function Landing() {
       </section>
 
       {/* Features */}
-      <section id="features" className="border-t border-slate/10 bg-paper">
+      <section id="features" className="scroll-mt-20 border-t border-slate/10 bg-paper">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
           <h2 className="font-display text-2xl font-semibold text-ink-navy sm:text-3xl">
             Built for how events actually get planned
