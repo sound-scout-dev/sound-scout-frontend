@@ -21,6 +21,7 @@ function DetailSkeleton() {
 function EventDetail() {
   const { id } = useParams()
   const location = useLocation()
+  const { user } = useAuth()
 
   const [event, setEvent] = useState(location.state?.event ?? null)
   const [plan, setPlan] = useState(location.state?.plan ?? null)
