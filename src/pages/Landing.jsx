@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom"
+import { useEffect } from "react"
+import { Link, useLocation } from "react-router-dom"
 import { BrainCircuit, Store, Zap, MessageSquareText, Cpu, Gavel } from "lucide-react"
 import Button from "../components/Button"
 import SpecCard from "../components/SpecCard"
@@ -48,6 +49,14 @@ const FEATURES = [
 ]
 
 function Landing() {
+  const location = useLocation()
+
+  useEffect(() => {
+    if (!location.hash) return
+    const target = document.querySelector(location.hash)
+    target?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }, [location.hash])
+
   return (
     <>
       {/* Hero */}
