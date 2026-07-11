@@ -33,15 +33,10 @@ export default {
           "0%": { opacity: 0, transform: "translateX(-6px)" },
           "100%": { opacity: 1, transform: "translateX(0)" },
         },
-        "eq-bounce": {
-          "0%, 100%": { transform: "scaleY(0.25)" },
-          "50%": { transform: "scaleY(1)" },
-        },
       },
       animation: {
         "fade-in": "fade-in 200ms ease-out forwards",
         "reveal-line": "reveal-line 250ms ease-out forwards",
-        "eq-bounce": "eq-bounce 1.1s ease-in-out infinite",
       },
       transitionDuration: {
         150: "150ms",
