@@ -1,8 +1,8 @@
-import { Gavel, Pencil } from "lucide-react"
+import { Gavel, Loader2, Pencil } from "lucide-react"
 import SpecCard from "../SpecCard"
 import Button from "../Button"
 
-function StepResults({ plan, onEdit, onPublish }) {
+function StepResults({ plan, onEdit, onPublish, publishing = false }) {
   return (
     <div className="flex flex-col items-center">
       <p className="font-mono text-xs uppercase tracking-widest text-circuit-teal">
