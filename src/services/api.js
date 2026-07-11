@@ -34,7 +34,10 @@ export async function listOrganizerEvents() {
   return delay(mockEvents)
 }
 
-export async function generateInfrastructurePlan(formData) {
+// Synchronous plan assembly. The New Event wizard renders this straight into
+// the SpecCard, whose own reveal animation supplies the "generating" feedback —
+// no separate spinner needed on top of it.
+export function buildInfrastructurePlan(formData) {
   const { eventType, crowdSize, location, budget } = formData
   const tier = crowdTier(Number(crowdSize) || 0)
   const template = PLAN_TEMPLATES[eventType] ?? PLAN_TEMPLATES.Other
@@ -52,12 +55,14 @@ export async function generateInfrastructurePlan(formData) {
     high: Math.round((parsedBudget * 1.15) / 100) * 100,
   }
 
-  const plan = {
+  return {
     eventType,
     meta: `${Number(crowdSize).toLocaleString()} guests · ${location}`,
     categories,
     priceRange,
   }
+}
 
-  return delay(plan, 2600)
+export async function generateInfrastructurePlan(formData) {
+  return delay(buildInfrastructurePlan(formData), 2600)
 }

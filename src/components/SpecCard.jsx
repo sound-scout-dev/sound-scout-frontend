@@ -22,12 +22,13 @@ function formatUSD(n) {
  * loop=true replays it (homepage demo). loop=false plays once and holds on
  * the finished sheet (results / detail screens).
  */
-function SpecCard({ plan, loop = false, className = "" }) {
+function SpecCard({ plan, loop = false, startRevealed = false, onDone, className = "" }) {
   const sequence = useRef(buildSequence(plan))
-  const [phase, setPhase] = useState("thinking") // thinking | revealing | done
-  const [visibleCount, setVisibleCount] = useState(0)
+  const [phase, setPhase] = useState(startRevealed ? "done" : "thinking") // thinking | revealing | done
+  const [visibleCount, setVisibleCount] = useState(startRevealed ? sequence.current.length : 0)
 
   useEffect(() => {
+    if (startRevealed) return
     let timers = []
 
     const runThinking = () => {
@@ -44,7 +45,12 @@ function SpecCard({ plan, loop = false, className = "" }) {
         )
       })
       const totalDelay = sequence.current.length * 200
-      timers.push(setTimeout(() => setPhase("done"), totalDelay))
+      timers.push(
+        setTimeout(() => {
+          setPhase("done")
+          onDone?.()
+        }, totalDelay)
+      )
       if (loop) {
         timers.push(setTimeout(runThinking, totalDelay + 3200))
       }
@@ -53,6 +59,7 @@ function SpecCard({ plan, loop = false, className = "" }) {
     runThinking()
 
     return () => timers.forEach(clearTimeout)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loop])
 
   const isVisible = (index) => visibleCount > index
