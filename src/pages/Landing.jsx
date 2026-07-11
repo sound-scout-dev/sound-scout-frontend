@@ -3,7 +3,6 @@ import { BrainCircuit, Store, Zap, MessageSquareText, Cpu, Gavel } from "lucide-
 import Button from "../components/Button"
 import SpecCard from "../components/SpecCard"
 import { heroPlan } from "../services/mockData"
-import audioMixerHero from "../assets/audio-mixer-hero.jpg"
 
 const STEPS = [
   {
