@@ -27,6 +27,7 @@ function BidSubmissionModal({ event, vendor, onClose, onSubmitted }) {
     setSubmitting(true)
     const bid = await submitBid({
       eventId: event.id,
+      vendorId: vendor.id,
       vendorName: vendor.name,
       price,
       notes,
