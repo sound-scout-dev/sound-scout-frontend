@@ -6,6 +6,7 @@ import EventPlanSummary from "../../components/EventPlanSummary"
 import BidCard from "../../components/BidCard"
 import Button from "../../components/Button"
 import { getEventById, listBidsForEvent, acceptBid, publishEvent } from "../../services/api"
+import { useAuth } from "../../context/AuthContext"
 
 function DetailSkeleton() {
   return (
