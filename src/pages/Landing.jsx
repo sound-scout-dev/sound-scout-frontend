@@ -52,7 +52,7 @@ function Landing() {
     <>
       {/* Hero */}
       <section
-        className="bg-ink-navy bg-[radial-gradient(ellipse_120%_100%_at_0%_0%,#1c1c42_0%,#12122B_55%)] bg-no-repeat"
+        className="bg-ink-navy"
         style={{
           backgroundImage:
             "radial-gradient(ellipse 120% 100% at 0% 0%, #1c1c42 0%, #12122B 55%), linear-gradient(rgba(247,245,241,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(247,245,241,0.05) 1px, transparent 1px)",
