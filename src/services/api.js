@@ -2,7 +2,7 @@
 // shaped data — swap the internals for real fetch/axios calls later
 // without touching any component that imports from here.
 
-import { PLAN_TEMPLATES, mockEvents } from "./mockData"
+import { PLAN_TEMPLATES, mockEvents, mockBids } from "./mockData"
 
 const DELAY_MS = 500
 
@@ -65,4 +65,22 @@ export function buildInfrastructurePlan(formData) {
 
 export async function generateInfrastructurePlan(formData) {
   return delay(buildInfrastructurePlan(formData), 2600)
+}
+
+export async function getEventById(id) {
+  const event = mockEvents.find((e) => e.id === id)
+  if (!event) return delay(null)
+  return delay({ ...event, plan: buildInfrastructurePlan(event) })
+}
+
+export async function listBidsForEvent(id) {
+  return delay(mockBids[id] ?? [])
+}
+
+export async function acceptBid(eventId, bidId) {
+  return delay({ eventId, bidId, status: "booked" })
+}
+
+export async function publishEvent(eventId) {
+  return delay({ eventId, status: "bidding_open" })
 }

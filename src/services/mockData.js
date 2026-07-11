@@ -152,6 +152,7 @@ export const mockEvents = [
     date: "2026-08-14",
     crowdSize: 2200,
     location: "Riverside Park",
+    budget: 22000,
     status: "bidding_open",
   },
   {
@@ -161,6 +162,7 @@ export const mockEvents = [
     date: "2026-07-25",
     crowdSize: 140,
     location: "Grandview Estate",
+    budget: 9000,
     status: "booked",
   },
   {
@@ -170,6 +172,56 @@ export const mockEvents = [
     date: "2026-09-02",
     crowdSize: 650,
     location: "Northbridge Convention Center",
+    budget: 31000,
     status: "planning",
   },
 ]
+
+// Bids keyed by event id. Events not listed here (e.g. freshly published
+// from the New Event wizard) simply have no bids yet.
+export const mockBids = {
+  "evt-1": [
+    {
+      id: "bid-1",
+      vendorName: "Amplitude Audio Co.",
+      price: 19800,
+      notes: "Can deliver full line array + backup console. Available for load-in two days early.",
+      rating: 4.8,
+      status: "pending",
+    },
+    {
+      id: "bid-2",
+      vendorName: "Northside Stage & Rigging",
+      price: 21500,
+      notes: "Includes truss roof and barricade. Lighting rig is a newer LED fleet.",
+      rating: 4.6,
+      status: "pending",
+    },
+    {
+      id: "bid-3",
+      vendorName: "Riverside Power Solutions",
+      price: 23200,
+      notes: "Silenced generators, full redundancy on distro. Slightly above your range.",
+      rating: 4.9,
+      status: "pending",
+    },
+  ],
+  "evt-2": [
+    {
+      id: "bid-4",
+      vendorName: "Grandview Sound & Light",
+      price: 8600,
+      notes: "Full package including uplighting and ceremony mics. Preferred vendor at this venue.",
+      rating: 5.0,
+      status: "accepted",
+    },
+    {
+      id: "bid-5",
+      vendorName: "Everlast Events Co.",
+      price: 9400,
+      notes: "Can match the request but no prior experience at Grandview Estate.",
+      rating: 4.3,
+      status: "declined",
+    },
+  ],
+}
