@@ -2,6 +2,7 @@ import { Link } from "react-router-dom"
 import { BrainCircuit, Store, Zap, MessageSquareText, Cpu, Gavel } from "lucide-react"
 import Button from "../components/Button"
 import SpecCard from "../components/SpecCard"
+import CountUpStat from "../components/CountUpStat"
 import { heroPlan } from "../services/mockData"
 
 const STEPS = [
