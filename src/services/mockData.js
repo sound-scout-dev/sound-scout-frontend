@@ -48,6 +48,29 @@ export const EVENT_TYPES = [
   "Other",
 ]
 
+export const EQUIPMENT_CATEGORIES = [
+  "Audio Equipment",
+  "Lighting Equipment",
+  "Staging & Rigging",
+  "Power & Generators",
+  "Full-Service Vendor",
+]
+
+// Maps a vendor's registered equipment category to the plan category it can bid on.
+export const EQUIPMENT_TO_PLAN_CATEGORY = {
+  "Audio Equipment": "Audio",
+  "Lighting Equipment": "Lighting",
+  "Staging & Rigging": "Staging",
+  "Power & Generators": "Power",
+}
+
+// The signed-in vendor for this demo — swap for real auth state later.
+export const currentVendor = {
+  name: "Amplitude Audio Co.",
+  equipmentCategory: "Audio Equipment",
+  rating: 4.8,
+}
+
 // Quantities are keyed by crowd-size tier: [small, medium, large]
 export const PLAN_TEMPLATES = {
   "Music Festival": {
@@ -174,6 +197,26 @@ export const mockEvents = [
     location: "Northbridge Convention Center",
     budget: 31000,
     status: "planning",
+  },
+  {
+    id: "evt-4",
+    name: "Lakeside Product Launch",
+    eventType: "Corporate Conference",
+    date: "2026-08-03",
+    crowdSize: 400,
+    location: "Lakeside Convention Hall",
+    budget: 17500,
+    status: "bidding_open",
+  },
+  {
+    id: "evt-5",
+    name: "Marigold Birthday Bash",
+    eventType: "Private Party",
+    date: "2026-07-19",
+    crowdSize: 90,
+    location: "Marigold Rooftop",
+    budget: 4200,
+    status: "bidding_open",
   },
 ]
 

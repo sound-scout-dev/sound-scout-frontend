@@ -5,16 +5,9 @@ import RoleToggle from "../components/RoleToggle"
 import FormField from "../components/FormField"
 import Button from "../components/Button"
 import { register } from "../services/api"
+import { EQUIPMENT_CATEGORIES } from "../services/mockData"
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-const EQUIPMENT_CATEGORIES = [
-  "Audio Equipment",
-  "Lighting Equipment",
-  "Staging & Rigging",
-  "Power & Generators",
-  "Full-Service Vendor",
-]
 
 function validate(values) {
   const errors = {}

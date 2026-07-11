@@ -2,7 +2,7 @@
 // shaped data — swap the internals for real fetch/axios calls later
 // without touching any component that imports from here.
 
-import { PLAN_TEMPLATES, mockEvents, mockBids } from "./mockData"
+import { PLAN_TEMPLATES, mockEvents, mockBids, EQUIPMENT_TO_PLAN_CATEGORY } from "./mockData"
 
 const DELAY_MS = 500
 
@@ -83,4 +83,45 @@ export async function acceptBid(eventId, bidId) {
 
 export async function publishEvent(eventId) {
   return delay({ eventId, status: "bidding_open" })
+}
+
+export async function listVendorOpportunities(equipmentCategory) {
+  const neededCategory = EQUIPMENT_TO_PLAN_CATEGORY[equipmentCategory]
+
+  const opportunities = mockEvents
+    .filter((event) => event.status === "bidding_open")
+    .map((event) => ({ ...event, plan: buildInfrastructurePlan(event) }))
+    .filter(
+      (event) =>
+        !neededCategory || event.plan.categories.some((cat) => cat.name === neededCategory)
+    )
+
+  return delay(opportunities)
+}
+
+export async function listVendorBids(vendorName) {
+  const bids = Object.entries(mockBids).flatMap(([eventId, eventBids]) => {
+    const event = mockEvents.find((e) => e.id === eventId)
+    return eventBids
+      .filter((bid) => bid.vendorName === vendorName)
+      .map((bid) => ({ ...bid, eventId, eventName: event?.name ?? "Unknown event" }))
+  })
+
+  return delay(bids)
+}
+
+export async function submitBid({ eventId, vendorName, price, notes, rating }) {
+  const bid = {
+    id: `bid-${Date.now()}`,
+    vendorName,
+    price: Number(price),
+    notes,
+    rating,
+    status: "pending",
+  }
+
+  if (!mockBids[eventId]) mockBids[eventId] = []
+  mockBids[eventId].push(bid)
+
+  return delay(bid)
 }
