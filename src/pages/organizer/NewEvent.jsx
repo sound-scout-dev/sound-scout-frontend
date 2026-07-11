@@ -8,6 +8,7 @@ import StepGenerating from "../../components/new-event/StepGenerating"
 import StepResults from "../../components/new-event/StepResults"
 
 const initialValues = {
+  eventName: "",
   eventType: "",
   date: "",
   crowdSize: "",
@@ -19,6 +20,7 @@ const initialValues = {
 
 function validateBasics(values) {
   const errors = {}
+  if (!values.eventName.trim()) errors.eventName = "Give your event a name."
   if (!values.eventType) errors.eventType = "Select an event type."
   if (!values.date) errors.date = "Choose an event date."
   if (!values.crowdSize) {
@@ -79,7 +81,17 @@ function NewEvent() {
 
   function handlePublish() {
     const id = `evt-${Date.now()}`
-    navigate(`/organizer/events/${id}`)
+    const event = {
+      id,
+      name: values.eventName,
+      eventType: values.eventType,
+      date: values.date,
+      crowdSize: Number(values.crowdSize),
+      location: values.location,
+      budget: Number(values.budget),
+      status: "bidding_open",
+    }
+    navigate(`/organizer/events/${id}`, { state: { event, plan } })
   }
 
   return (

@@ -7,6 +7,7 @@ import Login from "./pages/Login"
 import Register from "./pages/Register"
 import OrganizerDashboard from "./pages/organizer/OrganizerDashboard"
 import NewEvent from "./pages/organizer/NewEvent"
+import EventDetail from "./pages/organizer/EventDetail"
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
       <Route element={<DashboardLayout role="Organizer" />}>
         <Route path="/organizer/dashboard" element={<OrganizerDashboard />} />
         <Route path="/organizer/events/new" element={<NewEvent />} />
+        <Route path="/organizer/events/:id" element={<EventDetail />} />
       </Route>
     </Routes>
   )

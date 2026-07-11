@@ -14,6 +14,16 @@ function StepBasics({ values, errors, onChange, onNext }) {
 
       <div className="mt-6 grid gap-5 sm:grid-cols-2">
         <FormField
+          label="Event name"
+          name="eventName"
+          placeholder="e.g. Riverside Summer Fest"
+          value={values.eventName}
+          onChange={setField("eventName")}
+          error={errors.eventName}
+          className="sm:col-span-2"
+        />
+
+        <FormField
           as="select"
           label="Event type"
           name="eventType"
