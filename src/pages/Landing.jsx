@@ -82,17 +82,8 @@ function Landing() {
               </Button>
             </div>
 
-            {/* Placeholder figures for the competition demo; replace with real metrics once available */}
-            <div className="mt-14 flex divide-x divide-paper/10 border-t border-paper/10 pt-8">
-              <div className="pr-8">
-                <CountUpStat value={1200} suffix="+" label="Plans generated" />
-              </div>
-              <div className="px-8">
-                <CountUpStat value={340} suffix="+" label="Verified vendors" />
-              </div>
-              <div className="pl-8">
-                <CountUpStat value={4} suffix=" min" label="Avg. plan time" />
-              </div>
+            <div className="mt-10">
+              <SoundRadar />
             </div>
           </div>
 
