@@ -21,13 +21,27 @@ function StepResults({ plan, onEdit, onPublish, publishing = false }) {
       </div>
 
       <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:flex-row">
-        <Button type="button" variant="outline-dark" size="lg" className="flex-1" onClick={onEdit}>
+        <Button
+          type="button"
+          variant="outline-dark"
+          size="lg"
+          className="flex-1"
+          onClick={onEdit}
+          disabled={publishing}
+        >
           <Pencil size={16} strokeWidth={2} />
           Edit Plan
         </Button>
-        <Button type="button" variant="secondary" size="lg" className="flex-1" onClick={onPublish}>
-          <Gavel size={16} strokeWidth={2} />
-          Publish for Bidding
+        <Button
+          type="button"
+          variant="secondary"
+          size="lg"
+          className="flex-1"
+          onClick={onPublish}
+          disabled={publishing}
+        >
+          {publishing ? <Loader2 size={16} className="animate-spin" /> : <Gavel size={16} strokeWidth={2} />}
+          {publishing ? "Publishing…" : "Publish for Bidding"}
         </Button>
       </div>
     </div>
