@@ -5,6 +5,7 @@ import DashboardLayout from "./layouts/DashboardLayout"
 import Landing from "./pages/Landing"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
+import InstantRental from "./pages/InstantRental"
 import OrganizerDashboard from "./pages/organizer/OrganizerDashboard"
 import NewEvent from "./pages/organizer/NewEvent"
 import EventDetail from "./pages/organizer/EventDetail"
@@ -15,6 +16,7 @@ function App() {
     <Routes>
       <Route element={<PublicLayout />}>
         <Route path="/" element={<Landing />} />
+        <Route path="/instant-rental" element={<InstantRental />} />
       </Route>
 
       <Route element={<AuthLayout />}>
