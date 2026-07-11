@@ -51,9 +51,19 @@ function Landing() {
   return (
     <>
       {/* Hero */}
-      <section className="bg-ink-navy">
+      <section
+        className="bg-ink-navy bg-[radial-gradient(ellipse_120%_100%_at_0%_0%,#1c1c42_0%,#12122B_55%)] bg-no-repeat"
+        style={{
+          backgroundImage:
+            "radial-gradient(ellipse 120% 100% at 0% 0%, #1c1c42 0%, #12122B 55%), linear-gradient(rgba(247,245,241,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(247,245,241,0.05) 1px, transparent 1px)",
+          backgroundSize: "auto, 32px 32px, 32px 32px",
+        }}
+      >
         <div className="mx-auto grid max-w-7xl items-center gap-16 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:py-28 lg:px-8">
           <div>
+            <div className="mb-6">
+              <EqualizerBadge />
+            </div>
             <p className="font-mono text-xs uppercase tracking-widest text-signal-amber">
               AI infrastructure consultant &amp; bidding marketplace
             </p>
