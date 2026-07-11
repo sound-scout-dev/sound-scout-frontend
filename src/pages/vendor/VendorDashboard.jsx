@@ -5,6 +5,7 @@ import BidStatusBadge from "../../components/BidStatusBadge"
 import BidSubmissionModal from "../../components/BidSubmissionModal"
 import { listVendorOpportunities, listVendorBids } from "../../services/api"
 import { currentVendor } from "../../services/mockData"
+import { useAuth } from "../../context/AuthContext"
 
 function formatUSD(n) {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
@@ -25,6 +26,12 @@ function Skeleton() {
 }
 
 function VendorDashboard() {
+  const { user } = useAuth()
+  // Falls back to the demo fixture if no one has registered/logged in this
+  // session yet (e.g. navigating straight to this URL), and fills in a rating
+  // since the backend's User schema has no such field.
+  const vendor = { ...currentVendor, ...user, rating: user?.rating ?? currentVendor.rating }
+
   const [opportunities, setOpportunities] = useState([])
   const [myBids, setMyBids] = useState([])
   const [loading, setLoading] = useState(true)
@@ -33,8 +40,8 @@ function VendorDashboard() {
   useEffect(() => {
     let active = true
     Promise.all([
-      listVendorOpportunities(currentVendor.equipmentCategory),
-      listVendorBids(currentVendor.name),
+      listVendorOpportunities(vendor.equipmentCategory),
+      listVendorBids(vendor.name),
     ]).then(([opps, bids]) => {
       if (!active) return
       setOpportunities(opps)
@@ -57,7 +64,7 @@ function VendorDashboard() {
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
       <div>
         <p className="font-mono text-xs uppercase tracking-widest text-circuit-teal">
-          {currentVendor.equipmentCategory}
+          {vendor.equipmentCategory}
         </p>
         <h1 className="mt-1 font-display text-2xl font-semibold text-ink-navy sm:text-3xl">
           Open opportunities
@@ -79,7 +86,7 @@ function VendorDashboard() {
               No open opportunities right now
             </h2>
             <p className="mt-1.5 max-w-sm font-body text-sm text-slate">
-              Check back soon — new plans matching {currentVendor.equipmentCategory} show up here
+              Check back soon — new plans matching {vendor.equipmentCategory} show up here
               as soon as organizers publish them.
             </p>
           </div>
@@ -129,7 +136,7 @@ function VendorDashboard() {
       {activeEvent && (
         <BidSubmissionModal
           event={activeEvent}
-          vendor={currentVendor}
+          vendor={vendor}
           onClose={() => setActiveEvent(null)}
           onSubmitted={handleBidSubmitted}
         />
