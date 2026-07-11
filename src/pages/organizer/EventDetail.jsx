@@ -63,7 +63,7 @@ function EventDetail() {
 
   function handleAccept(bidId) {
     setAcceptingId(bidId)
-    acceptBid(event.id, bidId).then(() => {
+    acceptBid(event.id, bidId, user?.id).then(() => {
       setBids((prev) =>
         prev.map((b) => ({ ...b, status: b.id === bidId ? "accepted" : "declined" }))
       )
