@@ -1,9 +1,12 @@
 import { Routes, Route } from "react-router-dom"
 import PublicLayout from "./layouts/PublicLayout"
 import AuthLayout from "./layouts/AuthLayout"
+import DashboardLayout from "./layouts/DashboardLayout"
 import Landing from "./pages/Landing"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
+import OrganizerDashboard from "./pages/organizer/OrganizerDashboard"
+import NewEvent from "./pages/organizer/NewEvent"
 
 function App() {
   return (
@@ -15,6 +18,11 @@ function App() {
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+      </Route>
+
+      <Route element={<DashboardLayout role="Organizer" />}>
+        <Route path="/organizer/dashboard" element={<OrganizerDashboard />} />
+        <Route path="/organizer/events/new" element={<NewEvent />} />
       </Route>
     </Routes>
   )

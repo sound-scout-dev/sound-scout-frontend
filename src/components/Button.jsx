@@ -5,6 +5,8 @@ const VARIANTS = {
     "bg-circuit-teal text-paper hover:bg-emerald-700 active:bg-emerald-800 disabled:bg-slate/30",
   outline:
     "bg-transparent text-paper border border-paper/30 hover:border-paper/70 hover:bg-paper/5 active:bg-paper/10 disabled:border-paper/10 disabled:text-paper/30",
+  "outline-dark":
+    "bg-transparent text-ink-navy border border-slate/25 hover:border-ink-navy/40 hover:bg-ink-navy/5 active:bg-ink-navy/10 disabled:border-slate/10 disabled:text-slate/30",
   ghost:
     "bg-transparent text-ink-navy hover:bg-ink-navy/5 active:bg-ink-navy/10 disabled:text-slate/40",
   danger:
