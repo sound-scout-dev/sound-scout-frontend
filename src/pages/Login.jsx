@@ -5,6 +5,7 @@ import RoleToggle from "../components/RoleToggle"
 import FormField from "../components/FormField"
 import Button from "../components/Button"
 import { login } from "../services/api"
+import { useAuth } from "../context/AuthContext"
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -23,6 +24,7 @@ function validate(values) {
 
 function Login() {
   const navigate = useNavigate()
+  const { login: setSession } = useAuth()
   const [values, setValues] = useState({ role: "organizer", email: "", password: "" })
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
@@ -30,6 +32,9 @@ function Login() {
 
   const setField = (name) => (e) => setValues((v) => ({ ...v, [name]: e.target.value }))
 
+  // No login endpoint exists on the backend yet — this stays mocked (any
+  // password is accepted), but writes into the same AuthContext session used
+  // by real registration, so downstream pages don't care how the session started.
   async function handleSubmit(e) {
     e.preventDefault()
     const nextErrors = validate(values)
@@ -39,7 +44,8 @@ function Login() {
     setFormError("")
     setSubmitting(true)
     try {
-      const { user } = await login(values)
+      const user = await login(values)
+      setSession(user)
       navigate(user.role === "vendor" ? "/vendor/dashboard" : "/organizer/dashboard")
     } catch {
       setFormError("We couldn't log you in. Check your details and try again.")
