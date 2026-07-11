@@ -2,7 +2,7 @@ import { Link } from "react-router-dom"
 import { BrainCircuit, Store, Zap, MessageSquareText, Cpu, Gavel } from "lucide-react"
 import Button from "../components/Button"
 import SpecCard from "../components/SpecCard"
-import SoundRadar from "../components/SoundRadar"
+import SignalPanel from "../components/SignalPanel"
 import { heroPlan } from "../services/mockData"
 
 const STEPS = [
@@ -83,7 +83,7 @@ function Landing() {
             </div>
 
             <div className="mt-10">
-              <SoundRadar />
+              <SignalPanel />
             </div>
           </div>
 
