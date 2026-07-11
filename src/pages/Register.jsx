@@ -6,6 +6,7 @@ import FormField from "../components/FormField"
 import Button from "../components/Button"
 import { register } from "../services/api"
 import { EQUIPMENT_CATEGORIES } from "../services/mockData"
+import { useAuth } from "../context/AuthContext"
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -30,8 +31,8 @@ function validate(values) {
   }
 
   if (values.role === "vendor") {
-    if (!values.businessName.trim()) {
-      errors.businessName = "Enter your business name."
+    if (!values.region.trim()) {
+      errors.region = "Enter your region, e.g. Colombo 03."
     }
     if (!values.equipmentCategory) {
       errors.equipmentCategory = "Select your equipment category."
@@ -47,12 +48,13 @@ const initialValues = {
   email: "",
   password: "",
   confirmPassword: "",
-  businessName: "",
+  region: "",
   equipmentCategory: "",
 }
 
 function Register() {
   const navigate = useNavigate()
+  const { login } = useAuth()
   const [values, setValues] = useState(initialValues)
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
@@ -69,7 +71,10 @@ function Register() {
     setFormError("")
     setSubmitting(true)
     try {
-      const { user } = await register(values)
+      const user = await register(values)
+      // equipmentCategory isn't part of the backend's User schema — kept in the
+      // session client-side since the vendor-matching UI reads it from here.
+      login({ ...user, equipmentCategory: values.equipmentCategory })
       navigate(user.role === "vendor" ? "/vendor/dashboard" : "/organizer/dashboard")
     } catch {
       setFormError("We couldn't create your account. Please try again.")
@@ -117,13 +122,13 @@ function Register() {
         {values.role === "vendor" && (
           <>
             <FormField
-              label="Business name"
-              name="businessName"
-              autoComplete="organization"
-              value={values.businessName}
-              onChange={setField("businessName")}
-              error={errors.businessName}
-              placeholder="Riverside Audio Co."
+              label="Region"
+              name="region"
+              autoComplete="address-level2"
+              value={values.region}
+              onChange={setField("region")}
+              error={errors.region}
+              placeholder="e.g. Colombo 03"
             />
 
             <FormField
@@ -144,6 +149,8 @@ function Register() {
           </>
         )}
 
+        {/* Backend's UserRegistration schema has no password field yet — collected
+            here for expected signup UX, but not sent until the API supports it. */}
         <FormField
           label="Password"
           name="password"

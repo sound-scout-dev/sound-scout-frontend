@@ -1,7 +1,11 @@
-// Mock API layer. Every call simulates network latency and returns
-// shaped data — swap the internals for real fetch/axios calls later
-// without touching any component that imports from here.
+// Hybrid API layer: functions that have a matching endpoint in the real
+// backend's OpenAPI spec call it via httpClient's `request()`. Functions for
+// features with no backend support yet (or an undocumented response shape)
+// stay on the mock fixtures below, clearly marked, so the app keeps working
+// while the backend catches up. See the "wire what exists" plan for the
+// reasoning behind each choice.
 
+import { request } from "./httpClient"
 import {
   PLAN_TEMPLATES,
   mockEvents,
@@ -11,6 +15,7 @@ import {
 } from "./mockData"
 
 const DELAY_MS = 500
+const PUBLISHED_EVENTS_KEY = "soundscout.publishedEvents"
 
 function delay(value, ms = DELAY_MS) {
   return new Promise((resolve) => setTimeout(() => resolve(value), ms))
@@ -22,27 +27,58 @@ function crowdTier(crowdSize) {
   return 2
 }
 
+// Events published for real via createEvent()/generatePlan() below, kept
+// locally since there's no backend endpoint to list an organizer's own events.
+function getLocallyPublishedEvents() {
+  try {
+    return JSON.parse(localStorage.getItem(PUBLISHED_EVENTS_KEY)) ?? []
+  } catch {
+    return []
+  }
+}
+
+export function saveLocallyPublishedEvent(event) {
+  const events = getLocallyPublishedEvents()
+  events.push(event)
+  localStorage.setItem(PUBLISHED_EVENTS_KEY, JSON.stringify(events))
+}
+
+// No backend login endpoint exists yet — stays mocked. The caller (Login.jsx)
+// writes the returned user into AuthContext so the rest of the app doesn't
+// care whether the session came from here or from a real register() call.
 export async function login({ email, role }) {
   return delay({
-    token: "mock-token",
-    user: { email, role },
+    id: `mock-${Date.now()}`,
+    name: email.split("@")[0],
+    email,
+    role,
   })
 }
 
-export async function register({ email, role, fullName, businessName, equipmentCategory }) {
-  return delay({
-    token: "mock-token",
-    user: { email, role, fullName, businessName, equipmentCategory },
+// Real call: POST /users/register.
+export async function register({ fullName, email, role, region }) {
+  const payload = { name: fullName, email, role }
+  if (role === "vendor") payload.region = region
+
+  const created = await request("/users/register", {
+    method: "POST",
+    body: JSON.stringify(payload),
   })
+
+  return { id: created.user_id, name: created.name, email: created.email, role: created.role, region: created.region }
 }
 
+// No "list my events" endpoint exists — combine the seeded demo events with
+// anything published for real this session/browser via createEvent() below.
 export async function listOrganizerEvents() {
-  return delay(mockEvents)
+  return delay([...mockEvents, ...getLocallyPublishedEvents()])
 }
 
 // Synchronous plan assembly. The New Event wizard renders this straight into
 // the SpecCard, whose own reveal animation supplies the "generating" feedback —
-// no separate spinner needed on top of it.
+// no separate spinner needed on top of it. Also used as a stand-in wherever we
+// need to *display* a plan for a real backend event, since the real
+// ai_infrastructure_plan's JSON shape isn't documented in the spec yet.
 export function buildInfrastructurePlan(formData) {
   const { eventType, crowdSize, location, budget } = formData
   const tier = crowdTier(Number(crowdSize) || 0)
@@ -73,38 +109,113 @@ export async function generateInfrastructurePlan(formData) {
   return delay(buildInfrastructurePlan(formData), 2600)
 }
 
+// Real call: POST /events. The spec only documents "201: Event created
+// successfully" with no response schema — assuming (like any typical REST
+// API) that the created event, including its id, comes back in the body.
+export async function createEvent({ organizerId, eventType, crowdSize, venueSizeSqm, budgetRange }) {
+  return request("/events", {
+    method: "POST",
+    body: JSON.stringify({
+      organizer_id: organizerId,
+      event_type: eventType,
+      crowd_count: Number(crowdSize),
+      venue_size_sqm: Number(venueSizeSqm),
+      budget_range: budgetRange,
+    }),
+  })
+}
+
+// Real call: POST /events/{eventId}/generate-plan. This both generates the AI
+// plan and opens the event for bidding on the backend in one step — there's
+// no separate publish endpoint. The spec doesn't define ai_infrastructure_plan's
+// shape, so the wizard keeps showing its own client-side plan preview rather
+// than trusting this response's plan content.
+export async function generatePlan(eventId) {
+  return request(`/events/${eventId}/generate-plan`, { method: "POST" })
+}
+
+// No GET /events/{id} endpoint exists — check the seeded demo events and
+// anything published locally this session, same source as listOrganizerEvents.
 export async function getEventById(id) {
-  const event = mockEvents.find((e) => e.id === id)
+  const event =
+    mockEvents.find((e) => e.id === id) ?? getLocallyPublishedEvents().find((e) => e.id === id)
   if (!event) return delay(null)
   return delay({ ...event, plan: buildInfrastructurePlan(event) })
 }
 
-export async function listBidsForEvent(id) {
-  return delay(mockBids[id] ?? [])
+// Real call: GET /bids/event/{eventId}, with a fallback to local demo bids —
+// seeded mock events aren't real backend ids, so this also covers that case
+// without needing to sniff id formats.
+export async function listBidsForEvent(eventId) {
+  try {
+    const bids = await request(`/bids/event/${eventId}`)
+    if (Array.isArray(bids)) return bids
+  } catch {
+    // not a real backend event id, or backend unreachable — fall through to local data
+  }
+  return delay(mockBids[eventId] ?? [])
 }
 
-export async function acceptBid(eventId, bidId) {
+// Real call: PUT /bids/{bidId}/accept. Local bid/event status is updated by
+// the caller regardless, since demo events aren't tracked server-side.
+export async function acceptBid(eventId, bidId, organizerId) {
+  try {
+    await request(`/bids/${bidId}/accept`, {
+      method: "PUT",
+      body: JSON.stringify({ organizer_id: organizerId }),
+    })
+  } catch {
+    // demo bid not tracked server-side, or backend unreachable
+  }
   return delay({ eventId, bidId, status: "booked" })
 }
 
+// Used only for the seeded "planning" demo event (evt-3) — real events created
+// through the wizard go straight to "bidding_open" via generatePlan() above,
+// since the backend has no separate publish step.
 export async function publishEvent(eventId) {
   return delay({ eventId, status: "bidding_open" })
 }
 
+// Real call: GET /events/open, merged with local demo/published events so the
+// vendor feed stays populated even when the backend is unreachable (or hasn't
+// implemented this yet). ai_infrastructure_plan's shape is unconfirmed, so a
+// display plan is synthesized client-side via buildInfrastructurePlan for
+// rendering and category matching.
 export async function listVendorOpportunities(equipmentCategory) {
   const neededCategory = EQUIPMENT_TO_PLAN_CATEGORY[equipmentCategory]
 
-  const opportunities = mockEvents
-    .filter((event) => event.status === "bidding_open")
+  let realEvents = []
+  try {
+    const openEvents = await request("/events/open")
+    realEvents = (openEvents ?? []).map((e) => ({
+      id: e.event_id,
+      // name/date/location aren't in the backend Event schema — fall back to the event type.
+      name: e.event_type,
+      eventType: e.event_type,
+      crowdSize: e.crowd_count,
+      date: null,
+      location: "—",
+      status: "bidding_open",
+    }))
+  } catch {
+    // backend unreachable / not implemented yet — local fixtures below still populate the feed
+  }
+
+  const localEvents = [...mockEvents, ...getLocallyPublishedEvents()].filter(
+    (event) => event.status === "bidding_open"
+  )
+
+  const opportunities = [...realEvents, ...localEvents]
     .map((event) => ({ ...event, plan: buildInfrastructurePlan(event) }))
     .filter(
-      (event) =>
-        !neededCategory || event.plan.categories.some((cat) => cat.name === neededCategory)
+      (event) => !neededCategory || event.plan.categories.some((cat) => cat.name === neededCategory)
     )
 
   return delay(opportunities)
 }
 
+// No backend endpoint for a vendor's own bid history — stays fully mocked.
 export async function listVendorBids(vendorName) {
   const bids = Object.entries(mockBids).flatMap(([eventId, eventBids]) => {
     const event = mockEvents.find((e) => e.id === eventId)
@@ -116,6 +227,9 @@ export async function listVendorBids(vendorName) {
   return delay(bids)
 }
 
+// /inventory/instant/{region} exists but its response shape is completely
+// undocumented and it supports no category filter — integrating against a
+// guessed shape isn't worth it yet, so this stays fully mocked.
 export async function searchInstantRentals({ category, location }) {
   let results = instantRentalListings
 
@@ -130,11 +244,24 @@ export async function searchInstantRentals({ category, location }) {
   return delay(results, 350)
 }
 
+// No booking endpoint exists on the backend at all — stays fully mocked.
 export async function bookInstantRental(listingId) {
   return delay({ listingId, status: "booked" }, 500)
 }
 
-export async function submitBid({ eventId, vendorName, price, notes, rating }) {
+// Real call: POST /bids. `notes` isn't in the NewBid schema, so it's kept in
+// the local enrichment layer only (not sent) — same for the display-only
+// vendorName/rating shown in bid comparison lists.
+export async function submitBid({ eventId, vendorId, vendorName, price, notes, rating }) {
+  try {
+    await request("/bids", {
+      method: "POST",
+      body: JSON.stringify({ event_id: eventId, vendor_id: vendorId, proposed_price: Number(price) }),
+    })
+  } catch {
+    // demo event not tracked server-side, or backend unreachable — still record locally below
+  }
+
   const bid = {
     id: `bid-${Date.now()}`,
     vendorName,
