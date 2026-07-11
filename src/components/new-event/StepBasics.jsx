@@ -60,23 +60,36 @@ function StepBasics({ values, errors, onChange, onNext }) {
         />
 
         <FormField
-          label="Venue dimensions"
-          name="venueDimensions"
-          placeholder="e.g. 40m x 25m, outdoor"
-          value={values.venueDimensions}
-          onChange={setField("venueDimensions")}
-          error={errors.venueDimensions}
+          label="Venue size (m²)"
+          name="venueSizeSqm"
+          type="number"
+          min="1"
+          placeholder="e.g. 500"
+          value={values.venueSizeSqm}
+          onChange={setField("venueSizeSqm")}
+          error={errors.venueSizeSqm}
         />
 
         <FormField
-          label="Estimated budget (USD)"
-          name="budget"
+          label="Budget min (USD)"
+          name="budgetMin"
           type="number"
           min="1"
           placeholder="e.g. 15000"
-          value={values.budget}
-          onChange={setField("budget")}
-          error={errors.budget}
+          value={values.budgetMin}
+          onChange={setField("budgetMin")}
+          error={errors.budgetMin}
+        />
+
+        <FormField
+          label="Budget max (USD)"
+          name="budgetMax"
+          type="number"
+          min="1"
+          placeholder="e.g. 20000"
+          value={values.budgetMax}
+          onChange={setField("budgetMax")}
+          error={errors.budgetMax}
         />
 
         <FormField
@@ -86,6 +99,7 @@ function StepBasics({ values, errors, onChange, onNext }) {
           value={values.location}
           onChange={setField("location")}
           error={errors.location}
+          className="sm:col-span-2"
         />
       </div>
 
