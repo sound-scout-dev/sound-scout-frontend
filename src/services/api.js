@@ -2,7 +2,13 @@
 // shaped data — swap the internals for real fetch/axios calls later
 // without touching any component that imports from here.
 
-import { PLAN_TEMPLATES, mockEvents, mockBids, EQUIPMENT_TO_PLAN_CATEGORY } from "./mockData"
+import {
+  PLAN_TEMPLATES,
+  mockEvents,
+  mockBids,
+  EQUIPMENT_TO_PLAN_CATEGORY,
+  instantRentalListings,
+} from "./mockData"
 
 const DELAY_MS = 500
 
@@ -108,6 +114,24 @@ export async function listVendorBids(vendorName) {
   })
 
   return delay(bids)
+}
+
+export async function searchInstantRentals({ category, location }) {
+  let results = instantRentalListings
+
+  if (category) {
+    results = results.filter((listing) => listing.category === category)
+  }
+  if (location.trim()) {
+    const query = location.trim().toLowerCase()
+    results = results.filter((listing) => listing.location.toLowerCase().includes(query))
+  }
+
+  return delay(results, 350)
+}
+
+export async function bookInstantRental(listingId) {
+  return delay({ listingId, status: "booked" }, 500)
 }
 
 export async function submitBid({ eventId, vendorName, price, notes, rating }) {
