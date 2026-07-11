@@ -59,11 +59,24 @@ function Landing() {
           backgroundSize: "auto, 32px 32px, 32px 32px",
         }}
       >
-        <div className="mx-auto grid max-w-7xl items-center gap-16 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:py-28 lg:px-8">
+        <div className="mx-auto grid max-w-7xl items-center gap-16 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:items-start lg:py-20 lg:px-8">
           <div>
-            <div className="mb-6">
-              <EqualizerBadge />
+            <div className="relative mb-8 overflow-hidden rounded-md border border-signal-amber/25 shadow-2xl shadow-black/40">
+              <img
+                src={audioMixerHero}
+                alt="Close-up of a professional audio mixing console"
+                className="h-52 w-full object-cover sm:h-64"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-ink-navy via-ink-navy/10 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-4 py-3">
+                <span className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-signal-amber">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-signal-amber" />
+                  Live input
+                </span>
+                <span className="font-mono text-[10px] text-paper/50">Audio console · 32ch</span>
+              </div>
             </div>
+
             <p className="font-mono text-xs uppercase tracking-widest text-signal-amber">
               AI infrastructure consultant &amp; bidding marketplace
             </p>
