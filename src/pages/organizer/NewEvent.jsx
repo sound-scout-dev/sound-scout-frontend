@@ -164,8 +164,18 @@ function NewEvent() {
             onBack={() => setStep(1)}
           />
         )}
-        {step === 3 && <StepGenerating formValues={values} onComplete={handlePlanComplete} />}
-        {step === 4 && plan && <StepResults plan={plan} onEdit={handleEdit} onPublish={handlePublish} />}
+        {step === 3 && (
+          <StepGenerating
+            formValues={{
+              ...values,
+              budget: Math.round((Number(values.budgetMin) + Number(values.budgetMax)) / 2),
+            }}
+            onComplete={handlePlanComplete}
+          />
+        )}
+        {step === 4 && plan && (
+          <StepResults plan={plan} onEdit={handleEdit} onPublish={handlePublish} publishing={publishing} />
+        )}
       </div>
     </div>
   )
