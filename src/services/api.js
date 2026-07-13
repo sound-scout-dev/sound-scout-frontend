@@ -73,10 +73,10 @@ export async function register({ fullName, email, role, region, password }) {
   return { id: created.user_id, name: created.name, email: created.email, role: created.role, region: created.region }
 }
 
-export async function updateProfile({ name, email, region }) {
+export async function updateProfile({ name, email, region, password }) {
   const updated = await request("/users/profile", {
     method: "PUT",
-    body: JSON.stringify({ name, email, region }),
+    body: JSON.stringify({ name, email, region, password }),
   })
   return { id: updated.user_id, name: updated.name, email: updated.email, role: updated.role, region: updated.region }
 }
@@ -171,7 +171,7 @@ export async function listOrganizerEvents() {
         eventType: e.event_type,
         crowdSize: e.crowd_count,
         date: e.created_at || new Date().toISOString(),
-        location: e.environment || "Indoor",
+        location: e.location || "Colombo",
         status: e.status || "bidding_open",
         plan: displayPlan,
       }
@@ -459,7 +459,7 @@ export async function listVendorOpportunities(equipmentCategory) {
         eventType: e.event_type,
         crowdSize: e.crowd_count,
         date: e.created_at || new Date().toISOString(),
-        location: e.environment || "Indoor",
+        location: e.location || "Colombo",
         status: "bidding_open",
         plan: displayPlan,
       }
@@ -477,9 +477,33 @@ export async function listVendorOpportunities(equipmentCategory) {
       if (event.plan) return event;
       return { ...event, plan: buildInfrastructurePlan(event) };
     })
-    .filter(
-      (event) => !neededCategory || event.plan.categories.some((cat) => cat.name === neededCategory)
-    )
+    .filter((event) => {
+      if (!neededCategory) return true;
+      
+      // 1. If categories contain specific category names (e.g. mock events), check that
+      if (event.plan.categories.some((cat) => cat.name === neededCategory)) {
+        return true;
+      }
+      
+      // 2. If it is a flat "Equipment List" (standard for AI database events), scan items for keywords
+      const eqCat = event.plan.categories.find(c => c.name === "Equipment List");
+      if (eqCat) {
+        const text = eqCat.items.map(it => it.label.toLowerCase()).join(" ");
+        if (neededCategory === "Audio") {
+          return text.includes("speaker") || text.includes("mixer") || text.includes("mic") || text.includes("subwoofer") || text.includes("pa system") || text.includes("audio") || text.includes("line array") || text.includes("amplifier") || text.includes("sound") || text.includes("hazer") || text.includes("wireless");
+        }
+        if (neededCategory === "Lighting") {
+          return text.includes("light") || text.includes("led") || text.includes("par") || text.includes("head") || text.includes("hazer") || text.includes("laser") || text.includes("lighting") || text.includes("spot");
+        }
+        if (neededCategory === "Staging") {
+          return text.includes("stage") || text.includes("deck") || text.includes("truss") || text.includes("rigging") || text.includes("ground support");
+        }
+        if (neededCategory === "Power") {
+          return text.includes("generator") || text.includes("kva") || text.includes("power") || text.includes("silent") || text.includes("cabling");
+        }
+      }
+      return false;
+    })
 
   return delay(opportunities)
 }

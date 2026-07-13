@@ -3,13 +3,31 @@ import { LogOut } from "lucide-react"
 import Logo from "../components/Logo"
 import { useAuth } from "../context/AuthContext"
 
+import { useEffect } from "react"
+
 function DashboardLayout({ role = "Organizer" }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
+  useEffect(() => {
+    if (!user) {
+      navigate("/login")
+    } else {
+      const lowerUserRole = user.role?.toLowerCase()
+      const lowerLayoutRole = role.toLowerCase()
+      if (lowerUserRole !== lowerLayoutRole) {
+        navigate(lowerUserRole === "organizer" ? "/organizer/dashboard" : "/vendor/dashboard")
+      }
+    }
+  }, [user, role, navigate])
+
   function handleLogout() {
     logout()
     navigate("/")
+  }
+
+  if (!user || user.role?.toLowerCase() !== role.toLowerCase()) {
+    return null
   }
 
   return (

@@ -101,17 +101,36 @@ function SpecCard({ plan, loop = false, startRevealed = false, onDone, className
                 </div>
               )
             } else if (node.type === "item") {
+              const labelText = node.item.label;
+              const optionalMatch = labelText.match(/^(.*?)\s*\(Optional:\s*(.*?)\)$/i);
+              const isOptional = !!optionalMatch;
+              const cleanLabel = isOptional ? optionalMatch[1] : labelText;
+              const optionalComment = isOptional ? optionalMatch[2] : "";
+
               acc.push(
                 <div
                   key={`item-${node.cat.name}-${node.item.label}`}
-                  className={`flex items-baseline justify-between gap-4 border-b border-slate/10 pb-1.5 ${
+                  className={`flex flex-col border-b border-slate/10 pb-1.5 transition-all duration-300 ${
+                    isOptional 
+                      ? "border-alert-red/30 bg-alert-red/5 px-2.5 py-2 my-1 rounded border shadow-sm" 
+                      : ""
+                  } ${
                     isVisible(i) ? "animate-reveal-line" : "opacity-0"
                   }`}
                 >
-                  <span className="font-body text-sm text-ink-navy">{node.item.label}</span>
-                  <span className="font-mono text-xs font-semibold text-ink-navy">
-                    {node.item.qty}x
-                  </span>
+                  <div className="flex items-baseline justify-between gap-4">
+                    <span className={`font-body text-sm ${isOptional ? "text-alert-red font-semibold" : "text-ink-navy"}`}>
+                      {cleanLabel}
+                    </span>
+                    <span className="font-mono text-xs font-semibold text-ink-navy">
+                      {node.item.qty}x
+                    </span>
+                  </div>
+                  {isOptional && (
+                    <p className="mt-1 font-body text-[11px] text-alert-red/80 italic leading-snug">
+                      * Not compulsory: {optionalComment}
+                    </p>
+                  )}
                 </div>
               )
             }
