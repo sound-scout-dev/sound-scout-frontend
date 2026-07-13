@@ -65,6 +65,7 @@ function NewEvent() {
   const [values, setValues] = useState(initialValues)
   const [errors, setErrors] = useState({})
   const [plan, setPlan] = useState(null)
+  const [realEventId, setRealEventId] = useState("")
   const [publishing, setPublishing] = useState(false)
 
   function setField(name, value) {
@@ -83,8 +84,9 @@ function NewEvent() {
     if (Object.keys(nextErrors).length === 0) setStep(3)
   }
 
-  function handlePlanComplete(generatedPlan) {
+  function handlePlanComplete(generatedPlan, generatedId) {
     setPlan(generatedPlan)
+    setRealEventId(generatedId)
     setStep(4)
   }
 
@@ -99,28 +101,8 @@ function NewEvent() {
   // is unreachable, so the wizard still completes for demo purposes.
   async function handlePublish() {
     setPublishing(true)
-    const budgetRange = `${values.budgetMin}-${values.budgetMax}`
-    let eventId = `evt-${Date.now()}`
-
-    try {
-      const created = await createEvent({
-        organizerId: user?.id,
-        eventType: values.eventType,
-        crowdSize: values.crowdSize,
-        venueSizeSqm: values.venueSizeSqm,
-        budgetRange,
-      })
-      const realId = created?.event_id ?? created?.id
-      if (realId) {
-        eventId = realId
-        await generatePlan(realId)
-      }
-    } catch {
-      // backend unreachable / not implemented yet — proceed with the local id above
-    }
-
     const event = {
-      id: eventId,
+      id: realEventId,
       name: values.eventName,
       eventType: values.eventType,
       date: values.date,
@@ -131,7 +113,7 @@ function NewEvent() {
     }
     saveLocallyPublishedEvent(event)
     setPublishing(false)
-    navigate(`/organizer/events/${eventId}`, { state: { event, plan } })
+    navigate(`/organizer/events/${realEventId}`, { state: { event, plan } })
   }
 
   return (

@@ -71,7 +71,7 @@ function StepBasics({ values, errors, onChange, onNext }) {
         />
 
         <FormField
-          label="Budget min (USD)"
+          label="Budget min (LKR)"
           name="budgetMin"
           type="number"
           min="1"
@@ -82,7 +82,7 @@ function StepBasics({ values, errors, onChange, onNext }) {
         />
 
         <FormField
-          label="Budget max (USD)"
+          label="Budget max (LKR)"
           name="budgetMax"
           type="number"
           min="1"

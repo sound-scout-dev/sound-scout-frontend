@@ -1,8 +1,8 @@
 import { Star, Check, Loader2 } from "lucide-react"
 import Button from "./Button"
 
-function formatUSD(n) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
+function formatLKR(n) {
+  return "Rs. " + n.toLocaleString("en-LK", { maximumFractionDigits: 0 })
 }
 
 function BidCard({ bid, canAccept, accepting, onAccept }) {
@@ -23,7 +23,7 @@ function BidCard({ bid, canAccept, accepting, onAccept }) {
         </p>
       </div>
 
-      <p className="font-mono text-base font-semibold text-ink-navy">{formatUSD(bid.price)}</p>
+      <p className="font-mono text-base font-semibold text-ink-navy">{formatLKR(bid.price)}</p>
 
       <p className="font-body text-sm text-slate">{bid.notes}</p>
 

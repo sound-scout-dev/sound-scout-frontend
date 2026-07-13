@@ -46,18 +46,23 @@ export function saveLocallyPublishedEvent(event) {
 // No backend login endpoint exists yet — stays mocked. The caller (Login.jsx)
 // writes the returned user into AuthContext so the rest of the app doesn't
 // care whether the session came from here or from a real register() call.
-export async function login({ email, role }) {
-  return delay({
-    id: `mock-${Date.now()}`,
-    name: email.split("@")[0],
-    email,
-    role,
+export async function login({ email, password }) {
+  const session = await request("/users/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
   })
+  return {
+    id: session.user.user_id,
+    name: session.user.name,
+    email: session.user.email,
+    role: session.user.role,
+    region: session.user.region,
+  }
 }
 
 // Real call: POST /users/register.
-export async function register({ fullName, email, role, region }) {
-  const payload = { name: fullName, email, role }
+export async function register({ fullName, email, role, region, password }) {
+  const payload = { name: fullName, email, role, password }
   if (role === "vendor") payload.region = region
 
   const created = await request("/users/register", {
@@ -134,9 +139,60 @@ export async function generatePlan(eventId) {
   return request(`/events/${eventId}/generate-plan`, { method: "POST" })
 }
 
-// No GET /events/{id} endpoint exists — check the seeded demo events and
-// anything published locally this session, same source as listOrganizerEvents.
+// Real GET /events/{id} endpoint to retrieve a real event from backend.
 export async function getEventById(id) {
+  try {
+    const backendEvent = await request(`/events/${id}`)
+    if (backendEvent) {
+      const event = {
+        id: backendEvent.event_id,
+        name: backendEvent.event_type, // Fallback to type if name is not in schema
+        eventType: backendEvent.event_type,
+        crowdSize: backendEvent.crowd_count,
+        venueSizeSqm: backendEvent.venue_size_sqm,
+        budget: backendEvent.budget_range,
+        status: backendEvent.status,
+        date: backendEvent.created_at || new Date().toISOString(), // Fallback date
+      }
+
+      // Reconstruct the structured category display representation if we only have a flat array from Flask
+      let displayPlan;
+      const plan = backendEvent.ai_infrastructure_plan;
+      if (plan && plan.categories) {
+        displayPlan = plan;
+      } else if (plan && Array.isArray(plan)) {
+        const categories = [
+          {
+            name: "Equipment List",
+            items: plan.map(item => {
+              // Parse out quantities if present (e.g. "8x RCF HDL...")
+              const match = item.match(/^(\d+)x\s+(.*)$/);
+              if (match) {
+                return { label: match[2], qty: parseInt(match[1]) };
+              }
+              return { label: item, qty: 1 };
+            })
+          }
+        ];
+        displayPlan = {
+          eventType: event.eventType,
+          meta: `${event.crowdSize.toLocaleString()} guests`,
+          categories,
+          priceRange: { 
+            low: Math.round(Number(event.budget) * 0.8) || 50000, 
+            high: Math.round(Number(event.budget) * 1.2) || 150000 
+          }
+        }
+      } else {
+        displayPlan = buildInfrastructurePlan(event);
+      }
+
+      return { ...event, plan: displayPlan }
+    }
+  } catch (err) {
+    // Fall back to local mock data below
+  }
+
   const event =
     mockEvents.find((e) => e.id === id) ?? getLocallyPublishedEvents().find((e) => e.id === id)
   if (!event) return delay(null)
@@ -231,6 +287,27 @@ export async function listVendorBids(vendorName) {
 // undocumented and it supports no category filter — integrating against a
 // guessed shape isn't worth it yet, so this stays fully mocked.
 export async function searchInstantRentals({ category, location }) {
+  if (location.trim()) {
+    try {
+      const dbVendors = await request(`/inventory/instant/${encodeURIComponent(location.trim())}`)
+      if (Array.isArray(dbVendors) && dbVendors.length > 0) {
+        return dbVendors.map((vendor) => ({
+          id: `db-vendor-${vendor.vendor_id}`,
+          vendorName: vendor.shop_name || "Unknown Shop",
+          category: category || "Audio",
+          equipmentSummary: "Full inventory rental pack & instant gear setup",
+          location: vendor.region,
+          distanceKm: 2.5,
+          pricePerDay: 180,
+          availability: "now",
+          rating: 4.8,
+        }))
+      }
+    } catch (e) {
+      // Fall through to mock search if backend fails/returns 404
+    }
+  }
+
   let results = instantRentalListings
 
   if (category) {
@@ -256,7 +333,7 @@ export async function submitBid({ eventId, vendorId, vendorName, price, notes, r
   try {
     await request("/bids", {
       method: "POST",
-      body: JSON.stringify({ event_id: eventId, vendor_id: vendorId, proposed_price: Number(price) }),
+      body: JSON.stringify({ event_id: eventId, vendor_id: vendorId, proposed_price: Number(price), notes }),
     })
   } catch {
     // demo event not tracked server-side, or backend unreachable — still record locally below
