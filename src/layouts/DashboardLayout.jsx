@@ -25,7 +25,12 @@ function DashboardLayout({ role = "Organizer" }) {
 
           <div className="flex items-center gap-4">
             {user?.name && (
-              <span className="hidden font-body text-sm text-paper/70 sm:inline">{user.name}</span>
+              <Link 
+                to={role === "Organizer" ? "/organizer/profile" : "/vendor/profile"}
+                className="hidden font-body text-sm text-paper/70 hover:text-paper hover:underline sm:inline transition-colors"
+              >
+                {user.name}
+              </Link>
             )}
             <span className="rounded border border-paper/20 px-2.5 py-1 font-mono text-[11px] uppercase tracking-widest text-paper/70">
               {role}

@@ -54,6 +54,8 @@ function StepGenerating({ formValues, onComplete }) {
   const [budgetPlan, setBudgetPlan] = useState(null)
   const [premiumPlan, setPremiumPlan] = useState(null)
   const [realId, setRealId] = useState("")
+  const [feasibilityWarning, setFeasibilityWarning] = useState(null)
+  const [priceCuttingTips, setPriceCuttingTips] = useState([])
 
   const [selectedOption, setSelectedOption] = useState("budget") // "budget" | "premium"
   const fired = useRef(false)
@@ -82,7 +84,8 @@ function StepGenerating({ formValues, onComplete }) {
           budgetRange,
           environment: formValues.environment,
           requirements: formValues.requirements,
-          description: formValues.description
+          description: formValues.description,
+          location: formValues.location
         })
         
         const eventId = created?.event?.event_id ?? created?.event_id ?? created?.id
@@ -113,6 +116,8 @@ function StepGenerating({ formValues, onComplete }) {
           setRealId(eventId)
           setBudgetPlan(parsedBudget)
           setPremiumPlan(parsedPremium)
+          setFeasibilityWarning(options.feasibility_warning || null)
+          setPriceCuttingTips(options.price_cutting_tips || [])
           setLoading(false)
         }
       } catch (err) {
@@ -139,7 +144,13 @@ function StepGenerating({ formValues, onComplete }) {
     if (fired.current) return
     fired.current = true
     const finalPlan = selectedOption === "budget" ? budgetPlan : premiumPlan
-    setTimeout(() => onComplete(finalPlan, realId), 300)
+    // Pass warning and tips to final plan so they can be reviewed/edited in next steps if needed
+    const enrichedPlan = {
+      ...finalPlan,
+      feasibilityWarning,
+      priceCuttingTips,
+    }
+    setTimeout(() => onComplete(enrichedPlan, realId), 300)
   }
 
   return (
@@ -164,6 +175,29 @@ function StepGenerating({ formValues, onComplete }) {
             <p className="mb-4 text-center font-mono text-[11px] text-alert-red bg-alert-red/10 rounded px-2.5 py-1">
               {error}
             </p>
+          )}
+
+          {feasibilityWarning && (
+            <div className="mb-8 rounded-lg border border-signal-amber/30 bg-signal-amber/5 p-5 shadow-sm">
+              <h3 className="font-display font-semibold text-ink-navy text-sm flex items-center gap-2">
+                ⚠️ Budget Feasibility Warning
+              </h3>
+              <p className="mt-2 font-body text-xs text-slate">
+                {feasibilityWarning}
+              </p>
+              {priceCuttingTips && priceCuttingTips.length > 0 && (
+                <div className="mt-4 pt-3 border-t border-slate/10">
+                  <h4 className="font-mono text-[10px] uppercase tracking-widest text-slate font-semibold">
+                    AI Suggested Adjustments for MVP (Minimum Viable Product):
+                  </h4>
+                  <ul className="mt-2 space-y-1.5 font-body text-xs text-ink-navy list-disc list-inside">
+                    {priceCuttingTips.map((tip, i) => (
+                      <li key={i}>{tip}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           )}
           
           <div className="grid md:grid-cols-2 gap-6">

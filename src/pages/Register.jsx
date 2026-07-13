@@ -130,14 +130,20 @@ function Register() {
         {values.role === "vendor" && (
           <>
             <FormField
-              label="Region"
+              as="select"
+              label="Working District / Area"
               name="region"
-              autoComplete="address-level2"
               value={values.region}
               onChange={setField("region")}
               error={errors.region}
-              placeholder="e.g. Colombo 03"
-            />
+            >
+              <option value="">Select your working district...</option>
+              {["Colombo", "Gampaha", "Kalutara", "Kandy", "Galle", "Matara", "Kurunegala", "Jaffna", "Badulla", "Anuradhapura"].map((dist) => (
+                <option key={dist} value={dist}>
+                  {dist}
+                </option>
+              ))}
+            </FormField>
 
             <FormField
               as="select"
