@@ -1,8 +1,8 @@
 import { CalendarDays, MapPin, Users, CheckCircle2 } from "lucide-react"
 import Button from "./Button"
 
-function formatUSD(n) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
+function formatLKR(n) {
+  return "Rs. " + Number(n).toLocaleString("en-US", { maximumFractionDigits: 0 })
 }
 
 function formatDate(dateStr) {
@@ -47,7 +47,7 @@ function OpportunityCard({ event, hasBid, onPlaceBid }) {
       <div className="mt-4 flex items-center justify-between gap-4 rounded border border-signal-amber/30 bg-signal-amber/10 px-3 py-2">
         <span className="font-mono text-[11px] uppercase tracking-widest text-slate">Est. cost</span>
         <span className="font-mono text-sm font-semibold text-ink-navy">
-          {formatUSD(event.plan.priceRange.low)} – {formatUSD(event.plan.priceRange.high)}
+          {formatLKR(event.plan.priceRange.low)} – {formatLKR(event.plan.priceRange.high)}
         </span>
       </div>
 

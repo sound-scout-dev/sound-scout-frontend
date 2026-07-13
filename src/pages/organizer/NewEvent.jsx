@@ -6,7 +6,7 @@ import StepBasics from "../../components/new-event/StepBasics"
 import StepDescription from "../../components/new-event/StepDescription"
 import StepGenerating from "../../components/new-event/StepGenerating"
 import StepResults from "../../components/new-event/StepResults"
-import { createEvent, generatePlan, saveLocallyPublishedEvent } from "../../services/api"
+import { createEvent, generatePlan, saveLocallyPublishedEvent, finalizePlan } from "../../services/api"
 import { useAuth } from "../../context/AuthContext"
 
 const initialValues = {
@@ -15,9 +15,10 @@ const initialValues = {
   date: "",
   crowdSize: "",
   venueSizeSqm: "",
-  budgetMin: "",
   budgetMax: "",
   location: "",
+  environment: "Indoor",
+  requirements: ["Audio", "Lighting", "Staging"],
   description: "",
 }
 
@@ -28,25 +29,28 @@ function validateBasics(values) {
   if (!values.date) errors.date = "Choose an event date."
   if (!values.crowdSize) {
     errors.crowdSize = "Enter the expected number of guests."
-  } else if (Number(values.crowdSize) <= 0) {
-    errors.crowdSize = "Enter a valid number of guests."
+  } else if (Number(values.crowdSize) <= 0 || !Number.isInteger(Number(values.crowdSize))) {
+    errors.crowdSize = "Enter a whole number of guests (no decimals)."
   }
   if (!values.venueSizeSqm) {
     errors.venueSizeSqm = "Enter the venue size in square meters."
-  } else if (Number(values.venueSizeSqm) <= 0) {
-    errors.venueSizeSqm = "Enter a valid venue size."
+  } else if (Number(values.venueSizeSqm) <= 0 || !Number.isInteger(Number(values.venueSizeSqm))) {
+    errors.venueSizeSqm = "Enter a whole venue size (no decimals)."
   }
   if (!values.budgetMin) {
     errors.budgetMin = "Enter your minimum budget."
-  } else if (Number(values.budgetMin) <= 0) {
-    errors.budgetMin = "Enter a valid minimum budget."
+  } else if (Number(values.budgetMin) <= 0 || !Number.isInteger(Number(values.budgetMin))) {
+    errors.budgetMin = "Enter a whole minimum budget (no decimals)."
   }
   if (!values.budgetMax) {
     errors.budgetMax = "Enter your maximum budget."
-  } else if (Number(values.budgetMax) < Number(values.budgetMin)) {
-    errors.budgetMax = "Maximum budget must be at least the minimum."
+  } else if (Number(values.budgetMax) < Number(values.budgetMin) || !Number.isInteger(Number(values.budgetMax))) {
+    errors.budgetMax = "Enter a whole maximum budget (at least the minimum, no decimals)."
   }
   if (!values.location.trim()) errors.location = "Enter the event location."
+  if (!values.requirements || values.requirements.length === 0) {
+    errors.requirements = "Select at least one requirement."
+  }
   return errors
 }
 
@@ -108,9 +112,17 @@ function NewEvent() {
       date: values.date,
       crowdSize: Number(values.crowdSize),
       location: values.location,
+      environment: values.environment,
       budget: Math.round((Number(values.budgetMin) + Number(values.budgetMax)) / 2),
       status: "bidding_open",
     }
+    
+    try {
+      await finalizePlan(realEventId, plan)
+    } catch(err) {
+      console.warn("Could not finalize backend plan", err)
+    }
+
     saveLocallyPublishedEvent(event)
     setPublishing(false)
     navigate(`/organizer/events/${realEventId}`, { state: { event, plan } })
@@ -130,7 +142,7 @@ function NewEvent() {
       </div>
 
       <div className="mt-8">
-        <WizardProgress currentStep={step} />
+        <WizardProgress currentStep={step} onStepClick={setStep} />
       </div>
 
       <div className="mt-10 rounded-md border border-slate/15 bg-white p-6 sm:p-8">

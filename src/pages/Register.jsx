@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { Loader2 } from "lucide-react"
 import RoleToggle from "../components/RoleToggle"
 import FormField from "../components/FormField"
@@ -54,8 +54,16 @@ const initialValues = {
 
 function Register() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { login } = useAuth()
-  const [values, setValues] = useState(initialValues)
+  
+  const roleParam = searchParams.get("role")
+  const initialRole = roleParam === "vendor" || roleParam === "organizer" ? roleParam : "organizer"
+
+  const [values, setValues] = useState(() => ({
+    ...initialValues,
+    role: initialRole
+  }))
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState("")
