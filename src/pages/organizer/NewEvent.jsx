@@ -167,8 +167,14 @@ function NewEvent() {
             onComplete={handlePlanComplete}
           />
         )}
-        {step === 4 && plan && (
-          <StepResults plan={plan} onEdit={handleEdit} onPublish={handlePublish} publishing={publishing} />
+        {step === 4 && (
+          <StepResults
+            plan={plan}
+            onPlanChange={setPlan}
+            onEdit={handleEdit}
+            onPublish={handlePublish}
+            publishing={publishing}
+          />
         )}
       </div>
     </div>

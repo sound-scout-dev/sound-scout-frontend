@@ -73,6 +73,14 @@ export async function register({ fullName, email, role, region, password }) {
   return { id: created.user_id, name: created.name, email: created.email, role: created.role, region: created.region }
 }
 
+export async function updateProfile({ name, email, region }) {
+  const updated = await request("/users/profile", {
+    method: "PUT",
+    body: JSON.stringify({ name, email, region }),
+  })
+  return { id: updated.user_id, name: updated.name, email: updated.email, role: updated.role, region: updated.region }
+}
+
 // No "list my events" endpoint exists — combine the seeded demo events with
 // anything published for real this session/browser via createEvent() below.
 export async function listOrganizerEvents() {
@@ -212,7 +220,7 @@ export async function generateInfrastructurePlan(formData) {
 // Real call: POST /events. The spec only documents "201: Event created
 // successfully" with no response schema — assuming (like any typical REST
 // API) that the created event, including its id, comes back in the body.
-export async function createEvent({ organizerId, eventType, crowdSize, venueSizeSqm, budgetRange, environment, requirements, description }) {
+export async function createEvent({ organizerId, eventType, crowdSize, venueSizeSqm, budgetRange, environment, requirements, description, location }) {
   return request("/events", {
     method: "POST",
     body: JSON.stringify({
@@ -224,6 +232,7 @@ export async function createEvent({ organizerId, eventType, crowdSize, venueSize
       environment,
       requirements,
       description,
+      location,
     }),
   })
 }
@@ -487,6 +496,30 @@ export async function listVendorBids(vendorName) {
   return delay(bids)
 }
 
+const LOCAL_RENTAL_KEY = "soundscout.local_rentals"
+
+function getLocalRentals() {
+  try {
+    const raw = localStorage.getItem(LOCAL_RENTAL_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+export async function addInstantRental(listing) {
+  const current = getLocalRentals()
+  const newListing = {
+    id: `local-rental-${Date.now()}`,
+    ...listing,
+    distanceKm: 1.5,
+    availability: "now",
+    rating: 5.0,
+  }
+  localStorage.setItem(LOCAL_RENTAL_KEY, JSON.stringify([...current, newListing]))
+  return delay(newListing, 300)
+}
+
 // /inventory/instant/{region} exists but its response shape is completely
 // undocumented and it supports no category filter — integrating against a
 // guessed shape isn't worth it yet, so this stays fully mocked.
@@ -512,7 +545,7 @@ export async function searchInstantRentals({ category, location }) {
     }
   }
 
-  let results = instantRentalListings
+  let results = [...getLocalRentals(), ...instantRentalListings]
 
   if (category) {
     results = results.filter((listing) => listing.category === category)
