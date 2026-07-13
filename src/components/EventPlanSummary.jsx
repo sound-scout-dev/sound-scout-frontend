@@ -2,8 +2,8 @@ import { useState } from "react"
 import { CalendarDays, MapPin, Users, ChevronDown } from "lucide-react"
 import SpecCard from "./SpecCard"
 
-function formatUSD(n) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
+function formatLKR(n) {
+  return "Rs. " + n.toLocaleString("en-LK", { maximumFractionDigits: 0 })
 }
 
 function formatDate(dateStr) {
@@ -44,7 +44,7 @@ function EventPlanSummary({ event, plan }) {
             Estimated cost · {plan.categories.length} categories, {itemCount} items
           </span>
           <span className="font-mono text-base font-semibold text-ink-navy">
-            {formatUSD(plan.priceRange.low)} – {formatUSD(plan.priceRange.high)}
+            {formatLKR(plan.priceRange.low)} – {formatLKR(plan.priceRange.high)}
           </span>
         </div>
 

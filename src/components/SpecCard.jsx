@@ -11,8 +11,8 @@ function buildSequence(plan) {
   return seq
 }
 
-function formatUSD(n) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
+function formatLKR(n) {
+  return "Rs. " + n.toLocaleString("en-LK", { maximumFractionDigits: 0 })
 }
 
 /**
@@ -59,57 +59,48 @@ function SpecCard({ plan, loop = false, startRevealed = false, onDone, className
     runThinking()
 
     return () => timers.forEach(clearTimeout)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loop])
+  }, [loop, startRevealed])
 
-  const isVisible = (index) => visibleCount > index
+  const isVisible = (idx) => idx < visibleCount
 
   return (
     <div
       className={`overflow-hidden rounded-md border border-slate/15 bg-paper shadow-2xl shadow-black/30 ${className}`}
     >
-      <div className="flex items-center justify-between bg-ink-navy px-4 py-3">
-        <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-paper/70">
-          <Radar size={14} className="text-signal-amber" strokeWidth={2.5} />
-          AI Infrastructure Plan
-        </div>
-        <span className="flex items-center gap-1.5 font-mono text-[11px] text-paper/50">
+      <div className="border-b border-slate/10 px-5 py-4">
+        <div className="flex items-center justify-between">
+          <span className="flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-widest text-ink-navy">
+            <Radar size={14} className="text-signal-amber animate-pulse" />
+            AI Infrastructure Plan
+          </span>
           <span
-            className={`h-1.5 w-1.5 rounded-full bg-signal-amber ${
-              phase !== "done" ? "animate-pulse" : ""
+            className={`h-2 w-2 rounded-full ${
+              phase === "done" ? "bg-circuit-teal" : "bg-signal-amber animate-ping"
             }`}
           />
-          {phase === "done" ? "complete" : "generating"}
-        </span>
+        </div>
       </div>
 
-      <div className="p-5">
-        {isVisible(0) ? (
-          <div className="animate-reveal-line">
-            <h3 className="font-display text-lg font-semibold text-ink-navy">
-              {plan.eventType}
-            </h3>
-            <p className="mt-0.5 font-mono text-xs text-slate">{plan.meta}</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            <div className="h-5 w-48 animate-pulse rounded bg-slate/10" />
-            <div className="h-3 w-32 animate-pulse rounded bg-slate/10" />
-          </div>
-        )}
+      <div className="p-6">
+        <div className="font-display text-lg font-semibold text-ink-navy">
+          {plan.eventType}
+        </div>
+        <div className="mt-1 font-mono text-xs text-slate">{plan.meta}</div>
 
-        <div className="mt-5 space-y-5">
+        <div className="mt-6 space-y-5">
           {sequence.current.reduce((acc, node, i) => {
             if (node.type === "category") {
               acc.push(
-                <div key={`cat-${node.cat.name}`} className={isVisible(i) ? "animate-reveal-line" : "opacity-0"}>
-                  <p className="border-b border-slate/15 pb-1.5 font-mono text-[11px] font-medium uppercase tracking-widest text-circuit-teal">
+                <div
+                  key={`cat-${node.cat.name}`}
+                  className={isVisible(i) ? "animate-reveal-line" : "opacity-0"}
+                >
+                  <h4 className="font-mono text-[10px] font-semibold uppercase tracking-wider text-circuit-teal">
                     {node.cat.name}
-                  </p>
+                  </h4>
                 </div>
               )
-            }
-            if (node.type === "item") {
+            } else if (node.type === "item") {
               acc.push(
                 <div
                   key={`item-${node.cat.name}-${node.item.label}`}
@@ -118,7 +109,9 @@ function SpecCard({ plan, loop = false, startRevealed = false, onDone, className
                   }`}
                 >
                   <span className="font-body text-sm text-ink-navy">{node.item.label}</span>
-                  <span className="shrink-0 font-mono text-sm text-slate">{node.item.qty}</span>
+                  <span className="font-mono text-xs font-semibold text-ink-navy">
+                    {node.item.qty}x
+                  </span>
                 </div>
               )
             }
@@ -136,7 +129,7 @@ function SpecCard({ plan, loop = false, startRevealed = false, onDone, className
           Estimated cost
         </span>
         <span className="font-mono text-lg font-semibold text-ink-navy">
-          {formatUSD(plan.priceRange.low)} – {formatUSD(plan.priceRange.high)}
+          {formatLKR(plan.priceRange.low)} – {formatLKR(plan.priceRange.high)}
         </span>
       </div>
     </div>

@@ -40,14 +40,14 @@ function BidSubmissionModal({ event, vendor, onClose, onSubmitted }) {
   return (
     <Modal title={`Bid on ${event.name}`} onClose={onClose}>
       <p className="font-mono text-xs text-slate">
-        Estimated range: {event.plan.priceRange.low.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}
+        Estimated range: Rs. {event.plan.priceRange.low.toLocaleString("en-LK", { maximumFractionDigits: 0 })}
         {" – "}
-        {event.plan.priceRange.high.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}
+        Rs. {event.plan.priceRange.high.toLocaleString("en-LK", { maximumFractionDigits: 0 })}
       </p>
 
       <form className="mt-4 space-y-4" onSubmit={handleSubmit} noValidate>
         <FormField
-          label="Your bid amount (USD)"
+          label="Your bid amount (LKR)"
           name="price"
           type="number"
           min="1"

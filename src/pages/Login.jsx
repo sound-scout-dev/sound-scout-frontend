@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Loader2 } from "lucide-react"
-import RoleToggle from "../components/RoleToggle"
 import FormField from "../components/FormField"
 import Button from "../components/Button"
 import { login } from "../services/api"
@@ -25,7 +24,7 @@ function validate(values) {
 function Login() {
   const navigate = useNavigate()
   const { login: setSession } = useAuth()
-  const [values, setValues] = useState({ role: "organizer", email: "", password: "" })
+  const [values, setValues] = useState({ email: "", password: "" })
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState("")
@@ -62,12 +61,6 @@ function Login() {
       </p>
 
       <form className="mt-6 space-y-5" onSubmit={handleSubmit} noValidate>
-        <div>
-          <span className="mb-1.5 block font-mono text-[11px] font-medium uppercase tracking-widest text-slate">
-            I am a
-          </span>
-          <RoleToggle value={values.role} onChange={(role) => setValues((v) => ({ ...v, role }))} />
-        </div>
 
         <FormField
           label="Email address"

@@ -20,7 +20,7 @@ function BookingConfirmModal({ listing, onClose, onBooked }) {
         <p className="font-display text-sm font-semibold text-ink-navy">{listing.vendorName}</p>
         <p className="mt-1 font-body text-sm text-slate">{listing.equipmentSummary}</p>
         <p className="mt-3 font-mono text-lg font-semibold text-ink-navy">
-          ${listing.pricePerDay}
+          Rs. {listing.pricePerDay}
           <span className="text-sm font-normal text-slate">/day</span>
         </p>
       </div>

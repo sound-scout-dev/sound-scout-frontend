@@ -47,7 +47,7 @@ function RentalListingCard({ listing, booked, onBook }) {
 
       <div className="mt-5 flex items-center justify-between">
         <span className="font-mono text-lg font-semibold text-ink-navy">
-          ${listing.pricePerDay}
+          Rs. {listing.pricePerDay}
           <span className="text-sm font-normal text-slate">/day</span>
         </span>
 
