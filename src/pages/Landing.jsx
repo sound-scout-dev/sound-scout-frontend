@@ -5,6 +5,7 @@ import Button from "../components/Button"
 import SpecCard from "../components/SpecCard"
 import SignalPanel from "../components/SignalPanel"
 import { heroPlan } from "../services/mockData"
+import { useAuth } from "../context/AuthContext"
 
 const STEPS = [
   {
@@ -50,6 +51,16 @@ const FEATURES = [
 
 function Landing() {
   const location = useLocation()
+  const { user } = useAuth()
+  
+  // Decide where to send the user based on their login status and role
+  const generatePlanPath = user 
+    ? (user.role === "vendor" ? "/vendor/dashboard" : "/organizer/events/new")
+    : "/register?role=organizer";
+
+  const vendorPath = user 
+    ? "/vendor/dashboard"
+    : "/register?role=vendor";
 
   useEffect(() => {
     if (!location.hash) return
@@ -76,10 +87,10 @@ function Landing() {
               staging, and power spec — then puts it in front of vendors ready to bid on it.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button as={Link} to="/register" variant="primary" size="lg">
+              <Button as={Link} to={generatePlanPath} variant="primary" size="lg">
                 Generate a plan
               </Button>
-              <Button as={Link} to="/register" variant="outline" size="lg">
+              <Button as={Link} to={vendorPath} variant="outline" size="lg">
                 I'm a vendor
               </Button>
             </div>

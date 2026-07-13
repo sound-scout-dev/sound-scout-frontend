@@ -3,6 +3,7 @@ import { Link, NavLink } from "react-router-dom"
 import { Menu, X, Zap } from "lucide-react"
 import Logo from "./Logo"
 import Button from "./Button"
+import { useAuth } from "../context/AuthContext"
 
 const NAV_LINKS = [
   { to: "/#how-it-works", label: "How it works" },
@@ -11,16 +12,21 @@ const NAV_LINKS = [
 
 function Navbar() {
   const [open, setOpen] = useState(false)
+  const { user, logout } = useAuth()
 
   const linkClass = ({ isActive }) =>
     `text-sm font-medium transition-colors duration-150 ease-out hover:text-signal-amber ${
       isActive ? "text-signal-amber" : "text-paper/80"
     }`
 
+  const dashboardPath = user
+    ? (user.role === "vendor" ? "/vendor/dashboard" : "/organizer/dashboard")
+    : "/"
+
   return (
     <header className="sticky top-0 z-50 border-b border-paper/10 bg-ink-navy">
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link to="/" className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-signal-amber rounded">
+        <Link to={dashboardPath} className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-signal-amber rounded">
           <Logo />
         </Link>
 
@@ -40,12 +46,25 @@ function Navbar() {
             <Zap size={15} strokeWidth={2.5} />
             Instant Rental
           </Link>
-          <Button as={Link} to="/login" variant="ghost" size="sm" className="text-paper hover:bg-paper/10 active:bg-paper/15">
-            Log in
-          </Button>
-          <Button as={Link} to="/register" variant="primary" size="sm">
-            Get started
-          </Button>
+          {user ? (
+            <>
+              <Button as={Link} to={dashboardPath} variant="ghost" size="sm" className="text-paper hover:bg-paper/10 active:bg-paper/15">
+                Dashboard
+              </Button>
+              <Button onClick={logout} variant="primary" size="sm">
+                Log out
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button as={Link} to="/login" variant="ghost" size="sm" className="text-paper hover:bg-paper/10 active:bg-paper/15">
+                Log in
+              </Button>
+              <Button as={Link} to="/register" variant="primary" size="sm">
+                Get started
+              </Button>
+            </>
+          )}
         </div>
 
         <button
@@ -81,12 +100,25 @@ function Navbar() {
               Instant Rental
             </Link>
             <div className="flex gap-3 pt-2">
-              <Button as={Link} to="/login" variant="outline" size="sm" className="flex-1" onClick={() => setOpen(false)}>
-                Log in
-              </Button>
-              <Button as={Link} to="/register" variant="primary" size="sm" className="flex-1" onClick={() => setOpen(false)}>
-                Get started
-              </Button>
+              {user ? (
+                <>
+                  <Button as={Link} to={dashboardPath} variant="outline" size="sm" className="flex-1" onClick={() => setOpen(false)}>
+                    Dashboard
+                  </Button>
+                  <Button onClick={() => { logout(); setOpen(false); }} variant="primary" size="sm" className="flex-1">
+                    Log out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button as={Link} to="/login" variant="outline" size="sm" className="flex-1" onClick={() => setOpen(false)}>
+                    Log in
+                  </Button>
+                  <Button as={Link} to="/register" variant="primary" size="sm" className="flex-1" onClick={() => setOpen(false)}>
+                    Get started
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>

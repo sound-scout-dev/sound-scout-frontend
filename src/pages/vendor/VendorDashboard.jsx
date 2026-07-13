@@ -7,8 +7,8 @@ import { listVendorOpportunities, listVendorBids } from "../../services/api"
 import { currentVendor } from "../../services/mockData"
 import { useAuth } from "../../context/AuthContext"
 
-function formatUSD(n) {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
+function formatLKR(n) {
+  return "Rs. " + Number(n).toLocaleString("en-US", { maximumFractionDigits: 0 })
 }
 
 function Skeleton() {
@@ -123,7 +123,7 @@ function VendorDashboard() {
                 className="grid grid-cols-1 gap-3 border-b border-slate/10 p-5 last:border-b-0 sm:grid-cols-[1.5fr_1fr_auto] sm:items-center"
               >
                 <p className="font-display text-sm font-semibold text-ink-navy">{bid.eventName}</p>
-                <p className="font-mono text-sm text-ink-navy">{formatUSD(bid.price)}</p>
+                <p className="font-mono text-sm text-ink-navy">{formatLKR(bid.price)}</p>
                 <div className="sm:justify-self-end">
                   <BidStatusBadge status={bid.status} />
                 </div>

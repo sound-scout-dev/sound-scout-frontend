@@ -76,7 +76,102 @@ export async function register({ fullName, email, role, region, password }) {
 // No "list my events" endpoint exists — combine the seeded demo events with
 // anything published for real this session/browser via createEvent() below.
 export async function listOrganizerEvents() {
-  return delay([...mockEvents, ...getLocallyPublishedEvents()])
+  try {
+    const backendEvents = await request("/events")
+    return (backendEvents ?? []).map((e) => {
+      let parsedPlan = null
+      if (e.ai_infrastructure_plan) {
+        parsedPlan = typeof e.ai_infrastructure_plan === 'string'
+          ? JSON.parse(e.ai_infrastructure_plan)
+          : e.ai_infrastructure_plan
+      }
+
+      // Reconstruct display categories based on the plan shape (single selected vs draft options)
+      let displayPlan;
+      if (parsedPlan && parsedPlan.categories) {
+        displayPlan = parsedPlan;
+      } else if (parsedPlan && (parsedPlan.budget_plan || parsedPlan.premium_plan)) {
+        const selectedRaw = parsedPlan.budget_plan || parsedPlan.premium_plan;
+        const categories = [
+          {
+            name: "Equipment List",
+            items: selectedRaw.map(item => {
+              const match = item.match(/^(\d+)x\s+(.*)$/);
+              if (match) {
+                return { label: match[2], qty: parseInt(match[1]) };
+              }
+              return { label: item, qty: 1 };
+            })
+          }
+        ];
+        let low = 50000;
+        let high = 150000;
+        if (e.budget_range) {
+          const parts = e.budget_range.split('-');
+          if (parts.length === 2) {
+            low = Math.max(10000, Number(parts[0]) || 50000);
+            high = Number(parts[1]) || 150000;
+          }
+        }
+        displayPlan = {
+          eventType: e.event_type,
+          meta: `${e.crowd_count.toLocaleString()} guests`,
+          categories,
+          priceRange: { low, high }
+        }
+      } else if (parsedPlan && Array.isArray(parsedPlan)) {
+        const categories = [
+          {
+            name: "Equipment List",
+            items: parsedPlan.map(item => {
+              const match = item.match(/^(\d+)x\s+(.*)$/);
+              if (match) {
+                return { label: match[2], qty: parseInt(match[1]) };
+              }
+              return { label: item, qty: 1 };
+            })
+          }
+        ];
+        let low = 50000;
+        let high = 150000;
+        if (e.budget_range) {
+          const parts = e.budget_range.split('-');
+          if (parts.length === 2) {
+            low = Math.max(10000, Number(parts[0]) || 50000);
+            high = Number(parts[1]) || 150000;
+          }
+        }
+        displayPlan = {
+          eventType: e.event_type,
+          meta: `${e.crowd_count.toLocaleString()} guests`,
+          categories,
+          priceRange: { low, high }
+        }
+      } else {
+        displayPlan = buildInfrastructurePlan({
+          eventType: e.event_type,
+          crowdSize: e.crowd_count,
+          venueSizeSqm: e.venue_size_sqm,
+          budgetMin: e.budget_range ? e.budget_range.split('-')[0] : 50000,
+          budgetMax: e.budget_range ? e.budget_range.split('-')[1] : 150000,
+        });
+      }
+
+      return {
+        id: e.event_id,
+        name: e.event_type, // Use event type as fallback event name
+        eventType: e.event_type,
+        crowdSize: e.crowd_count,
+        date: e.created_at || new Date().toISOString(),
+        location: e.environment || "Indoor",
+        status: e.status || "bidding_open",
+        plan: displayPlan,
+      }
+    })
+  } catch (err) {
+    // If backend is unreachable, fallback to local/mock data to prevent crashing
+    return [...mockEvents, ...getLocallyPublishedEvents()]
+  }
 }
 
 // Synchronous plan assembly. The New Event wizard renders this straight into
@@ -117,7 +212,7 @@ export async function generateInfrastructurePlan(formData) {
 // Real call: POST /events. The spec only documents "201: Event created
 // successfully" with no response schema — assuming (like any typical REST
 // API) that the created event, including its id, comes back in the body.
-export async function createEvent({ organizerId, eventType, crowdSize, venueSizeSqm, budgetRange }) {
+export async function createEvent({ organizerId, eventType, crowdSize, venueSizeSqm, budgetRange, environment, requirements, description }) {
   return request("/events", {
     method: "POST",
     body: JSON.stringify({
@@ -126,6 +221,9 @@ export async function createEvent({ organizerId, eventType, crowdSize, venueSize
       crowd_count: Number(crowdSize),
       venue_size_sqm: Number(venueSizeSqm),
       budget_range: budgetRange,
+      environment,
+      requirements,
+      description,
     }),
   })
 }
@@ -137,6 +235,13 @@ export async function createEvent({ organizerId, eventType, crowdSize, venueSize
 // than trusting this response's plan content.
 export async function generatePlan(eventId) {
   return request(`/events/${eventId}/generate-plan`, { method: "POST" })
+}
+
+export async function finalizePlan(eventId, selected_plan) {
+  return request(`/events/${eventId}/finalize-plan`, {
+    method: "PUT",
+    body: JSON.stringify({ selected_plan }),
+  })
 }
 
 // Real GET /events/{id} endpoint to retrieve a real event from backend.
@@ -151,21 +256,30 @@ export async function getEventById(id) {
         crowdSize: backendEvent.crowd_count,
         venueSizeSqm: backendEvent.venue_size_sqm,
         budget: backendEvent.budget_range,
+        location: backendEvent.environment || "Indoor",
         status: backendEvent.status,
         date: backendEvent.created_at || new Date().toISOString(), // Fallback date
       }
 
-      // Reconstruct the structured category display representation if we only have a flat array from Flask
+      // Reconstruct the structured category display representation safely
       let displayPlan;
-      const plan = backendEvent.ai_infrastructure_plan;
+      let plan = backendEvent.ai_infrastructure_plan;
+      if (plan && typeof plan === 'string') {
+        try {
+          plan = JSON.parse(plan);
+        } catch (e) {
+          console.warn("Could not parse AI plan JSON string", e);
+        }
+      }
+
       if (plan && plan.categories) {
         displayPlan = plan;
-      } else if (plan && Array.isArray(plan)) {
+      } else if (plan && (plan.budget_plan || plan.premium_plan)) {
+        const selectedRaw = plan.budget_plan || plan.premium_plan;
         const categories = [
           {
             name: "Equipment List",
-            items: plan.map(item => {
-              // Parse out quantities if present (e.g. "8x RCF HDL...")
+            items: selectedRaw.map(item => {
               const match = item.match(/^(\d+)x\s+(.*)$/);
               if (match) {
                 return { label: match[2], qty: parseInt(match[1]) };
@@ -174,14 +288,48 @@ export async function getEventById(id) {
             })
           }
         ];
+        let low = 50000;
+        let high = 150000;
+        if (event.budget) {
+          const parts = event.budget.split('-');
+          if (parts.length === 2) {
+            low = Math.max(10000, Number(parts[0]) || 50000);
+            high = Number(parts[1]) || 150000;
+          }
+        }
         displayPlan = {
           eventType: event.eventType,
           meta: `${event.crowdSize.toLocaleString()} guests`,
           categories,
-          priceRange: { 
-            low: Math.round(Number(event.budget) * 0.8) || 50000, 
-            high: Math.round(Number(event.budget) * 1.2) || 150000 
+          priceRange: { low, high }
+        }
+      } else if (plan && Array.isArray(plan)) {
+        const categories = [
+          {
+            name: "Equipment List",
+            items: plan.map(item => {
+              const match = item.match(/^(\d+)x\s+(.*)$/);
+              if (match) {
+                return { label: match[2], qty: parseInt(match[1]) };
+              }
+              return { label: item, qty: 1 };
+            })
           }
+        ];
+        let low = 50000;
+        let high = 150000;
+        if (event.budget) {
+          const parts = event.budget.split('-');
+          if (parts.length === 2) {
+            low = Math.max(10000, Number(parts[0]) || 50000);
+            high = Number(parts[1]) || 150000;
+          }
+        }
+        displayPlan = {
+          eventType: event.eventType,
+          meta: `${event.crowdSize.toLocaleString()} guests`,
+          categories,
+          priceRange: { low, high }
         }
       } else {
         displayPlan = buildInfrastructurePlan(event);
@@ -242,28 +390,84 @@ export async function listVendorOpportunities(equipmentCategory) {
   const neededCategory = EQUIPMENT_TO_PLAN_CATEGORY[equipmentCategory]
 
   let realEvents = []
+  let backendOnline = false
   try {
     const openEvents = await request("/events/open")
-    realEvents = (openEvents ?? []).map((e) => ({
-      id: e.event_id,
-      // name/date/location aren't in the backend Event schema — fall back to the event type.
-      name: e.event_type,
-      eventType: e.event_type,
-      crowdSize: e.crowd_count,
-      date: null,
-      location: "—",
-      status: "bidding_open",
-    }))
-  } catch {
-    // backend unreachable / not implemented yet — local fixtures below still populate the feed
+    backendOnline = true
+    realEvents = (openEvents ?? []).map((e) => {
+      let parsedPlan = null;
+      if (e.ai_infrastructure_plan) {
+        parsedPlan = typeof e.ai_infrastructure_plan === 'string'
+          ? JSON.parse(e.ai_infrastructure_plan)
+          : e.ai_infrastructure_plan;
+      }
+
+      let displayPlan;
+      if (parsedPlan && parsedPlan.categories) {
+        displayPlan = parsedPlan;
+      } else if (parsedPlan && Array.isArray(parsedPlan)) {
+        const categories = [
+          {
+            name: "Equipment List",
+            items: parsedPlan.map(item => {
+              const match = item.match(/^(\d+)x\s+(.*)$/);
+              if (match) {
+                return { label: match[2], qty: parseInt(match[1]) };
+              }
+              return { label: item, qty: 1 };
+            })
+          }
+        ];
+        
+        let low = 50000;
+        let high = 150000;
+        if (e.budget_range) {
+          const parts = e.budget_range.split('-');
+          if (parts.length === 2) {
+            low = Math.max(10000, Number(parts[0]) || 50000);
+            high = Number(parts[1]) || 150000;
+          }
+        }
+        displayPlan = {
+          eventType: e.event_type,
+          meta: `${e.crowd_count.toLocaleString()} guests`,
+          categories,
+          priceRange: { low, high }
+        }
+      } else {
+        displayPlan = buildInfrastructurePlan({
+          eventType: e.event_type,
+          crowdSize: e.crowd_count,
+          venueSizeSqm: e.venue_size_sqm,
+          budgetMin: e.budget_range ? e.budget_range.split('-')[0] : 50000,
+          budgetMax: e.budget_range ? e.budget_range.split('-')[1] : 150000,
+        });
+      }
+
+      return {
+        id: e.event_id,
+        name: e.event_type,
+        eventType: e.event_type,
+        crowdSize: e.crowd_count,
+        date: e.created_at || new Date().toISOString(),
+        location: e.environment || "Indoor",
+        status: "bidding_open",
+        plan: displayPlan,
+      }
+    })
+  } catch (err) {
+    // backend unreachable / not implemented yet
   }
 
   const localEvents = [...mockEvents, ...getLocallyPublishedEvents()].filter(
     (event) => event.status === "bidding_open"
   )
 
-  const opportunities = [...realEvents, ...localEvents]
-    .map((event) => ({ ...event, plan: buildInfrastructurePlan(event) }))
+  const opportunities = (backendOnline ? realEvents : localEvents)
+    .map((event) => {
+      if (event.plan) return event;
+      return { ...event, plan: buildInfrastructurePlan(event) };
+    })
     .filter(
       (event) => !neededCategory || event.plan.categories.some((cat) => cat.name === neededCategory)
     )
