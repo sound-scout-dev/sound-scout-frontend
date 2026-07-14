@@ -35,6 +35,7 @@ function VendorDashboard() {
   const [myBids, setMyBids] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeEvent, setActiveEvent] = useState(null)
+  const [activeCategories, setActiveCategories] = useState([])
 
   // Instant rental listing form states
   const [eqSummary, setEqSummary] = useState("")
@@ -46,7 +47,7 @@ function VendorDashboard() {
   useEffect(() => {
     let active = true
     Promise.all([
-      listVendorOpportunities(vendor.equipmentCategory),
+      listVendorOpportunities(vendor.equipmentCategory, vendor.region),
       listVendorBids(vendor.name),
     ]).then(([opps, bids]) => {
       if (!active) return
@@ -135,8 +136,12 @@ function VendorDashboard() {
                   <OpportunityCard
                     key={event.id}
                     event={event}
+                    vendor={vendor}
                     hasBid={biddedEventIds.has(event.id)}
-                    onPlaceBid={setActiveEvent}
+                    onPlaceBid={(ev, cats) => {
+                      setActiveEvent(ev)
+                      setActiveCategories(cats)
+                    }}
                   />
                 ))}
               </div>
@@ -260,8 +265,12 @@ function VendorDashboard() {
       {activeEvent && (
         <BidSubmissionModal
           event={activeEvent}
+          initialCategories={activeCategories}
           vendor={vendor}
-          onClose={() => setActiveEvent(null)}
+          onClose={() => {
+            setActiveEvent(null)
+            setActiveCategories([])
+          }}
           onSubmitted={handleBidSubmitted}
         />
       )}

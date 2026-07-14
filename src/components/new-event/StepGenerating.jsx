@@ -45,21 +45,40 @@ function getHeuristicPrice(categories) {
   return total
 }
 
-function parseRawPlan(rawPlanArray, formValues, mlCost = 50000, isPremium = false) {
-  if (!rawPlanArray || !Array.isArray(rawPlanArray)) return buildInfrastructurePlan(formValues);
+function parseRawPlan(rawPlanData, formValues, mlCost = 50000, isPremium = false) {
+  if (!rawPlanData) return buildInfrastructurePlan(formValues);
 
-  const categories = [
-    {
-      name: "Equipment List",
-      items: rawPlanArray.map(item => {
-        const match = item.match(/^(\d+)x\s+(.*)$/);
-        if (match) {
-          return { label: match[2], qty: parseInt(match[1]) };
-        }
-        return { label: item, qty: 1 };
-      })
-    }
-  ];
+  let categories = [];
+  
+  if (Array.isArray(rawPlanData)) {
+    categories = [
+      {
+        name: "Equipment List",
+        items: rawPlanData.map(item => {
+          const match = item.match(/^(\d+)x\s+(.*)$/);
+          if (match) {
+            return { label: match[2], qty: parseInt(match[1]) };
+          }
+          return { label: item, qty: 1 };
+        })
+      }
+    ];
+  } else if (typeof rawPlanData === 'object') {
+    categories = Object.entries(rawPlanData).map(([name, items]) => {
+      return {
+        name,
+        items: Array.isArray(items) ? items.map(item => {
+          const match = item.match(/^(\d+)x\s+(.*)$/);
+          if (match) {
+            return { label: match[2], qty: parseInt(match[1]) };
+          }
+          return { label: item, qty: 1 };
+        }) : []
+      };
+    });
+  } else {
+    return buildInfrastructurePlan(formValues);
+  }
 
   const heuristicTotal = getHeuristicPrice(categories);
   const low = isPremium 

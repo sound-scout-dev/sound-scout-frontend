@@ -100,18 +100,32 @@ export async function listOrganizerEvents() {
         displayPlan = parsedPlan;
       } else if (parsedPlan && (parsedPlan.budget_plan || parsedPlan.premium_plan)) {
         const selectedRaw = parsedPlan.budget_plan || parsedPlan.premium_plan;
-        const categories = [
-          {
-            name: "Equipment List",
-            items: selectedRaw.map(item => {
+        let categories = [];
+        if (Array.isArray(selectedRaw)) {
+          categories = [
+            {
+              name: "Equipment List",
+              items: selectedRaw.map(item => {
+                const match = item.match(/^(\d+)x\s+(.*)$/);
+                if (match) {
+                  return { label: match[2], qty: parseInt(match[1]) };
+                }
+                return { label: item, qty: 1 };
+              })
+            }
+          ];
+        } else if (typeof selectedRaw === 'object') {
+          categories = Object.entries(selectedRaw).map(([name, items]) => ({
+            name,
+            items: Array.isArray(items) ? items.map(item => {
               const match = item.match(/^(\d+)x\s+(.*)$/);
               if (match) {
                 return { label: match[2], qty: parseInt(match[1]) };
               }
               return { label: item, qty: 1 };
-            })
-          }
-        ];
+            }) : []
+          }));
+        }
         let low = 50000;
         let high = 150000;
         if (e.budget_range) {
@@ -127,34 +141,7 @@ export async function listOrganizerEvents() {
           categories,
           priceRange: { low, high }
         }
-      } else if (parsedPlan && Array.isArray(parsedPlan)) {
-        const categories = [
-          {
-            name: "Equipment List",
-            items: parsedPlan.map(item => {
-              const match = item.match(/^(\d+)x\s+(.*)$/);
-              if (match) {
-                return { label: match[2], qty: parseInt(match[1]) };
-              }
-              return { label: item, qty: 1 };
-            })
-          }
-        ];
-        let low = 50000;
-        let high = 150000;
-        if (e.budget_range) {
-          const parts = e.budget_range.split('-');
-          if (parts.length === 2) {
-            low = Math.max(10000, Number(parts[0]) || 50000);
-            high = Number(parts[1]) || 150000;
-          }
-        }
-        displayPlan = {
-          eventType: e.event_type,
-          meta: `${e.crowd_count.toLocaleString()} guests`,
-          categories,
-          priceRange: { low, high }
-        }
+
       } else {
         displayPlan = buildInfrastructurePlan({
           eventType: e.event_type,
@@ -395,7 +382,7 @@ export async function publishEvent(eventId) {
 // implemented this yet). ai_infrastructure_plan's shape is unconfirmed, so a
 // display plan is synthesized client-side via buildInfrastructurePlan for
 // rendering and category matching.
-export async function listVendorOpportunities(equipmentCategory) {
+export async function listVendorOpportunities(equipmentCategory, vendorRegion) {
   const neededCategory = EQUIPMENT_TO_PLAN_CATEGORY[equipmentCategory]
 
   let realEvents = []
@@ -414,19 +401,34 @@ export async function listVendorOpportunities(equipmentCategory) {
       let displayPlan;
       if (parsedPlan && parsedPlan.categories) {
         displayPlan = parsedPlan;
-      } else if (parsedPlan && Array.isArray(parsedPlan)) {
-        const categories = [
-          {
-            name: "Equipment List",
-            items: parsedPlan.map(item => {
+      } else if (parsedPlan && (parsedPlan.budget_plan || parsedPlan.premium_plan)) {
+        const selectedRaw = parsedPlan.budget_plan || parsedPlan.premium_plan;
+        let categories = [];
+        if (Array.isArray(selectedRaw)) {
+          categories = [
+            {
+              name: "Equipment List",
+              items: selectedRaw.map(item => {
+                const match = item.match(/^(\d+)x\s+(.*)$/);
+                if (match) {
+                  return { label: match[2], qty: parseInt(match[1]) };
+                }
+                return { label: item, qty: 1 };
+              })
+            }
+          ];
+        } else if (typeof selectedRaw === 'object') {
+          categories = Object.entries(selectedRaw).map(([name, items]) => ({
+            name,
+            items: Array.isArray(items) ? items.map(item => {
               const match = item.match(/^(\d+)x\s+(.*)$/);
               if (match) {
                 return { label: match[2], qty: parseInt(match[1]) };
               }
               return { label: item, qty: 1 };
-            })
-          }
-        ];
+            }) : []
+          }));
+        }
         
         let low = 50000;
         let high = 150000;
@@ -460,8 +462,10 @@ export async function listVendorOpportunities(equipmentCategory) {
         crowdSize: e.crowd_count,
         date: e.created_at || new Date().toISOString(),
         location: e.location || "Colombo",
+        district: e.district || "",
         status: "bidding_open",
         plan: displayPlan,
+        existing_bids: e.existing_bids || [],
       }
     })
   } catch (err) {
@@ -478,6 +482,16 @@ export async function listVendorOpportunities(equipmentCategory) {
       return { ...event, plan: buildInfrastructurePlan(event) };
     })
     .filter((event) => {
+      // 0. Filter by region if specified (handles multiple comma-separated districts)
+      if (vendorRegion) {
+        const vendorDistricts = vendorRegion.split(',').map(d => d.trim().toLowerCase()).filter(Boolean);
+        const matchesDistrict = event.district && vendorDistricts.includes(event.district.toLowerCase());
+        const matchesLocation = event.location && vendorDistricts.some(d => event.location.toLowerCase().includes(d));
+        if (!matchesDistrict && !matchesLocation) {
+           return false;
+        }
+      }
+
       if (!neededCategory) return true;
       
       // 1. If categories contain specific category names (e.g. mock events), check that
@@ -663,11 +677,11 @@ export async function bookInstantRental(listingId) {
 // Real call: POST /bids. `notes` isn't in the NewBid schema, so it's kept in
 // the local enrichment layer only (not sent) — same for the display-only
 // vendorName/rating shown in bid comparison lists.
-export async function submitBid({ eventId, vendorId, vendorName, price, notes, rating }) {
+export async function submitBid({ eventId, vendorId, vendorName, price, notes, rating, bidCategories }) {
   try {
     await request("/bids", {
       method: "POST",
-      body: JSON.stringify({ event_id: eventId, vendor_id: vendorId, proposed_price: Number(price), notes }),
+      body: JSON.stringify({ event_id: eventId, vendor_id: vendorId, proposed_price: Number(price), notes, bid_categories: bidCategories }),
     })
   } catch {
     // demo event not tracked server-side, or backend unreachable — still record locally below
@@ -680,6 +694,7 @@ export async function submitBid({ eventId, vendorId, vendorName, price, notes, r
     notes,
     rating,
     status: "pending",
+    bid_categories: bidCategories,
   }
 
   if (!mockBids[eventId]) mockBids[eventId] = []

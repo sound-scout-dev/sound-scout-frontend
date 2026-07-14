@@ -121,18 +121,33 @@ function Profile() {
                     <MapPin size={12} />
                     Working District / Area
                   </label>
-                  <select
-                    value={region}
-                    onChange={(e) => setRegion(e.target.value)}
-                    className="mt-1 block w-full rounded border border-slate/25 px-3 py-2 font-body text-sm text-ink-navy focus:border-signal-amber focus:ring-1 focus:ring-signal-amber focus:outline-none"
-                  >
-                    <option value="">Select your working district...</option>
-                    {["Colombo", "Gampaha", "Kalutara", "Kandy", "Galle", "Matara", "Kurunegala", "Jaffna", "Badulla", "Anuradhapura"].map((dist) => (
-                      <option key={dist} value={dist}>
-                        {dist}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    {["Colombo", "Gampaha", "Kalutara", "Kandy", "Galle", "Matara", "Kurunegala", "Jaffna", "Badulla", "Anuradhapura"].map((dist) => {
+                      const isSelected = region && region.split(', ').includes(dist);
+                      return (
+                        <button
+                          key={dist}
+                          type="button"
+                          onClick={() => {
+                            let currentDistricts = region ? region.split(', ').filter(Boolean) : [];
+                            if (currentDistricts.includes(dist)) {
+                              currentDistricts = currentDistricts.filter(d => d !== dist);
+                            } else {
+                              currentDistricts.push(dist);
+                            }
+                            setRegion(currentDistricts.join(', '));
+                          }}
+                          className={`rounded border p-2.5 text-left text-xs font-medium transition-all duration-200 ${
+                            isSelected
+                              ? "border-signal-amber bg-signal-amber/10 text-ink-navy shadow-sm"
+                              : "border-slate/15 hover:border-slate/30 text-slate hover:bg-slate/5"
+                          }`}
+                        >
+                          {dist}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>

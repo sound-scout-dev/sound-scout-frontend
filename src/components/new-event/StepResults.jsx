@@ -6,6 +6,7 @@ import Button from "../Button"
 function StepResults({ plan, onPlanChange, onEdit, onPublish, publishing = false }) {
   const [isEditing, setIsEditing] = useState(false)
   const [localPlan, setLocalPlan] = useState(plan)
+  const [priceRatio, setPriceRatio] = useState(1)
 
   function formatLKR(n) {
     return "Rs. " + n.toLocaleString("en-LK", { maximumFractionDigits: 0 })
@@ -41,9 +42,11 @@ function StepResults({ plan, onPlanChange, onEdit, onPublish, publishing = false
       })
     })
     
+    const scaledTotal = total * priceRatio;
+    
     updatedPlan.priceRange = {
-      low: Math.round((total * 0.85) / 100) * 100,
-      high: Math.round((total * 1.15) / 100) * 100,
+      low: Math.round((scaledTotal * 0.85) / 100) * 100,
+      high: Math.round((scaledTotal * 1.15) / 100) * 100,
     }
     return updatedPlan
   }
@@ -209,7 +212,39 @@ function StepResults({ plan, onPlanChange, onEdit, onPublish, publishing = false
             variant="outline-dark"
             size="lg"
             className="flex-1"
-            onClick={() => setIsEditing(true)}
+            onClick={() => {
+              // Calculate ratio between AI's generated price and our frontend hardcoded prices
+              // so that edits scale proportionally instead of jumping to a different baseline.
+              let mockTotal = 0;
+              plan.categories.forEach((cat) => {
+                cat.items.forEach((item) => {
+                  const qty = Number(item.qty) || 1
+                  const label = item.label.toLowerCase()
+                  let price = 5000 // default base
+                  if (label.includes("speaker") || label.includes("pa system") || label.includes("array")) {
+                    price = label.includes("line array") ? 25000 : 10000
+                  } else if (label.includes("subwoofer")) {
+                    price = 15000
+                  } else if (label.includes("mixer") || label.includes("console")) {
+                    price = label.includes("digital") ? 20000 : 8000
+                  } else if (label.includes("mic") || label.includes("microphone")) {
+                    price = label.includes("wireless") ? 5000 : 1500
+                  } else if (label.includes("screen") || label.includes("projector") || label.includes("led wall")) {
+                    price = label.includes("led screen") || label.includes("led wall") ? 75000 : 25000
+                  } else if (label.includes("light") || label.includes("par") || label.includes("moving head")) {
+                    price = label.includes("moving head") ? 8000 : 2000
+                  } else if (label.includes("generator") || label.includes("power")) {
+                    price = 45000
+                  } else if (label.includes("stage") || label.includes("deck") || label.includes("truss")) {
+                    price = 30000
+                  }
+                  mockTotal += price * qty
+                })
+              })
+              const currentMidpoint = ((plan.priceRange?.low || mockTotal) + (plan.priceRange?.high || mockTotal)) / 2;
+              setPriceRatio(mockTotal > 0 ? (currentMidpoint / mockTotal) : 1);
+              setIsEditing(true);
+            }}
             disabled={publishing}
           >
             <Pencil size={16} strokeWidth={2} className="inline mr-1" />
