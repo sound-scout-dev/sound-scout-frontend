@@ -32,10 +32,11 @@ function validateBasics(values) {
   } else if (Number(values.crowdSize) <= 0 || !Number.isInteger(Number(values.crowdSize))) {
     errors.crowdSize = "Enter a whole number of guests (no decimals)."
   }
-  if (!values.venueSizeSqm) {
-    errors.venueSizeSqm = "Enter the venue size in square meters."
-  } else if (Number(values.venueSizeSqm) <= 0 || !Number.isInteger(Number(values.venueSizeSqm))) {
-    errors.venueSizeSqm = "Enter a whole venue size (no decimals)."
+  if (values.venueSizeSqm !== "" && values.venueSizeSqm !== null && values.venueSizeSqm !== undefined) {
+    const num = Number(values.venueSizeSqm);
+    if (isNaN(num) || num <= 0 || !Number.isInteger(num)) {
+      errors.venueSizeSqm = "Enter a positive whole venue size (no decimals)."
+    }
   }
   if (!values.budgetMin) {
     errors.budgetMin = "Enter your minimum budget."

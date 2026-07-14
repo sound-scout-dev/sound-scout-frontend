@@ -73,10 +73,10 @@ export async function register({ fullName, email, role, region, password }) {
   return { id: created.user_id, name: created.name, email: created.email, role: created.role, region: created.region }
 }
 
-export async function updateProfile({ name, email, region }) {
+export async function updateProfile({ name, email, region, password }) {
   const updated = await request("/users/profile", {
     method: "PUT",
-    body: JSON.stringify({ name, email, region }),
+    body: JSON.stringify({ name, email, region, password }),
   })
   return { id: updated.user_id, name: updated.name, email: updated.email, role: updated.role, region: updated.region }
 }
@@ -100,18 +100,32 @@ export async function listOrganizerEvents() {
         displayPlan = parsedPlan;
       } else if (parsedPlan && (parsedPlan.budget_plan || parsedPlan.premium_plan)) {
         const selectedRaw = parsedPlan.budget_plan || parsedPlan.premium_plan;
-        const categories = [
-          {
-            name: "Equipment List",
-            items: selectedRaw.map(item => {
+        let categories = [];
+        if (Array.isArray(selectedRaw)) {
+          categories = [
+            {
+              name: "Equipment List",
+              items: selectedRaw.map(item => {
+                const match = item.match(/^(\d+)x\s+(.*)$/);
+                if (match) {
+                  return { label: match[2], qty: parseInt(match[1]) };
+                }
+                return { label: item, qty: 1 };
+              })
+            }
+          ];
+        } else if (typeof selectedRaw === 'object') {
+          categories = Object.entries(selectedRaw).map(([name, items]) => ({
+            name,
+            items: Array.isArray(items) ? items.map(item => {
               const match = item.match(/^(\d+)x\s+(.*)$/);
               if (match) {
                 return { label: match[2], qty: parseInt(match[1]) };
               }
               return { label: item, qty: 1 };
-            })
-          }
-        ];
+            }) : []
+          }));
+        }
         let low = 50000;
         let high = 150000;
         if (e.budget_range) {
@@ -127,34 +141,7 @@ export async function listOrganizerEvents() {
           categories,
           priceRange: { low, high }
         }
-      } else if (parsedPlan && Array.isArray(parsedPlan)) {
-        const categories = [
-          {
-            name: "Equipment List",
-            items: parsedPlan.map(item => {
-              const match = item.match(/^(\d+)x\s+(.*)$/);
-              if (match) {
-                return { label: match[2], qty: parseInt(match[1]) };
-              }
-              return { label: item, qty: 1 };
-            })
-          }
-        ];
-        let low = 50000;
-        let high = 150000;
-        if (e.budget_range) {
-          const parts = e.budget_range.split('-');
-          if (parts.length === 2) {
-            low = Math.max(10000, Number(parts[0]) || 50000);
-            high = Number(parts[1]) || 150000;
-          }
-        }
-        displayPlan = {
-          eventType: e.event_type,
-          meta: `${e.crowd_count.toLocaleString()} guests`,
-          categories,
-          priceRange: { low, high }
-        }
+
       } else {
         displayPlan = buildInfrastructurePlan({
           eventType: e.event_type,
@@ -171,7 +158,7 @@ export async function listOrganizerEvents() {
         eventType: e.event_type,
         crowdSize: e.crowd_count,
         date: e.created_at || new Date().toISOString(),
-        location: e.environment || "Indoor",
+        location: e.location || "Colombo",
         status: e.status || "bidding_open",
         plan: displayPlan,
       }
@@ -395,7 +382,7 @@ export async function publishEvent(eventId) {
 // implemented this yet). ai_infrastructure_plan's shape is unconfirmed, so a
 // display plan is synthesized client-side via buildInfrastructurePlan for
 // rendering and category matching.
-export async function listVendorOpportunities(equipmentCategory) {
+export async function listVendorOpportunities(equipmentCategory, vendorRegion) {
   const neededCategory = EQUIPMENT_TO_PLAN_CATEGORY[equipmentCategory]
 
   let realEvents = []
@@ -414,19 +401,34 @@ export async function listVendorOpportunities(equipmentCategory) {
       let displayPlan;
       if (parsedPlan && parsedPlan.categories) {
         displayPlan = parsedPlan;
-      } else if (parsedPlan && Array.isArray(parsedPlan)) {
-        const categories = [
-          {
-            name: "Equipment List",
-            items: parsedPlan.map(item => {
+      } else if (parsedPlan && (parsedPlan.budget_plan || parsedPlan.premium_plan)) {
+        const selectedRaw = parsedPlan.budget_plan || parsedPlan.premium_plan;
+        let categories = [];
+        if (Array.isArray(selectedRaw)) {
+          categories = [
+            {
+              name: "Equipment List",
+              items: selectedRaw.map(item => {
+                const match = item.match(/^(\d+)x\s+(.*)$/);
+                if (match) {
+                  return { label: match[2], qty: parseInt(match[1]) };
+                }
+                return { label: item, qty: 1 };
+              })
+            }
+          ];
+        } else if (typeof selectedRaw === 'object') {
+          categories = Object.entries(selectedRaw).map(([name, items]) => ({
+            name,
+            items: Array.isArray(items) ? items.map(item => {
               const match = item.match(/^(\d+)x\s+(.*)$/);
               if (match) {
                 return { label: match[2], qty: parseInt(match[1]) };
               }
               return { label: item, qty: 1 };
-            })
-          }
-        ];
+            }) : []
+          }));
+        }
         
         let low = 50000;
         let high = 150000;
@@ -459,9 +461,11 @@ export async function listVendorOpportunities(equipmentCategory) {
         eventType: e.event_type,
         crowdSize: e.crowd_count,
         date: e.created_at || new Date().toISOString(),
-        location: e.environment || "Indoor",
+        location: e.location || "Colombo",
+        district: e.district || "",
         status: "bidding_open",
         plan: displayPlan,
+        existing_bids: e.existing_bids || [],
       }
     })
   } catch (err) {
@@ -477,9 +481,43 @@ export async function listVendorOpportunities(equipmentCategory) {
       if (event.plan) return event;
       return { ...event, plan: buildInfrastructurePlan(event) };
     })
-    .filter(
-      (event) => !neededCategory || event.plan.categories.some((cat) => cat.name === neededCategory)
-    )
+    .filter((event) => {
+      // 0. Filter by region if specified (handles multiple comma-separated districts)
+      if (vendorRegion) {
+        const vendorDistricts = vendorRegion.split(',').map(d => d.trim().toLowerCase()).filter(Boolean);
+        const matchesDistrict = event.district && vendorDistricts.includes(event.district.toLowerCase());
+        const matchesLocation = event.location && vendorDistricts.some(d => event.location.toLowerCase().includes(d));
+        if (!matchesDistrict && !matchesLocation) {
+           return false;
+        }
+      }
+
+      if (!neededCategory) return true;
+      
+      // 1. If categories contain specific category names (e.g. mock events), check that
+      if (event.plan.categories.some((cat) => cat.name === neededCategory)) {
+        return true;
+      }
+      
+      // 2. If it is a flat "Equipment List" (standard for AI database events), scan items for keywords
+      const eqCat = event.plan.categories.find(c => c.name === "Equipment List");
+      if (eqCat) {
+        const text = eqCat.items.map(it => it.label.toLowerCase()).join(" ");
+        if (neededCategory === "Audio") {
+          return text.includes("speaker") || text.includes("mixer") || text.includes("mic") || text.includes("subwoofer") || text.includes("pa system") || text.includes("audio") || text.includes("line array") || text.includes("amplifier") || text.includes("sound") || text.includes("hazer") || text.includes("wireless");
+        }
+        if (neededCategory === "Lighting") {
+          return text.includes("light") || text.includes("led") || text.includes("par") || text.includes("head") || text.includes("hazer") || text.includes("laser") || text.includes("lighting") || text.includes("spot");
+        }
+        if (neededCategory === "Staging") {
+          return text.includes("stage") || text.includes("deck") || text.includes("truss") || text.includes("rigging") || text.includes("ground support");
+        }
+        if (neededCategory === "Power") {
+          return text.includes("generator") || text.includes("kva") || text.includes("power") || text.includes("silent") || text.includes("cabling");
+        }
+      }
+      return false;
+    })
 
   return delay(opportunities)
 }
@@ -524,20 +562,42 @@ export async function addInstantRental(listing) {
 // undocumented and it supports no category filter — integrating against a
 // guessed shape isn't worth it yet, so this stays fully mocked.
 export async function searchInstantRentals({ category, location }) {
+  let dbResults = []
   if (location.trim()) {
     try {
       const dbVendors = await request(`/inventory/instant/${encodeURIComponent(location.trim())}`)
       if (Array.isArray(dbVendors) && dbVendors.length > 0) {
-        return dbVendors.map((vendor) => ({
-          id: `db-vendor-${vendor.vendor_id}`,
-          vendorName: vendor.shop_name || "Unknown Shop",
-          category: category || "Audio",
-          equipmentSummary: "Full inventory rental pack & instant gear setup",
-          location: vendor.region,
-          distanceKm: 2.5,
-          pricePerDay: 180,
-          availability: "now",
-          rating: 4.8,
+        dbResults = await Promise.all(dbVendors.map(async (vendor) => {
+          let distance = 2.5;
+          try {
+            const aiRes = await fetch("http://localhost:8000/api/distance", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ venue: location, vendor_region: vendor.region })
+            });
+            if (aiRes.ok) {
+              const aiData = await aiRes.json();
+              distance = aiData.distance_km;
+            }
+          } catch (e) {
+             console.error("AI Distance Fetch failed, using fallback:", e);
+          }
+          
+          const bookedMockIds = JSON.parse(localStorage.getItem("soundscout.booked_mock_ids") || "[]")
+          const isBooked = bookedMockIds.includes(`db-vendor-${vendor.vendor_id}`)
+
+          return {
+            id: `db-vendor-${vendor.vendor_id}`,
+            vendorName: vendor.shop_name || "Unknown Shop",
+            category: category || "Audio",
+            equipmentSummary: "Full inventory rental pack & instant gear setup",
+            location: vendor.region,
+            distanceKm: distance,
+            pricePerDay: 180,
+            availability: isBooked ? "booked" : "now",
+            status: isBooked ? "booked" : "now",
+            rating: 4.8,
+          }
         }))
       }
     } catch (e) {
@@ -547,30 +607,81 @@ export async function searchInstantRentals({ category, location }) {
 
   let results = [...getLocalRentals(), ...instantRentalListings]
 
+  // Resolve distance dynamically using AI distance model if location query is present
+  if (location.trim()) {
+    results = await Promise.all(results.map(async (listing) => {
+      let distance = listing.distanceKm;
+      try {
+        const aiRes = await fetch("http://localhost:8000/api/distance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ venue: location, vendor_region: listing.location })
+        });
+        if (aiRes.ok) {
+          const aiData = await aiRes.json();
+          distance = aiData.distance_km;
+        }
+      } catch (e) {
+        // keep original mock distance
+      }
+      
+      const bookedMockIds = JSON.parse(localStorage.getItem("soundscout.booked_mock_ids") || "[]")
+      const isBooked = bookedMockIds.includes(listing.id) || listing.status === "booked"
+
+      return { 
+        ...listing, 
+        distanceKm: distance,
+        status: isBooked ? "booked" : listing.status,
+        availability: isBooked ? "booked" : listing.availability
+      }
+    }))
+  } else {
+    // Check booked status from localStorage
+    results = results.map(listing => {
+      const bookedMockIds = JSON.parse(localStorage.getItem("soundscout.booked_mock_ids") || "[]")
+      const isBooked = bookedMockIds.includes(listing.id) || listing.status === "booked"
+      return {
+        ...listing,
+        status: isBooked ? "booked" : listing.status,
+        availability: isBooked ? "booked" : listing.availability
+      }
+    })
+  }
+
   if (category) {
     results = results.filter((listing) => listing.category === category)
   }
-  if (location.trim()) {
-    const query = location.trim().toLowerCase()
-    results = results.filter((listing) => listing.location.toLowerCase().includes(query))
+  
+  if (dbResults.length > 0) {
+    return [...dbResults, ...results]
   }
 
   return delay(results, 350)
 }
 
-// No booking endpoint exists on the backend at all — stays fully mocked.
+// No booking endpoint exists on the backend at all — stays fully mocked in localStorage.
 export async function bookInstantRental(listingId) {
+  const current = getLocalRentals()
+  const idx = current.findIndex(r => r.id === listingId)
+  if (idx !== -1) {
+    current[idx].status = "booked"
+    localStorage.setItem(LOCAL_RENTAL_KEY, JSON.stringify(current))
+  } else {
+    const bookedMockIds = JSON.parse(localStorage.getItem("soundscout.booked_mock_ids") || "[]")
+    bookedMockIds.push(listingId)
+    localStorage.setItem("soundscout.booked_mock_ids", JSON.stringify(bookedMockIds))
+  }
   return delay({ listingId, status: "booked" }, 500)
 }
 
 // Real call: POST /bids. `notes` isn't in the NewBid schema, so it's kept in
 // the local enrichment layer only (not sent) — same for the display-only
 // vendorName/rating shown in bid comparison lists.
-export async function submitBid({ eventId, vendorId, vendorName, price, notes, rating }) {
+export async function submitBid({ eventId, vendorId, vendorName, price, notes, rating, bidCategories }) {
   try {
     await request("/bids", {
       method: "POST",
-      body: JSON.stringify({ event_id: eventId, vendor_id: vendorId, proposed_price: Number(price), notes }),
+      body: JSON.stringify({ event_id: eventId, vendor_id: vendorId, proposed_price: Number(price), notes, bid_categories: bidCategories }),
     })
   } catch {
     // demo event not tracked server-side, or backend unreachable — still record locally below
@@ -583,6 +694,7 @@ export async function submitBid({ eventId, vendorId, vendorName, price, notes, r
     notes,
     rating,
     status: "pending",
+    bid_categories: bidCategories,
   }
 
   if (!mockBids[eventId]) mockBids[eventId] = []

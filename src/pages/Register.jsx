@@ -129,21 +129,41 @@ function Register() {
 
         {values.role === "vendor" && (
           <>
-            <FormField
-              as="select"
-              label="Working District / Area"
-              name="region"
-              value={values.region}
-              onChange={setField("region")}
-              error={errors.region}
-            >
-              <option value="">Select your working district...</option>
-              {["Colombo", "Gampaha", "Kalutara", "Kandy", "Galle", "Matara", "Kurunegala", "Jaffna", "Badulla", "Anuradhapura"].map((dist) => (
-                <option key={dist} value={dist}>
-                  {dist}
-                </option>
-              ))}
-            </FormField>
+            <div>
+              <label className="mb-1.5 block font-mono text-[11px] font-medium uppercase tracking-widest text-slate">
+                Working Districts / Areas (Select all that apply)
+              </label>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {["Colombo", "Gampaha", "Kalutara", "Kandy", "Galle", "Matara", "Kurunegala", "Jaffna", "Badulla", "Anuradhapura"].map((dist) => {
+                  const isSelected = values.region && values.region.split(', ').includes(dist);
+                  return (
+                    <button
+                      key={dist}
+                      type="button"
+                      onClick={() => {
+                        let currentDistricts = values.region ? values.region.split(', ').filter(Boolean) : [];
+                        if (currentDistricts.includes(dist)) {
+                          currentDistricts = currentDistricts.filter(d => d !== dist);
+                        } else {
+                          currentDistricts.push(dist);
+                        }
+                        setValues(v => ({ ...v, region: currentDistricts.join(', ') }));
+                      }}
+                      className={`rounded border p-2.5 text-left text-xs font-medium transition-all duration-200 ${
+                        isSelected
+                          ? "border-signal-amber bg-signal-amber/10 text-ink-navy shadow-sm"
+                          : "border-slate/15 hover:border-slate/30 text-slate hover:bg-slate/5"
+                      }`}
+                    >
+                      {dist}
+                    </button>
+                  );
+                })}
+              </div>
+              {errors.region && (
+                <p className="mt-1 font-mono text-[10px] text-alert-red">{errors.region}</p>
+              )}
+            </div>
 
             <FormField
               as="select"
