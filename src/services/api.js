@@ -57,6 +57,7 @@ export async function login({ email, password }) {
     email: session.user.email,
     role: session.user.role,
     region: session.user.region,
+    token: session.accessToken,
   }
 }
 
@@ -70,7 +71,14 @@ export async function register({ fullName, email, role, region, password }) {
     body: JSON.stringify(payload),
   })
 
-  return { id: created.user_id, name: created.name, email: created.email, role: created.role, region: created.region }
+  return { 
+    id: created.user.user_id, 
+    name: created.user.name, 
+    email: created.user.email, 
+    role: created.user.role, 
+    region: created.user.region,
+    token: created.accessToken
+  }
 }
 
 export async function updateProfile({ name, email, region, password }) {
@@ -84,89 +92,91 @@ export async function updateProfile({ name, email, region, password }) {
 // No "list my events" endpoint exists — combine the seeded demo events with
 // anything published for real this session/browser via createEvent() below.
 export async function listOrganizerEvents() {
-  try {
-    const backendEvents = await request("/events")
-    return (backendEvents ?? []).map((e) => {
-      let parsedPlan = null
-      if (e.ai_infrastructure_plan) {
-        parsedPlan = typeof e.ai_infrastructure_plan === 'string'
-          ? JSON.parse(e.ai_infrastructure_plan)
-          : e.ai_infrastructure_plan
-      }
-
-      // Reconstruct display categories based on the plan shape (single selected vs draft options)
-      let displayPlan;
-      if (parsedPlan && parsedPlan.categories) {
-        displayPlan = parsedPlan;
-      } else if (parsedPlan && (parsedPlan.budget_plan || parsedPlan.premium_plan)) {
-        const selectedRaw = parsedPlan.budget_plan || parsedPlan.premium_plan;
-        let categories = [];
-        if (Array.isArray(selectedRaw)) {
-          categories = [
-            {
-              name: "Equipment List",
-              items: selectedRaw.map(item => {
-                const match = item.match(/^(\d+)x\s+(.*)$/);
-                if (match) {
-                  return { label: match[2], qty: parseInt(match[1]) };
-                }
-                return { label: item, qty: 1 };
-              })
-            }
-          ];
-        } else if (typeof selectedRaw === 'object') {
-          categories = Object.entries(selectedRaw).map(([name, items]) => ({
-            name,
-            items: Array.isArray(items) ? items.map(item => {
-              const match = item.match(/^(\d+)x\s+(.*)$/);
-              if (match) {
-                return { label: match[2], qty: parseInt(match[1]) };
-              }
-              return { label: item, qty: 1 };
-            }) : []
-          }));
-        }
-        let low = 50000;
-        let high = 150000;
-        if (e.budget_range) {
-          const parts = e.budget_range.split('-');
-          if (parts.length === 2) {
-            low = Math.max(10000, Number(parts[0]) || 50000);
-            high = Number(parts[1]) || 150000;
+      let mappedBackendEvents = []
+      try {
+        const backendEvents = await request("/events")
+        mappedBackendEvents = (backendEvents ?? []).map((e) => {
+          let parsedPlan = null
+          if (e.ai_infrastructure_plan) {
+            parsedPlan = typeof e.ai_infrastructure_plan === 'string'
+              ? JSON.parse(e.ai_infrastructure_plan)
+              : e.ai_infrastructure_plan
           }
-        }
-        displayPlan = {
-          eventType: e.event_type,
-          meta: `${e.crowd_count.toLocaleString()} guests`,
-          categories,
-          priceRange: { low, high }
-        }
 
-      } else {
-        displayPlan = buildInfrastructurePlan({
-          eventType: e.event_type,
-          crowdSize: e.crowd_count,
-          venueSizeSqm: e.venue_size_sqm,
-          budgetMin: e.budget_range ? e.budget_range.split('-')[0] : 50000,
-          budgetMax: e.budget_range ? e.budget_range.split('-')[1] : 150000,
-        });
-      }
+          // Reconstruct display categories based on the plan shape (single selected vs draft options)
+          let displayPlan;
+          if (parsedPlan && parsedPlan.categories) {
+            displayPlan = parsedPlan;
+          } else if (parsedPlan && (parsedPlan.budget_plan || parsedPlan.premium_plan)) {
+            const selectedRaw = parsedPlan.budget_plan || parsedPlan.premium_plan;
+            let categories = [];
+            if (Array.isArray(selectedRaw)) {
+              categories = [
+                {
+                  name: "Equipment List",
+                  items: selectedRaw.map(item => {
+                    const match = item.match(/^(\d+)x\s+(.*)$/);
+                    if (match) {
+                      return { label: match[2], qty: parseInt(match[1]) };
+                    }
+                    return { label: item, qty: 1 };
+                  })
+                }
+              ];
+            } else if (typeof selectedRaw === 'object') {
+              categories = Object.entries(selectedRaw).map(([name, items]) => ({
+                name,
+                items: Array.isArray(items) ? items.map(item => {
+                  const match = item.match(/^(\d+)x\s+(.*)$/);
+                  if (match) {
+                    return { label: match[2], qty: parseInt(match[1]) };
+                  }
+                  return { label: item, qty: 1 };
+                }) : []
+              }));
+            }
+            let low = 50000;
+            let high = 150000;
+            if (e.budget_range) {
+              const parts = e.budget_range.split('-');
+              if (parts.length === 2) {
+                low = Math.max(10000, Number(parts[0]) || 50000);
+                high = Number(parts[1]) || 150000;
+              }
+            }
+            displayPlan = {
+              eventType: e.event_type,
+              meta: `${e.crowd_count.toLocaleString()} guests`,
+              categories,
+              priceRange: { low, high }
+            }
 
-      return {
-        id: e.event_id,
-        name: e.event_type, // Use event type as fallback event name
-        eventType: e.event_type,
-        crowdSize: e.crowd_count,
-        date: e.created_at || new Date().toISOString(),
-        location: e.location || "Colombo",
-        status: e.status || "bidding_open",
-        plan: displayPlan,
+          } else {
+            displayPlan = buildInfrastructurePlan({
+              eventType: e.event_type,
+              crowdSize: e.crowd_count,
+              venueSizeSqm: e.venue_size_sqm,
+              budgetMin: e.budget_range ? e.budget_range.split('-')[0] : 50000,
+              budgetMax: e.budget_range ? e.budget_range.split('-')[1] : 150000,
+            });
+          }
+
+          return {
+            id: e.event_id,
+            name: e.event_type, // Use event type as fallback event name
+            eventType: e.event_type,
+            crowdSize: e.crowd_count,
+            date: e.created_at || new Date().toISOString(),
+            location: e.location || "Colombo",
+            status: e.status || "bidding_open",
+            plan: displayPlan,
+          }
+        })
+      } catch (err) {
+        console.error("Failed to list organizer events:", err)
       }
-    })
-  } catch (err) {
-    // If backend is unreachable, fallback to local/mock data to prevent crashing
-    return [...mockEvents, ...getLocallyPublishedEvents()]
-  }
+      
+      return mappedBackendEvents
 }
 
 // Synchronous plan assembly. The New Event wizard renders this straight into
@@ -252,7 +262,7 @@ export async function getEventById(id) {
         crowdSize: backendEvent.crowd_count,
         venueSizeSqm: backendEvent.venue_size_sqm,
         budget: backendEvent.budget_range,
-        location: backendEvent.environment || "Indoor",
+        location: backendEvent.location || backendEvent.environment || "Indoor",
         status: backendEvent.status,
         date: backendEvent.created_at || new Date().toISOString(), // Fallback date
       }
@@ -272,18 +282,35 @@ export async function getEventById(id) {
         displayPlan = plan;
       } else if (plan && (plan.budget_plan || plan.premium_plan)) {
         const selectedRaw = plan.budget_plan || plan.premium_plan;
-        const categories = [
-          {
-            name: "Equipment List",
-            items: selectedRaw.map(item => {
-              const match = item.match(/^(\d+)x\s+(.*)$/);
-              if (match) {
-                return { label: match[2], qty: parseInt(match[1]) };
-              }
-              return { label: item, qty: 1 };
-            })
-          }
-        ];
+        
+        let categories = [];
+        if (typeof selectedRaw === 'object' && !Array.isArray(selectedRaw)) {
+          categories = Object.entries(selectedRaw).map(([name, items]) => {
+            return {
+              name,
+              items: Array.isArray(items) ? items.map(item => {
+                const match = item.match(/^(\d+)x\s+(.*)$/);
+                if (match) {
+                  return { label: match[2], qty: parseInt(match[1]) };
+                }
+                return { label: item, qty: 1 };
+              }) : []
+            };
+          });
+        } else if (Array.isArray(selectedRaw)) {
+          categories = [
+            {
+              name: "Equipment List",
+              items: selectedRaw.map(item => {
+                const match = item.match(/^(\d+)x\s+(.*)$/);
+                if (match) {
+                  return { label: match[2], qty: parseInt(match[1]) };
+                }
+                return { label: item, qty: 1 };
+              })
+            }
+          ];
+        }
         let low = 50000;
         let high = 150000;
         if (event.budget) {
@@ -334,13 +361,9 @@ export async function getEventById(id) {
       return { ...event, plan: displayPlan }
     }
   } catch (err) {
-    // Fall back to local mock data below
+    console.error("Failed to get event by id:", err)
+    return null
   }
-
-  const event =
-    mockEvents.find((e) => e.id === id) ?? getLocallyPublishedEvents().find((e) => e.id === id)
-  if (!event) return delay(null)
-  return delay({ ...event, plan: buildInfrastructurePlan(event) })
 }
 
 // Real call: GET /bids/event/{eventId}, with a fallback to local demo bids —
@@ -349,9 +372,20 @@ export async function getEventById(id) {
 export async function listBidsForEvent(eventId) {
   try {
     const bids = await request(`/bids/event/${eventId}`)
-    if (Array.isArray(bids)) return bids
-  } catch {
-    // not a real backend event id, or backend unreachable — fall through to local data
+    if (Array.isArray(bids)) {
+      return bids.map((b) => ({
+        id: b.bid_id,
+        eventId: b.event_id,
+        vendorName: b.vendor_name,
+        price: Number(b.proposed_price),
+        notes: b.notes || "",
+        status: b.status,
+        rating: b.rating || 5.0,
+        bid_categories: b.bid_categories || [],
+      }))
+    }
+  } catch (err) {
+    console.error("Failed to fetch bids:", err)
   }
   return delay(mockBids[eventId] ?? [])
 }
@@ -522,16 +556,24 @@ export async function listVendorOpportunities(equipmentCategory, vendorRegion) {
   return delay(opportunities)
 }
 
-// No backend endpoint for a vendor's own bid history — stays fully mocked.
-export async function listVendorBids(vendorName) {
-  const bids = Object.entries(mockBids).flatMap(([eventId, eventBids]) => {
-    const event = mockEvents.find((e) => e.id === eventId)
-    return eventBids
-      .filter((bid) => bid.vendorName === vendorName)
-      .map((bid) => ({ ...bid, eventId, eventName: event?.name ?? "Unknown event" }))
-  })
-
-  return delay(bids)
+export async function listVendorBids() {
+  try {
+    const bids = await request("/bids/vendor")
+    if (Array.isArray(bids)) {
+      return bids.map((b) => ({
+        id: b.bid_id,
+        eventId: b.event_id,
+        eventName: b.event_type ? `${b.event_type} at ${b.location}` : "Event",
+        price: Number(b.proposed_price),
+        status: b.status,
+        notes: b.notes || "",
+        bid_categories: b.bid_categories || [],
+      }))
+    }
+  } catch (err) {
+    console.error("Failed to fetch vendor bids:", err)
+  }
+  return []
 }
 
 const LOCAL_RENTAL_KEY = "soundscout.local_rentals"
@@ -550,9 +592,11 @@ export async function addInstantRental(listing) {
   const newListing = {
     id: `local-rental-${Date.now()}`,
     ...listing,
+    qty: Number(listing.qty) || 1,
     distanceKm: 1.5,
     availability: "now",
     rating: 5.0,
+    status: "now"
   }
   localStorage.setItem(LOCAL_RENTAL_KEY, JSON.stringify([...current, newListing]))
   return delay(newListing, 300)
@@ -583,8 +627,11 @@ export async function searchInstantRentals({ category, location }) {
              console.error("AI Distance Fetch failed, using fallback:", e);
           }
           
-          const bookedMockIds = JSON.parse(localStorage.getItem("soundscout.booked_mock_ids") || "[]")
-          const isBooked = bookedMockIds.includes(`db-vendor-${vendor.vendor_id}`)
+          const bookedQtys = JSON.parse(localStorage.getItem("soundscout.booked_mock_qtys") || "{}")
+          const bookedQty = bookedQtys[`db-vendor-${vendor.vendor_id}`] || 0
+          const initialQty = 3 // Mock initial qty for backend vendors
+          const remainingQty = Math.max(0, initialQty - bookedQty)
+          const isBooked = remainingQty <= 0
 
           return {
             id: `db-vendor-${vendor.vendor_id}`,
@@ -594,6 +641,7 @@ export async function searchInstantRentals({ category, location }) {
             location: vendor.region,
             distanceKm: distance,
             pricePerDay: 180,
+            qty: remainingQty,
             availability: isBooked ? "booked" : "now",
             status: isBooked ? "booked" : "now",
             rating: 4.8,
@@ -625,21 +673,28 @@ export async function searchInstantRentals({ category, location }) {
         // keep original mock distance
       }
       
-      const bookedMockIds = JSON.parse(localStorage.getItem("soundscout.booked_mock_ids") || "[]")
-      const isBooked = bookedMockIds.includes(listing.id) || listing.status === "booked"
-
+      const bookedQtys = JSON.parse(localStorage.getItem("soundscout.booked_mock_qtys") || "{}")
+      const bookedQty = bookedQtys[listing.id] || 0
+      const currentQty = Number(listing.qty) || 1
+      const remainingQty = Math.max(0, currentQty - bookedQty)
+      const isBooked = remainingQty <= 0 || listing.status === "booked"
+      
       return { 
         ...listing, 
         distanceKm: distance,
-        status: isBooked ? "booked" : listing.status,
-        availability: isBooked ? "booked" : listing.availability
+        qty: remainingQty,
+        availability: isBooked ? "booked" : "now",
+        status: isBooked ? "booked" : listing.status
       }
     }))
   } else {
     // Check booked status from localStorage
     results = results.map(listing => {
-      const bookedMockIds = JSON.parse(localStorage.getItem("soundscout.booked_mock_ids") || "[]")
-      const isBooked = bookedMockIds.includes(listing.id) || listing.status === "booked"
+      const bookedQtys = JSON.parse(localStorage.getItem("soundscout.booked_mock_qtys") || "{}")
+      const bookedQty = bookedQtys[listing.id] || 0
+      const currentQty = Number(listing.qty) || 1
+      const remainingQty = Math.max(0, currentQty - bookedQty)
+      const isBooked = remainingQty <= 0 || listing.status === "booked"
       return {
         ...listing,
         status: isBooked ? "booked" : listing.status,
@@ -660,16 +715,25 @@ export async function searchInstantRentals({ category, location }) {
 }
 
 // No booking endpoint exists on the backend at all — stays fully mocked in localStorage.
-export async function bookInstantRental(listingId) {
+export async function bookInstantRental(listingId, qtyToBook = 1) {
   const current = getLocalRentals()
   const idx = current.findIndex(r => r.id === listingId)
   if (idx !== -1) {
-    current[idx].status = "booked"
+    const listing = current[idx]
+    const currentQty = Number(listing.qty) || 1
+    if (currentQty > qtyToBook) {
+      listing.qty = currentQty - qtyToBook
+    } else {
+      listing.qty = 0
+      listing.status = "booked"
+      listing.availability = "booked"
+    }
     localStorage.setItem(LOCAL_RENTAL_KEY, JSON.stringify(current))
   } else {
-    const bookedMockIds = JSON.parse(localStorage.getItem("soundscout.booked_mock_ids") || "[]")
-    bookedMockIds.push(listingId)
-    localStorage.setItem("soundscout.booked_mock_ids", JSON.stringify(bookedMockIds))
+    // For backend listings, we mock partial tracking by maintaining a booked count
+    const bookedMockQtys = JSON.parse(localStorage.getItem("soundscout.booked_mock_qtys") || "{}")
+    bookedMockQtys[listingId] = (bookedMockQtys[listingId] || 0) + qtyToBook
+    localStorage.setItem("soundscout.booked_mock_qtys", JSON.stringify(bookedMockQtys))
   }
   return delay({ listingId, status: "booked" }, 500)
 }

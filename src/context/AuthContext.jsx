@@ -20,7 +20,16 @@ export function AuthProvider({ children }) {
     setUser(nextUser)
   }
 
-  function logout() {
+  async function logout() {
+    try {
+      const apiBase = import.meta.env.VITE_API_BASE_URL || "/api"
+      await fetch(apiBase + "/users/logout", {
+        method: "POST",
+        credentials: "include"
+      })
+    } catch (e) {
+      // Ignore
+    }
     localStorage.removeItem(STORAGE_KEY)
     setUser(null)
   }

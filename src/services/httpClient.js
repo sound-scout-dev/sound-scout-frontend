@@ -13,8 +13,17 @@ export class ApiError extends Error {
 }
 
 export async function request(path, options = {}) {
+  const headers = { "Content-Type": "application/json", ...options.headers }
+  
+  try {
+    const session = JSON.parse(localStorage.getItem("soundscout.session") || "{}")
+    if (session?.token) {
+      headers["Authorization"] = `Bearer ${session.token}`
+    }
+  } catch (_) {}
+
   const response = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json", ...options.headers },
+    headers,
     credentials: "include",
     ...options,
   })

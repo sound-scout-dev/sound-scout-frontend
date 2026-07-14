@@ -43,6 +43,11 @@ function RentalListingCard({ listing, booked, onBook }) {
           <Star size={13} className="fill-signal-amber text-signal-amber" />
           {listing.rating.toFixed(1)} / 5
         </span>
+        {listing.qty !== undefined && (
+          <span className="text-circuit-teal font-semibold font-mono">
+            {listing.qty} left
+          </span>
+        )}
       </div>
 
       <div className="mt-5 flex items-center justify-between">
@@ -51,7 +56,7 @@ function RentalListingCard({ listing, booked, onBook }) {
           <span className="text-sm font-normal text-slate">/day</span>
         </span>
 
-        {booked ? (
+        {booked || listing.status === "booked" || listing.availability === "booked" || (listing.qty !== undefined && Number(listing.qty) <= 0) ? (
           <span className="flex items-center gap-1.5 font-mono text-xs font-medium uppercase tracking-wide text-circuit-teal">
             <CheckCircle2 size={15} strokeWidth={2} />
             Booked

@@ -83,6 +83,7 @@ export const instantRentalListings = [
     distanceKm: 3.2,
     pricePerDay: 220,
     availability: "now",
+    qty: 3,
     rating: 4.7,
   },
   {
@@ -94,6 +95,7 @@ export const instantRentalListings = [
     distanceKm: 5.8,
     pricePerDay: 150,
     availability: "now",
+    qty: 2,
     rating: 4.5,
   },
   {
@@ -105,6 +107,7 @@ export const instantRentalListings = [
     distanceKm: 12.4,
     pricePerDay: 310,
     availability: "2h",
+    qty: 1,
     rating: 4.8,
   },
   {
@@ -116,6 +119,7 @@ export const instantRentalListings = [
     distanceKm: 4.1,
     pricePerDay: 180,
     availability: "now",
+    qty: 4,
     rating: 4.9,
   },
   {
@@ -127,6 +131,7 @@ export const instantRentalListings = [
     distanceKm: 7.0,
     pricePerDay: 260,
     availability: "4h",
+    qty: 3,
     rating: 4.6,
   },
   {
@@ -138,7 +143,8 @@ export const instantRentalListings = [
     distanceKm: 15.2,
     pricePerDay: 200,
     availability: "now",
-    rating: 4.4,
+    qty: 2,
+    rating: 4.8,
   },
   {
     id: "rental-7",
