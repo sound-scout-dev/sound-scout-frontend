@@ -13,6 +13,38 @@ const PROGRESS_LOGS = [
   "Assembling final design plan..."
 ]
 
+function getHeuristicPrice(categories) {
+  let total = 0
+  categories.forEach((cat) => {
+    cat.items.forEach((item) => {
+      const qty = Number(item.qty) || 1
+      const label = item.label.toLowerCase()
+      let price = 5000 // default base
+      
+      if (label.includes("speaker") || label.includes("pa system") || label.includes("array")) {
+        price = label.includes("line array") ? 25000 : 10000
+      } else if (label.includes("subwoofer")) {
+        price = 15000
+      } else if (label.includes("mixer") || label.includes("console")) {
+        price = label.includes("digital") ? 20000 : 8000
+      } else if (label.includes("mic") || label.includes("microphone")) {
+        price = label.includes("wireless") ? 5000 : 1500
+      } else if (label.includes("screen") || label.includes("projector") || label.includes("led wall")) {
+        price = label.includes("led screen") || label.includes("led wall") ? 75000 : 25000
+      } else if (label.includes("light") || label.includes("par") || label.includes("moving head")) {
+        price = label.includes("moving head") ? 8000 : 2000
+      } else if (label.includes("generator") || label.includes("power")) {
+        price = 45000
+      } else if (label.includes("stage") || label.includes("deck") || label.includes("truss")) {
+        price = 30000
+      }
+      
+      total += price * qty
+    })
+  })
+  return total
+}
+
 function parseRawPlan(rawPlanArray, formValues, mlCost = 50000, isPremium = false) {
   if (!rawPlanArray || !Array.isArray(rawPlanArray)) return buildInfrastructurePlan(formValues);
 
@@ -29,13 +61,13 @@ function parseRawPlan(rawPlanArray, formValues, mlCost = 50000, isPremium = fals
     }
   ];
 
-  // Calculate actual estimated market range based on Random Forest ML cost prediction
+  const heuristicTotal = getHeuristicPrice(categories);
   const low = isPremium 
-    ? Math.round(mlCost * 1.2) 
-    : Math.max(10000, Math.round(mlCost * 0.8));
+    ? Math.round((heuristicTotal * 1.25) / 100) * 100
+    : Math.round((heuristicTotal * 0.85) / 100) * 100;
   const high = isPremium 
-    ? Math.round(mlCost * 1.6) 
-    : Math.max(12000, Math.round(mlCost * 1.2));
+    ? Math.round((heuristicTotal * 1.6) / 100) * 100
+    : Math.round((heuristicTotal * 1.15) / 100) * 100;
 
   return {
     eventType: formValues.eventType,
@@ -126,9 +158,16 @@ function StepGenerating({ formValues, onComplete }) {
           setError("AI generation failed. Proceeding with offline design...")
           // Fallback to offline mock plan
           const offlinePlan = buildInfrastructurePlan(formValues)
+          const offlinePremium = {
+            ...offlinePlan,
+            priceRange: {
+              low: Math.round(offlinePlan.priceRange.low * 1.4),
+              high: Math.round(offlinePlan.priceRange.high * 1.5)
+            }
+          }
           setRealId(`evt-fallback-${Date.now()}`)
           setBudgetPlan(offlinePlan)
-          setPremiumPlan(offlinePlan)
+          setPremiumPlan(offlinePremium)
           setLoading(false)
         }
       }
