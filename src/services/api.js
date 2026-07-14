@@ -548,20 +548,42 @@ export async function addInstantRental(listing) {
 // undocumented and it supports no category filter — integrating against a
 // guessed shape isn't worth it yet, so this stays fully mocked.
 export async function searchInstantRentals({ category, location }) {
+  let dbResults = []
   if (location.trim()) {
     try {
       const dbVendors = await request(`/inventory/instant/${encodeURIComponent(location.trim())}`)
       if (Array.isArray(dbVendors) && dbVendors.length > 0) {
-        return dbVendors.map((vendor) => ({
-          id: `db-vendor-${vendor.vendor_id}`,
-          vendorName: vendor.shop_name || "Unknown Shop",
-          category: category || "Audio",
-          equipmentSummary: "Full inventory rental pack & instant gear setup",
-          location: vendor.region,
-          distanceKm: 2.5,
-          pricePerDay: 180,
-          availability: "now",
-          rating: 4.8,
+        dbResults = await Promise.all(dbVendors.map(async (vendor) => {
+          let distance = 2.5;
+          try {
+            const aiRes = await fetch("http://localhost:8000/api/distance", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ venue: location, vendor_region: vendor.region })
+            });
+            if (aiRes.ok) {
+              const aiData = await aiRes.json();
+              distance = aiData.distance_km;
+            }
+          } catch (e) {
+             console.error("AI Distance Fetch failed, using fallback:", e);
+          }
+          
+          const bookedMockIds = JSON.parse(localStorage.getItem("soundscout.booked_mock_ids") || "[]")
+          const isBooked = bookedMockIds.includes(`db-vendor-${vendor.vendor_id}`)
+
+          return {
+            id: `db-vendor-${vendor.vendor_id}`,
+            vendorName: vendor.shop_name || "Unknown Shop",
+            category: category || "Audio",
+            equipmentSummary: "Full inventory rental pack & instant gear setup",
+            location: vendor.region,
+            distanceKm: distance,
+            pricePerDay: 180,
+            availability: isBooked ? "booked" : "now",
+            status: isBooked ? "booked" : "now",
+            rating: 4.8,
+          }
         }))
       }
     } catch (e) {
@@ -571,19 +593,70 @@ export async function searchInstantRentals({ category, location }) {
 
   let results = [...getLocalRentals(), ...instantRentalListings]
 
+  // Resolve distance dynamically using AI distance model if location query is present
+  if (location.trim()) {
+    results = await Promise.all(results.map(async (listing) => {
+      let distance = listing.distanceKm;
+      try {
+        const aiRes = await fetch("http://localhost:8000/api/distance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ venue: location, vendor_region: listing.location })
+        });
+        if (aiRes.ok) {
+          const aiData = await aiRes.json();
+          distance = aiData.distance_km;
+        }
+      } catch (e) {
+        // keep original mock distance
+      }
+      
+      const bookedMockIds = JSON.parse(localStorage.getItem("soundscout.booked_mock_ids") || "[]")
+      const isBooked = bookedMockIds.includes(listing.id) || listing.status === "booked"
+
+      return { 
+        ...listing, 
+        distanceKm: distance,
+        status: isBooked ? "booked" : listing.status,
+        availability: isBooked ? "booked" : listing.availability
+      }
+    }))
+  } else {
+    // Check booked status from localStorage
+    results = results.map(listing => {
+      const bookedMockIds = JSON.parse(localStorage.getItem("soundscout.booked_mock_ids") || "[]")
+      const isBooked = bookedMockIds.includes(listing.id) || listing.status === "booked"
+      return {
+        ...listing,
+        status: isBooked ? "booked" : listing.status,
+        availability: isBooked ? "booked" : listing.availability
+      }
+    })
+  }
+
   if (category) {
     results = results.filter((listing) => listing.category === category)
   }
-  if (location.trim()) {
-    const query = location.trim().toLowerCase()
-    results = results.filter((listing) => listing.location.toLowerCase().includes(query))
+  
+  if (dbResults.length > 0) {
+    return [...dbResults, ...results]
   }
 
   return delay(results, 350)
 }
 
-// No booking endpoint exists on the backend at all — stays fully mocked.
+// No booking endpoint exists on the backend at all — stays fully mocked in localStorage.
 export async function bookInstantRental(listingId) {
+  const current = getLocalRentals()
+  const idx = current.findIndex(r => r.id === listingId)
+  if (idx !== -1) {
+    current[idx].status = "booked"
+    localStorage.setItem(LOCAL_RENTAL_KEY, JSON.stringify(current))
+  } else {
+    const bookedMockIds = JSON.parse(localStorage.getItem("soundscout.booked_mock_ids") || "[]")
+    bookedMockIds.push(listingId)
+    localStorage.setItem("soundscout.booked_mock_ids", JSON.stringify(bookedMockIds))
+  }
   return delay({ listingId, status: "booked" }, 500)
 }
 

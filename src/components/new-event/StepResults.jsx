@@ -100,6 +100,31 @@ function StepResults({ plan, onPlanChange, onEdit, onPublish, publishing = false
           : "Review the spec below, then publish it for vendors to bid on — or go back and adjust the details."}
       </p>
 
+      {plan.feasibilityWarning && (
+        <div className="mt-6 w-full max-w-lg rounded-lg border border-signal-amber/30 bg-signal-amber/5 p-5 shadow-sm text-left">
+          <h3 className="font-display font-semibold text-ink-navy text-sm flex items-center gap-2">
+            ⚠️ Budget Feasibility Details
+          </h3>
+          <p className="mt-2 font-body text-xs text-slate">
+            {plan.feasibilityWarning}
+          </p>
+          {plan.priceCuttingTips && plan.priceCuttingTips.length > 0 && (
+            <div className="mt-4 pt-3 border-t border-slate/10">
+              <h4 className="font-mono text-[10px] uppercase tracking-widest text-slate font-semibold">
+                AI Suggested Adjustments for Performance / Cost:
+              </h4>
+              <ul className="mt-2 list-disc list-inside space-y-1">
+                {plan.priceCuttingTips.map((tip, idx) => (
+                  <li key={idx} className="font-body text-xs text-slate/85">
+                    {tip}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="mt-8 w-full max-w-lg">
         {isEditing ? (
           <div className="rounded-md border border-slate/15 bg-white p-6 shadow-sm space-y-6">

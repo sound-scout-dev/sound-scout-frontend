@@ -123,7 +123,7 @@ function SpecCard({ plan, loop = false, startRevealed = false, onDone, className
                       {cleanLabel}
                     </span>
                     <span className="font-mono text-xs font-semibold text-ink-navy">
-                      {node.item.qty}x
+                      {typeof node.item.qty === "string" && node.item.qty.endsWith("x") ? node.item.qty : `${node.item.qty}x`}
                     </span>
                   </div>
                   {isOptional && (
