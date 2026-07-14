@@ -69,11 +69,11 @@ function StepBasics({ values, errors, onChange, onNext }) {
         />
 
         <FormField
-          label="Venue size (m²)"
+          label="Venue size (m²) - Optional"
           name="venueSizeSqm"
           type="number"
           min="1"
-          placeholder="e.g. 500"
+          placeholder="e.g. 500 (Leave blank if unknown)"
           value={values.venueSizeSqm}
           onChange={setField("venueSizeSqm")}
           error={errors.venueSizeSqm}
