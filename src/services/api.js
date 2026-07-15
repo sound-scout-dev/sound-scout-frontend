@@ -227,11 +227,12 @@ export async function generateInfrastructurePlan(formData) {
 // Real call: POST /events. The spec only documents "201: Event created
 // successfully" with no response schema — assuming (like any typical REST
 // API) that the created event, including its id, comes back in the body.
-export async function createEvent({ organizerId, eventType, crowdSize, venueSizeSqm, budgetRange, environment, requirements, description, location }) {
+export async function createEvent({ organizerId, name, eventType, crowdSize, venueSizeSqm, budgetRange, environment, requirements, description, location }) {
   return request("/events", {
     method: "POST",
     body: JSON.stringify({
       organizer_id: organizerId,
+      name,
       event_type: eventType,
       crowd_count: Number(crowdSize),
       venue_size_sqm: Number(venueSizeSqm),
