@@ -5,7 +5,7 @@
 // while the backend catches up. See the "wire what exists" plan for the
 // reasoning behind each choice.
 
-import { request } from "./httpClient"
+import { request, ApiError } from "./httpClient"
 import {
   PLAN_TEMPLATES,
   mockEvents,
@@ -731,8 +731,14 @@ export async function submitBid({ eventId, vendorId, vendorName, price, notes, r
       method: "POST",
       body: JSON.stringify({ event_id: eventId, vendor_id: vendorId, proposed_price: Number(price), notes, bid_categories: bidCategories }),
     })
-  } catch {
-    // demo event not tracked server-side, or backend unreachable — still record locally below
+  } catch (err) {
+    // A real event rejected the bid on business-rule grounds (e.g. this vendor
+    // already bid on it) — surface that instead of silently faking success.
+    if (err instanceof ApiError && err.status === 409) {
+      throw err
+    }
+    // Otherwise: demo event not tracked server-side, or backend unreachable —
+    // still record locally below so the demo experience keeps working.
   }
 
   const bid = {

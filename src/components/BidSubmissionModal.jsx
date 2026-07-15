@@ -77,17 +77,21 @@ function BidSubmissionModal({ event, initialCategories = [], vendor, onClose, on
 
     setError("")
     setSubmitting(true)
-    const bid = await submitBid({
-      eventId: event.id,
-      vendorId: vendor.id,
-      vendorName: vendor.name,
-      price,
-      notes,
-      rating: vendor.rating,
-      bidCategories: selectedCategories,
-    })
-    setSubmitting(false)
-    onSubmitted({ ...bid, eventId: event.id, eventName: event.name })
+    try {
+      const bid = await submitBid({
+        eventId: event.id,
+        vendorId: vendor.id,
+        vendorName: vendor.name,
+        price,
+        notes,
+        rating: vendor.rating,
+        bidCategories: selectedCategories,
+      })
+      onSubmitted({ ...bid, eventId: event.id, eventName: event.name })
+    } catch (err) {
+      setError(err.message || "Couldn't submit your bid. Please try again.")
+      setSubmitting(false)
+    }
   }
 
   return (

@@ -23,7 +23,7 @@ export async function request(path, options = {}) {
   const body = isJson ? await response.json().catch(() => null) : null
 
   if (!response.ok) {
-    throw new ApiError(body?.message ?? `Request to ${path} failed (${response.status}).`, response.status)
+    throw new ApiError(body?.error ?? body?.message ?? `Request to ${path} failed (${response.status}).`, response.status)
   }
 
   return body
