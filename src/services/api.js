@@ -398,10 +398,10 @@ export async function acceptBid(eventId, bidId, organizerId) {
       body: JSON.stringify({ organizer_id: organizerId }),
     })
   } catch (err) {
-    // A real bid rejected the accept on business-rule/auth grounds (bid not
-    // found, event not found, not the owning organizer) — surface that
-    // instead of silently faking success.
-    if (err instanceof ApiError && err.status !== undefined) {
+    // 401 (expired/invalid session) and 403 (bid/event exist but caller isn't
+    // the owning organizer) are real rejections that can't happen for a demo
+    // bid id — surface them instead of silently faking success.
+    if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
       throw err
     }
     // Otherwise: demo bid not tracked server-side, or backend unreachable —
@@ -740,9 +740,10 @@ export async function submitBid({ eventId, vendorId, vendorName, price, notes, r
       body: JSON.stringify({ event_id: eventId, vendor_id: vendorId, proposed_price: Number(price), notes, bid_categories: bidCategories }),
     })
   } catch (err) {
-    // A real event rejected the bid on business-rule grounds (e.g. this vendor
-    // already bid on it) — surface that instead of silently faking success.
-    if (err instanceof ApiError && err.status === 409) {
+    // A real event rejected the bid on business-rule/auth grounds (already
+    // bid on it, or an expired/invalid session) — surface that instead of
+    // silently faking success.
+    if (err instanceof ApiError && (err.status === 401 || err.status === 409)) {
       throw err
     }
     // Otherwise: demo event not tracked server-side, or backend unreachable —

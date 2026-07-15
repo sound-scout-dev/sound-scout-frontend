@@ -30,6 +30,7 @@ function EventDetail() {
   const [notFound, setNotFound] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [acceptingId, setAcceptingId] = useState(null)
+  const [acceptError, setAcceptError] = useState("")
 
   useEffect(() => {
     if (location.state) return
@@ -63,13 +64,19 @@ function EventDetail() {
 
   function handleAccept(bidId) {
     setAcceptingId(bidId)
-    acceptBid(event.id, bidId, user?.id).then(() => {
-      setBids((prev) =>
-        prev.map((b) => ({ ...b, status: b.id === bidId ? "accepted" : "declined" }))
-      )
-      setEvent((e) => ({ ...e, status: "booked" }))
-      setAcceptingId(null)
-    })
+    setAcceptError("")
+    acceptBid(event.id, bidId, user?.id)
+      .then(() => {
+        setBids((prev) =>
+          prev.map((b) => ({ ...b, status: b.id === bidId ? "accepted" : "declined" }))
+        )
+        setEvent((e) => ({ ...e, status: "booked" }))
+        setAcceptingId(null)
+      })
+      .catch((err) => {
+        setAcceptError(err.message || "Couldn't accept this bid. Please try again.")
+        setAcceptingId(null)
+      })
   }
 
   if (notFound) {
@@ -132,6 +139,12 @@ function EventDetail() {
                 <h2 className="font-display text-lg font-semibold text-ink-navy">
                   Vendor bids{bids.length > 0 ? ` (${bids.length})` : ""}
                 </h2>
+
+                {acceptError && (
+                  <p className="mt-3 rounded border border-alert-red/30 bg-alert-red/10 px-3 py-2 text-sm text-alert-red">
+                    {acceptError}
+                  </p>
+                )}
 
                 <div className="mt-4 overflow-hidden rounded-md border border-slate/15 bg-white">
                   {bids.length === 0 ? (
