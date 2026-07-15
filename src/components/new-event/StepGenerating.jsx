@@ -139,6 +139,7 @@ function StepGenerating({ formValues, onComplete }) {
         // 1. Create the event
         const created = await createEvent({
           organizerId: user?.id,
+          name: formValues.eventName,
           eventType: formValues.eventType,
           crowdSize: formValues.crowdSize,
           venueSizeSqm: formValues.venueSizeSqm,

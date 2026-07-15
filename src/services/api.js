@@ -174,7 +174,7 @@ export async function listOrganizerEvents() {
 
       return {
         id: e.event_id,
-        name: e.event_type, // Use event type as fallback event name
+        name: e.name || e.event_type, // Fall back to event type if no custom name was set
         eventType: e.event_type,
         crowdSize: e.crowd_count,
         date: e.created_at || new Date().toISOString(),
@@ -268,7 +268,7 @@ export async function getEventById(id) {
     if (backendEvent) {
       const event = {
         id: backendEvent.event_id,
-        name: backendEvent.event_type, // Fallback to type if name is not in schema
+        name: backendEvent.name || backendEvent.event_type,
         eventType: backendEvent.event_type,
         crowdSize: backendEvent.crowd_count,
         venueSizeSqm: backendEvent.venue_size_sqm,
@@ -397,8 +397,15 @@ export async function acceptBid(eventId, bidId, organizerId) {
       method: "PUT",
       body: JSON.stringify({ organizer_id: organizerId }),
     })
-  } catch {
-    // demo bid not tracked server-side, or backend unreachable
+  } catch (err) {
+    // A real bid rejected the accept on business-rule/auth grounds (bid not
+    // found, event not found, not the owning organizer) — surface that
+    // instead of silently faking success.
+    if (err instanceof ApiError && err.status !== undefined) {
+      throw err
+    }
+    // Otherwise: demo bid not tracked server-side, or backend unreachable —
+    // still record locally below so the demo experience keeps working.
   }
   return delay({ eventId, bidId, status: "booked" })
 }
@@ -490,7 +497,7 @@ export async function listVendorOpportunities(equipmentCategory, vendorRegion) {
 
       return {
         id: e.event_id,
-        name: e.event_type,
+        name: e.name || e.event_type,
         eventType: e.event_type,
         crowdSize: e.crowd_count,
         date: e.created_at || new Date().toISOString(),
