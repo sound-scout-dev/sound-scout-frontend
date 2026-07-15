@@ -556,14 +556,30 @@ export async function listVendorOpportunities(equipmentCategory, vendorRegion) {
 
 // No backend endpoint for a vendor's own bid history — stays fully mocked.
 export async function listVendorBids(vendorName) {
-  const bids = Object.entries(mockBids).flatMap(([eventId, eventBids]) => {
+  let realBids = []
+  try {
+    const bids = await request("/bids/vendor")
+    realBids = (bids ?? []).map((b) => ({
+      id: b.bid_id,
+      eventId: b.event_id,
+      eventName: b.event_type,
+      price: Number(b.proposed_price),
+      notes: b.notes,
+      status: b.status,
+      bid_categories: b.bid_categories,
+    }))
+  } catch {
+    // backend unreachable — fall through to local mock bids only
+  }
+
+  const mockedBids = Object.entries(mockBids).flatMap(([eventId, eventBids]) => {
     const event = mockEvents.find((e) => e.id === eventId)
     return eventBids
       .filter((bid) => bid.vendorName === vendorName)
       .map((bid) => ({ ...bid, eventId, eventName: event?.name ?? "Unknown event" }))
   })
 
-  return delay(bids)
+  return delay([...realBids, ...mockedBids])
 }
 
 const LOCAL_RENTAL_KEY = "soundscout.local_rentals"
