@@ -110,6 +110,8 @@ function StepGenerating({ formValues, onComplete }) {
 
   const [selectedOption, setSelectedOption] = useState("budget") // "budget" | "premium"
   const fired = useRef(false)
+  const pipelineStarted = useRef(false)
+  const activeRef = useRef(true)
 
   // Cycle through progress logs for clean UX during the 10-15s AI pipeline wait
   useEffect(() => {
@@ -121,11 +123,19 @@ function StepGenerating({ formValues, onComplete }) {
   }, [loading])
 
   useEffect(() => {
-    let active = true
+    activeRef.current = true
+    if (pipelineStarted.current) {
+      return () => {
+        activeRef.current = false
+      }
+    }
+    pipelineStarted.current = true
+
+    let eventId = null
     async function triggerBackendPipeline() {
       try {
         const budgetRange = `${formValues.budgetMin}-${formValues.budgetMax}`
-        
+
         // 1. Create the event
         const created = await createEvent({
           organizerId: user?.id,
@@ -138,8 +148,8 @@ function StepGenerating({ formValues, onComplete }) {
           description: formValues.description,
           location: formValues.location
         })
-        
-        const eventId = created?.event?.event_id ?? created?.event_id ?? created?.id
+
+        eventId = created?.event?.event_id ?? created?.event_id ?? created?.id
         if (!eventId) {
           throw new Error("Failed to retrieve event ID from database.")
         }
@@ -163,7 +173,7 @@ function StepGenerating({ formValues, onComplete }) {
            parsedPremium = parsedBudget
         }
 
-        if (active) {
+        if (activeRef.current) {
           setRealId(eventId)
           setBudgetPlan(parsedBudget)
           setPremiumPlan(parsedPremium)
@@ -173,7 +183,7 @@ function StepGenerating({ formValues, onComplete }) {
         }
       } catch (err) {
         console.error("AI Generation Error:", err)
-        if (active) {
+        if (activeRef.current) {
           setError("AI generation failed. Proceeding with offline design...")
           // Fallback to offline mock plan
           const offlinePlan = buildInfrastructurePlan(formValues)
@@ -184,7 +194,10 @@ function StepGenerating({ formValues, onComplete }) {
               high: Math.round(offlinePlan.priceRange.high * 1.5)
             }
           }
-          setRealId(`evt-fallback-${Date.now()}`)
+          // The event row itself was created successfully before the AI step
+          // failed — keep its real database id so finalizePlan() can still
+          // publish it. Only fabricate a fake id if event creation never happened.
+          setRealId(eventId ?? `evt-fallback-${Date.now()}`)
           setBudgetPlan(offlinePlan)
           setPremiumPlan(offlinePremium)
           setLoading(false)
@@ -194,7 +207,7 @@ function StepGenerating({ formValues, onComplete }) {
 
     triggerBackendPipeline()
     return () => {
-      active = false
+      activeRef.current = false
     }
   }, [formValues, user])
 

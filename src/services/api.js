@@ -17,6 +17,25 @@ import {
 const DELAY_MS = 500
 const PUBLISHED_EVENTS_KEY = "soundscout.publishedEvents"
 
+// A stored ai_infrastructure_plan is trusted as-is when it already has a
+// "categories" shape, but nothing guarantees it also carries a priceRange
+// (e.g. a plan written directly to the database) — EventPlanSummary reads
+// plan.priceRange.low/high unconditionally, so a missing one crashes the
+// whole event detail page. Backfill it from the event's budget_range instead.
+function ensurePlanPriceRange(plan, event) {
+  if (!plan || plan.priceRange) return plan
+  let low = 50000
+  let high = 150000
+  if (event?.budget_range) {
+    const parts = event.budget_range.split('-')
+    if (parts.length === 2) {
+      low = Math.max(10000, Number(parts[0]) || low)
+      high = Number(parts[1]) || high
+    }
+  }
+  return { ...plan, priceRange: { low, high } }
+}
+
 function delay(value, ms = DELAY_MS) {
   return new Promise((resolve) => setTimeout(() => resolve(value), ms))
 }
@@ -65,10 +84,11 @@ export async function register({ fullName, email, role, region, password }) {
   const payload = { name: fullName, email, role, password }
   if (role === "vendor") payload.region = region
 
-  const created = await request("/users/register", {
+  const response = await request("/users/register", {
     method: "POST",
     body: JSON.stringify(payload),
   })
+  const created = response.user
 
   return { id: created.user_id, name: created.name, email: created.email, role: created.role, region: created.region }
 }
@@ -97,7 +117,7 @@ export async function listOrganizerEvents() {
       // Reconstruct display categories based on the plan shape (single selected vs draft options)
       let displayPlan;
       if (parsedPlan && parsedPlan.categories) {
-        displayPlan = parsedPlan;
+        displayPlan = ensurePlanPriceRange(parsedPlan, e);
       } else if (parsedPlan && (parsedPlan.budget_plan || parsedPlan.premium_plan)) {
         const selectedRaw = parsedPlan.budget_plan || parsedPlan.premium_plan;
         let categories = [];
@@ -269,7 +289,7 @@ export async function getEventById(id) {
       }
 
       if (plan && plan.categories) {
-        displayPlan = plan;
+        displayPlan = ensurePlanPriceRange(plan, backendEvent);
       } else if (plan && (plan.budget_plan || plan.premium_plan)) {
         const selectedRaw = plan.budget_plan || plan.premium_plan;
         const categories = [
@@ -349,7 +369,19 @@ export async function getEventById(id) {
 export async function listBidsForEvent(eventId) {
   try {
     const bids = await request(`/bids/event/${eventId}`)
-    if (Array.isArray(bids)) return bids
+    // Backend rows use bid_id/vendor_name/proposed_price and don't track a
+    // vendor rating — remap to the shape BidCard expects, same as the mock data.
+    if (Array.isArray(bids)) {
+      return bids.map((b) => ({
+        id: b.bid_id,
+        vendorName: b.vendor_name,
+        price: Number(b.proposed_price),
+        notes: b.notes,
+        status: b.status,
+        rating: b.rating ?? 4.5,
+        bid_categories: b.bid_categories,
+      }))
+    }
   } catch {
     // not a real backend event id, or backend unreachable — fall through to local data
   }
@@ -400,7 +432,7 @@ export async function listVendorOpportunities(equipmentCategory, vendorRegion) {
 
       let displayPlan;
       if (parsedPlan && parsedPlan.categories) {
-        displayPlan = parsedPlan;
+        displayPlan = ensurePlanPriceRange(parsedPlan, e);
       } else if (parsedPlan && (parsedPlan.budget_plan || parsedPlan.premium_plan)) {
         const selectedRaw = parsedPlan.budget_plan || parsedPlan.premium_plan;
         let categories = [];
