@@ -147,7 +147,8 @@ function StepGenerating({ formValues, onComplete }) {
           environment: formValues.environment,
           requirements: formValues.requirements,
           description: formValues.description,
-          location: formValues.location
+          location: formValues.location,
+          eventDate: formValues.date
         })
 
         eventId = created?.event?.event_id ?? created?.event_id ?? created?.id

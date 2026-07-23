@@ -25,8 +25,15 @@ function BidCard({ bid, canAccept, accepting, onAccept }) {
       <div>
         <p className="font-display text-sm font-semibold text-ink-navy">{bid.vendorName}</p>
         <p className="mt-1 flex items-center gap-1 font-mono text-xs text-slate">
-          <Star size={13} className="fill-signal-amber text-signal-amber" />
-          {bid.rating.toFixed(1)} / 5
+          {bid.ratingCount > 0 ? (
+            <>
+              <Star size={13} className="fill-signal-amber text-signal-amber" />
+              {bid.rating.toFixed(1)} / 5
+              <span className="text-slate/60">({bid.ratingCount})</span>
+            </>
+          ) : (
+            <span className="text-slate/60">New vendor · no ratings yet</span>
+          )}
         </p>
         {categories.length > 0 && (
           <div className="mt-1.5 flex flex-wrap gap-1">

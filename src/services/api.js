@@ -227,7 +227,7 @@ export async function generateInfrastructurePlan(formData) {
 // Real call: POST /events. The spec only documents "201: Event created
 // successfully" with no response schema — assuming (like any typical REST
 // API) that the created event, including its id, comes back in the body.
-export async function createEvent({ organizerId, name, eventType, crowdSize, venueSizeSqm, budgetRange, environment, requirements, description, location }) {
+export async function createEvent({ organizerId, name, eventType, crowdSize, venueSizeSqm, budgetRange, environment, requirements, description, location, eventDate }) {
   return request("/events", {
     method: "POST",
     body: JSON.stringify({
@@ -241,6 +241,7 @@ export async function createEvent({ organizerId, name, eventType, crowdSize, ven
       requirements,
       description,
       location,
+      event_date: eventDate,
     }),
   })
 }
@@ -370,16 +371,19 @@ export async function getEventById(id) {
 export async function listBidsForEvent(eventId) {
   try {
     const bids = await request(`/bids/event/${eventId}`)
-    // Backend rows use bid_id/vendor_name/proposed_price and don't track a
-    // vendor rating — remap to the shape BidCard expects, same as the mock data.
+    // Backend rows use bid_id/vendor_name/proposed_price, plus vendor_rating/
+    // vendor_rating_count from the ratings system — remap to the shape
+    // BidCard expects, same as the mock data.
     if (Array.isArray(bids)) {
       return bids.map((b) => ({
         id: b.bid_id,
+        vendorId: b.vendor_id,
         vendorName: b.vendor_name,
         price: Number(b.proposed_price),
         notes: b.notes,
         status: b.status,
-        rating: b.rating ?? 4.5,
+        rating: Number(b.vendor_rating ?? 0),
+        ratingCount: Number(b.vendor_rating_count ?? 0),
         bid_categories: b.bid_categories,
       }))
     }
@@ -387,6 +391,34 @@ export async function listBidsForEvent(eventId) {
     // not a real backend event id, or backend unreachable — fall through to local data
   }
   return delay(mockBids[eventId] ?? [])
+}
+
+// Real call: GET /ratings/pending — accepted vendors from past events the
+// organizer hasn't rated yet.
+export async function listPendingRatings() {
+  try {
+    const rows = await request("/ratings/pending")
+    return (rows ?? []).map((r) => ({
+      eventId: r.event_id,
+      eventType: r.event_type,
+      eventDate: r.event_date,
+      bidId: r.bid_id,
+      price: Number(r.proposed_price),
+      vendorId: r.vendor_id,
+      vendorName: r.vendor_name,
+    }))
+  } catch {
+    return []
+  }
+}
+
+// Real call: POST /ratings — organizer rates a vendor after an accepted,
+// already-happened event.
+export async function submitVendorRating({ eventId, vendorId, rating, review }) {
+  return request("/ratings", {
+    method: "POST",
+    body: JSON.stringify({ event_id: eventId, vendor_id: vendorId, rating, review }),
+  })
 }
 
 // Real call: PUT /bids/{bidId}/accept. Local bid/event status is updated by
