@@ -797,3 +797,56 @@ export async function submitBid({ eventId, vendorId, vendorName, price, notes, r
 
   return delay(bid)
 }
+
+// Real call: POST /payments/initiate. Returns { checkout_url, fields } for the
+// caller to POST straight to PayHere's hosted checkout via redirectToPayHereCheckout.
+export async function initiatePayment(bidId) {
+  return request("/payments/initiate", {
+    method: "POST",
+    body: JSON.stringify({ bid_id: bidId }),
+  })
+}
+
+// Real call: GET /payments/bid/{bidId}. Returns { status: "not_started" } if no
+// payment has been initiated yet for this bid, rather than throwing.
+export async function getPaymentStatusForBid(bidId) {
+  try {
+    return await request(`/payments/bid/${bidId}`)
+  } catch {
+    return { status: "not_started" }
+  }
+}
+
+// Real call: GET /payments/{paymentId} — used by the return/cancel redirect
+// pages, which only know the payment id (not the bid id) from the URL.
+export async function getPaymentById(paymentId) {
+  return request(`/payments/${paymentId}`)
+}
+
+// Real call: PUT /payments/{paymentId}/payout. Marks the vendor as paid out
+// OUTSIDE the app (bank transfer, etc) — PayHere has no automated marketplace
+// payout for Sri Lankan vendors, so this is a manual confirmation, not a real
+// money transfer triggered by this call.
+export async function markVendorPayout(paymentId) {
+  return request(`/payments/${paymentId}/payout`, { method: "PUT" })
+}
+
+// PayHere's hosted checkout requires an actual browser form submission (a real
+// navigation), not a fetch/XHR — it needs to redirect the whole page to its
+// domain. This builds that form on the fly and submits it.
+export function redirectToPayHereCheckout({ checkout_url, fields }) {
+  const form = document.createElement("form")
+  form.method = "POST"
+  form.action = checkout_url
+
+  Object.entries(fields).forEach(([name, value]) => {
+    const input = document.createElement("input")
+    input.type = "hidden"
+    input.name = name
+    input.value = value
+    form.appendChild(input)
+  })
+
+  document.body.appendChild(form)
+  form.submit()
+}
