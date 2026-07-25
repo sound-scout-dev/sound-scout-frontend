@@ -48,6 +48,24 @@ function getHeuristicPrice(categories) {
 function parseRawPlan(rawPlanData, formValues, mlCost = 50000, isPremium = false) {
   if (!rawPlanData) return buildInfrastructurePlan(formValues);
 
+  // If it's already a fully structured plan (e.g. from fallback or re-renders)
+  if (rawPlanData.categories && Array.isArray(rawPlanData.categories)) {
+    return {
+      eventType: rawPlanData.eventType || formValues.eventType,
+      meta: rawPlanData.meta || `${Number(formValues.crowdSize).toLocaleString()} guests · ${formValues.location}`,
+      categories: rawPlanData.categories.map(cat => ({
+        name: cat.name || "Equipment",
+        items: Array.isArray(cat.items) ? cat.items.map(item => {
+          if (typeof item === 'object' && item !== null) {
+            return { label: item.label || "Equipment Item", qty: Number(item.qty) || 1 };
+          }
+          return { label: String(item), qty: 1 };
+        }) : []
+      })),
+      priceRange: rawPlanData.priceRange || { low: mlCost * 0.8, high: mlCost * 1.2 }
+    };
+  }
+
   let categories = [];
   
   if (Array.isArray(rawPlanData)) {
@@ -55,24 +73,32 @@ function parseRawPlan(rawPlanData, formValues, mlCost = 50000, isPremium = false
       {
         name: "Equipment List",
         items: rawPlanData.map(item => {
-          const match = item.match(/^(\d+)x\s+(.*)$/);
+          if (typeof item === 'object' && item !== null) {
+            return { label: item.label || "Equipment Item", qty: Number(item.qty) || 1 };
+          }
+          const strItem = String(item);
+          const match = strItem.match(/^(\d+)x\s+(.*)$/);
           if (match) {
             return { label: match[2], qty: parseInt(match[1]) };
           }
-          return { label: item, qty: 1 };
+          return { label: strItem, qty: 1 };
         })
       }
     ];
-  } else if (typeof rawPlanData === 'object') {
+  } else if (typeof rawPlanData === 'object' && rawPlanData !== null) {
     categories = Object.entries(rawPlanData).map(([name, items]) => {
       return {
-        name,
+        name: name || "Equipment",
         items: Array.isArray(items) ? items.map(item => {
-          const match = item.match(/^(\d+)x\s+(.*)$/);
+          if (typeof item === 'object' && item !== null) {
+            return { label: item.label || "Equipment Item", qty: Number(item.qty) || 1 };
+          }
+          const strItem = String(item);
+          const match = strItem.match(/^(\d+)x\s+(.*)$/);
           if (match) {
             return { label: match[2], qty: parseInt(match[1]) };
           }
-          return { label: item, qty: 1 };
+          return { label: strItem, qty: 1 };
         }) : []
       };
     });
@@ -91,8 +117,8 @@ function parseRawPlan(rawPlanData, formValues, mlCost = 50000, isPremium = false
   return {
     eventType: formValues.eventType,
     meta: `${Number(formValues.crowdSize).toLocaleString()} guests · ${formValues.location}`,
-    categories,
-    priceRange: { low, high }
+    categories: categories.filter(c => c.items.length > 0), // Filter out non-equipment keys like agent logs/predicted cost
+    priceRange: { low: low || mlCost * 0.8, high: high || mlCost * 1.2 }
   }
 }
 
@@ -120,9 +146,13 @@ function StepGenerating({ formValues, onComplete }) {
     return () => clearInterval(interval)
   }, [loading])
 
+  const apiFired = useRef(false)
+
   useEffect(() => {
     let active = true
     async function triggerBackendPipeline() {
+      if (apiFired.current) return
+      apiFired.current = true
       try {
         const budgetRange = `${formValues.budgetMin}-${formValues.budgetMax}`
         
@@ -163,39 +193,31 @@ function StepGenerating({ formValues, onComplete }) {
            parsedPremium = parsedBudget
         }
 
-        if (active) {
-          setRealId(eventId)
-          setBudgetPlan(parsedBudget)
-          setPremiumPlan(parsedPremium)
-          setFeasibilityWarning(options.feasibility_warning || null)
-          setPriceCuttingTips(options.price_cutting_tips || [])
-          setLoading(false)
-        }
+        setRealId(eventId)
+        setBudgetPlan(parsedBudget)
+        setPremiumPlan(parsedPremium)
+        setFeasibilityWarning(options.feasibility_warning || null)
+        setPriceCuttingTips(options.price_cutting_tips || [])
+        setLoading(false)
       } catch (err) {
         console.error("AI Generation Error:", err)
-        if (active) {
-          setError("AI generation failed. Proceeding with offline design...")
-          // Fallback to offline mock plan
-          const offlinePlan = buildInfrastructurePlan(formValues)
-          const offlinePremium = {
-            ...offlinePlan,
-            priceRange: {
-              low: Math.round(offlinePlan.priceRange.low * 1.4),
-              high: Math.round(offlinePlan.priceRange.high * 1.5)
-            }
+        // Fallback to offline mock plan
+        const offlinePlan = buildInfrastructurePlan(formValues)
+        const offlinePremium = {
+          ...offlinePlan,
+          priceRange: {
+            low: Math.round(offlinePlan.priceRange.low * 1.4),
+            high: Math.round(offlinePlan.priceRange.high * 1.5)
           }
-          setRealId(`evt-fallback-${Date.now()}`)
-          setBudgetPlan(offlinePlan)
-          setPremiumPlan(offlinePremium)
-          setLoading(false)
         }
+        setRealId(`evt-fallback-${Date.now()}`)
+        setBudgetPlan(offlinePlan)
+        setPremiumPlan(offlinePremium)
+        setLoading(false)
       }
     }
 
     triggerBackendPipeline()
-    return () => {
-      active = false
-    }
   }, [formValues, user])
 
   function handleProceed() {

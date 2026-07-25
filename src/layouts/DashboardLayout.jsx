@@ -2,6 +2,7 @@ import { Link, Outlet, useNavigate } from "react-router-dom"
 import { LogOut } from "lucide-react"
 import Logo from "../components/Logo"
 import { useAuth } from "../context/AuthContext"
+import SessionTimeoutModal from "../components/SessionTimeoutModal"
 
 import { useEffect } from "react"
 
@@ -68,6 +69,8 @@ function DashboardLayout({ role = "Organizer" }) {
       <main className="flex-1">
         <Outlet />
       </main>
+
+      <SessionTimeoutModal />
     </div>
   )
 }

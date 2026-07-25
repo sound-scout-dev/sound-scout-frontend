@@ -168,7 +168,7 @@ export async function listOrganizerEvents() {
             crowdSize: e.crowd_count,
             date: e.created_at || new Date().toISOString(),
             location: e.location || "Colombo",
-            status: e.status || "bidding_open",
+            status: e.status === "draft" ? "planning" : (e.status || "bidding_open"),
             plan: displayPlan,
           }
         })
@@ -177,6 +177,14 @@ export async function listOrganizerEvents() {
       }
       
       return mappedBackendEvents
+}
+
+// Used to finalize and publish draft events from the dashboard
+export async function publishEvent(eventId, selectedPlan) {
+  return request(`/events/${eventId}/finalize-plan`, {
+    method: "PUT",
+    body: JSON.stringify({ selected_plan: selectedPlan }),
+  })
 }
 
 // Synchronous plan assembly. The New Event wizard renders this straight into
@@ -263,7 +271,7 @@ export async function getEventById(id) {
         venueSizeSqm: backendEvent.venue_size_sqm,
         budget: backendEvent.budget_range,
         location: backendEvent.location || backendEvent.environment || "Indoor",
-        status: backendEvent.status,
+        status: backendEvent.status === "draft" ? "planning" : (backendEvent.status || "bidding_open"),
         date: backendEvent.created_at || new Date().toISOString(), // Fallback date
       }
 
@@ -404,12 +412,7 @@ export async function acceptBid(eventId, bidId, organizerId) {
   return delay({ eventId, bidId, status: "booked" })
 }
 
-// Used only for the seeded "planning" demo event (evt-3) — real events created
-// through the wizard go straight to "bidding_open" via generatePlan() above,
-// since the backend has no separate publish step.
-export async function publishEvent(eventId) {
-  return delay({ eventId, status: "bidding_open" })
-}
+
 
 // Real call: GET /events/open, merged with local demo/published events so the
 // vendor feed stays populated even when the backend is unreachable (or hasn't

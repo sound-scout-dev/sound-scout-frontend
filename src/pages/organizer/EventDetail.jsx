@@ -5,6 +5,7 @@ import StatusBadge from "../../components/StatusBadge"
 import EventPlanSummary from "../../components/EventPlanSummary"
 import BidCard from "../../components/BidCard"
 import Button from "../../components/Button"
+import StepResults from "../../components/new-event/StepResults"
 import { getEventById, listBidsForEvent, acceptBid, publishEvent } from "../../services/api"
 import { useAuth } from "../../context/AuthContext"
 
@@ -55,7 +56,7 @@ function EventDetail() {
 
   function handlePublish() {
     setPublishing(true)
-    publishEvent(event.id).then(() => {
+    publishEvent(event.id, plan).then(() => {
       setEvent((e) => ({ ...e, status: "bidding_open" }))
       setPublishing(false)
     })
@@ -111,24 +112,22 @@ function EventDetail() {
             <StatusBadge status={event.status} />
           </div>
 
-          <div className="mt-6">
-            <EventPlanSummary event={event} plan={plan} />
-          </div>
-
-          <div className="mt-8">
-            {event.status === "planning" ? (
-              <div className="flex flex-col items-center gap-4 rounded-md border border-dashed border-slate/25 bg-white px-6 py-10 text-center">
-                <p className="font-body text-sm text-slate">
-                  This plan hasn't been published yet — vendors can't bid on it until you do.
-                </p>
-                <Button variant="primary" size="md" onClick={handlePublish} disabled={publishing}>
-                  {publishing && <Loader2 size={16} className="animate-spin" />}
-                  <Send size={16} strokeWidth={2} />
-                  {publishing ? "Publishing…" : "Publish for Bidding"}
-                </Button>
+          {event.status === "planning" ? (
+            <div className="mt-8">
+              <StepResults
+                plan={plan}
+                onPlanChange={setPlan}
+                onPublish={handlePublish}
+                publishing={publishing}
+              />
+            </div>
+          ) : (
+            <>
+              <div className="mt-6">
+                <EventPlanSummary event={event} plan={plan} />
               </div>
-            ) : (
-              <>
+
+              <div className="mt-8">
                 <h2 className="font-display text-lg font-semibold text-ink-navy">
                   Vendor bids{bids.length > 0 ? ` (${bids.length})` : ""}
                 </h2>
@@ -150,9 +149,9 @@ function EventDetail() {
                     ))
                   )}
                 </div>
-              </>
-            )}
-          </div>
+              </div>
+            </>
+          )}
         </>
       )}
     </div>
