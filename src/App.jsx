@@ -9,6 +9,8 @@ import InstantRental from "./pages/InstantRental"
 import OrganizerDashboard from "./pages/organizer/OrganizerDashboard"
 import NewEvent from "./pages/organizer/NewEvent"
 import EventDetail from "./pages/organizer/EventDetail"
+import PaymentReturn from "./pages/organizer/PaymentReturn"
+import PaymentCancel from "./pages/organizer/PaymentCancel"
 import VendorDashboard from "./pages/vendor/VendorDashboard"
 import Profile from "./pages/Profile"
 
@@ -29,6 +31,8 @@ function App() {
         <Route path="/organizer/dashboard" element={<OrganizerDashboard />} />
         <Route path="/organizer/events/new" element={<NewEvent />} />
         <Route path="/organizer/events/:id" element={<EventDetail />} />
+        <Route path="/organizer/payments/:paymentId/return" element={<PaymentReturn />} />
+        <Route path="/organizer/payments/:paymentId/cancel" element={<PaymentCancel />} />
         <Route path="/organizer/profile" element={<Profile />} />
       </Route>
 

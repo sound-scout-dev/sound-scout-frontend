@@ -5,8 +5,16 @@ import StatusBadge from "../../components/StatusBadge"
 import EventPlanSummary from "../../components/EventPlanSummary"
 import BidCard from "../../components/BidCard"
 import Button from "../../components/Button"
-import StepResults from "../../components/new-event/StepResults"
-import { getEventById, listBidsForEvent, acceptBid, publishEvent } from "../../services/api"
+import {
+  getEventById,
+  listBidsForEvent,
+  acceptBid,
+  publishEvent,
+  getPaymentStatusForBid,
+  initiatePayment,
+  markVendorPayout,
+  redirectToPayHereCheckout,
+} from "../../services/api"
 import { useAuth } from "../../context/AuthContext"
 
 function DetailSkeleton() {
@@ -31,6 +39,26 @@ function EventDetail() {
   const [notFound, setNotFound] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [acceptingId, setAcceptingId] = useState(null)
+  const [acceptError, setAcceptError] = useState("")
+  const [payments, setPayments] = useState({}) // bidId -> payment record
+  const [payingId, setPayingId] = useState(null)
+  const [markingPayoutId, setMarkingPayoutId] = useState(null)
+  const [paymentError, setPaymentError] = useState("")
+
+  // Payment status only matters for accepted bids — fetch it for those once
+  // bids are known/updated, rather than for every pending/declined bid.
+  function loadPaymentsFor(bidsList) {
+    const acceptedBids = bidsList.filter((b) => b.status === "accepted")
+    Promise.all(acceptedBids.map((b) => getPaymentStatusForBid(b.id))).then((results) => {
+      setPayments((prev) => {
+        const next = { ...prev }
+        acceptedBids.forEach((b, i) => {
+          next[b.id] = results[i]
+        })
+        return next
+      })
+    })
+  }
 
   useEffect(() => {
     if (location.state) return
@@ -45,6 +73,7 @@ function EventDetail() {
         setEvent(fetchedEvent)
         setPlan(fetchedEvent.plan)
         setBids(fetchedBids)
+        loadPaymentsFor(fetchedBids)
       }
       setLoading(false)
     })
@@ -64,13 +93,53 @@ function EventDetail() {
 
   function handleAccept(bidId) {
     setAcceptingId(bidId)
-    acceptBid(event.id, bidId, user?.id).then(() => {
-      setBids((prev) =>
-        prev.map((b) => ({ ...b, status: b.id === bidId ? "accepted" : "declined" }))
-      )
-      setEvent((e) => ({ ...e, status: "booked" }))
-      setAcceptingId(null)
-    })
+    setAcceptError("")
+    acceptBid(event.id, bidId, user?.id)
+      .then(() => {
+        const updatedBids = bids.map((b) => ({ ...b, status: b.id === bidId ? "accepted" : "declined" }))
+        setBids(updatedBids)
+        setEvent((e) => ({ ...e, status: "booked" }))
+        setAcceptingId(null)
+        loadPaymentsFor(updatedBids)
+      })
+      .catch((err) => {
+        setAcceptError(err.message || "Couldn't accept this bid. Please try again.")
+        setAcceptingId(null)
+      })
+  }
+
+  function handlePay(bidId) {
+    setPayingId(bidId)
+    setPaymentError("")
+    initiatePayment(bidId)
+      .then((data) => {
+        // Navigates the browser away to PayHere's hosted checkout — no further
+        // state update needed here, the page is about to unload.
+        redirectToPayHereCheckout(data)
+      })
+      .catch((err) => {
+        setPaymentError(err.message || "Couldn't start the payment. Please try again.")
+        setPayingId(null)
+      })
+  }
+
+  function handleMarkPayout(paymentId) {
+    setMarkingPayoutId(paymentId)
+    setPaymentError("")
+    markVendorPayout(paymentId)
+      .then(({ payment }) => {
+        setPayments((prev) => {
+          const next = { ...prev }
+          const bidEntry = Object.entries(next).find(([, p]) => p.payment_id === paymentId)
+          if (bidEntry) next[bidEntry[0]] = payment
+          return next
+        })
+        setMarkingPayoutId(null)
+      })
+      .catch((err) => {
+        setPaymentError(err.message || "Couldn't update the payout status. Please try again.")
+        setMarkingPayoutId(null)
+      })
   }
 
   if (notFound) {
@@ -132,6 +201,18 @@ function EventDetail() {
                   Vendor bids{bids.length > 0 ? ` (${bids.length})` : ""}
                 </h2>
 
+                {acceptError && (
+                  <p className="mt-3 rounded border border-alert-red/30 bg-alert-red/10 px-3 py-2 text-sm text-alert-red">
+                    {acceptError}
+                  </p>
+                )}
+
+                {paymentError && (
+                  <p className="mt-3 rounded border border-alert-red/30 bg-alert-red/10 px-3 py-2 text-sm text-alert-red">
+                    {paymentError}
+                  </p>
+                )}
+
                 <div className="mt-4 overflow-hidden rounded-md border border-slate/15 bg-white">
                   {bids.length === 0 ? (
                     <p className="p-8 text-center font-body text-sm text-slate">
@@ -145,6 +226,11 @@ function EventDetail() {
                         canAccept={event.status === "bidding_open"}
                         accepting={acceptingId === bid.id}
                         onAccept={handleAccept}
+                        payment={payments[bid.id]}
+                        paying={payingId === bid.id}
+                        markingPayout={payments[bid.id] && markingPayoutId === payments[bid.id].payment_id}
+                        onPay={handlePay}
+                        onMarkPayout={handleMarkPayout}
                       />
                     ))
                   )}

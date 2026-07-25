@@ -1,9 +1,49 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-import { Plus, CalendarPlus } from "lucide-react"
+import { Plus, CalendarPlus, Star } from "lucide-react"
 import Button from "../../components/Button"
 import EventCard from "../../components/EventCard"
-import { listOrganizerEvents } from "../../services/api"
+import RateVendorModal from "../../components/RateVendorModal"
+import { listOrganizerEvents, listPendingRatings } from "../../services/api"
+
+function formatLKR(n) {
+  return "Rs. " + n.toLocaleString("en-LK", { maximumFractionDigits: 0 })
+}
+
+function PendingRatings({ items, onRate }) {
+  if (items.length === 0) return null
+
+  return (
+    <div className="mb-8 rounded-md border border-signal-amber/30 bg-signal-amber/5 p-5">
+      <h2 className="flex items-center gap-2 font-display text-sm font-semibold text-ink-navy">
+        <Star size={16} className="fill-signal-amber text-signal-amber" />
+        Rate your vendors
+      </h2>
+      <p className="mt-1 font-body text-xs text-slate">
+        These events have passed — let other organizers know how these vendors performed.
+      </p>
+      <div className="mt-4 divide-y divide-slate/10">
+        {items.map((item) => (
+          <div
+            key={`${item.eventId}-${item.vendorId}`}
+            className="flex flex-wrap items-center justify-between gap-3 py-3"
+          >
+            <div>
+              <p className="font-display text-sm font-medium text-ink-navy">{item.vendorName}</p>
+              <p className="font-mono text-xs text-slate">
+                {item.eventType} · {formatLKR(item.price)}
+                {item.eventDate ? ` · ${new Date(item.eventDate).toLocaleDateString()}` : ""}
+              </p>
+            </div>
+            <Button variant="secondary" size="sm" onClick={() => onRate(item)}>
+              Rate vendor
+            </Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 function DashboardSkeleton() {
   return (
@@ -48,7 +88,8 @@ function EmptyState() {
 function OrganizerDashboard() {
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
-  const [previewEmpty, setPreviewEmpty] = useState(false)
+  const [pendingRatings, setPendingRatings] = useState([])
+  const [ratingTarget, setRatingTarget] = useState(null)
 
   useEffect(() => {
     let active = true
@@ -58,12 +99,20 @@ function OrganizerDashboard() {
         setLoading(false)
       }
     })
+    listPendingRatings().then((data) => {
+      if (active) setPendingRatings(data)
+    })
     return () => {
       active = false
     }
   }, [])
 
-  const visibleEvents = previewEmpty ? [] : events
+  function handleRatingSubmitted(item) {
+    setPendingRatings((prev) =>
+      prev.filter((p) => !(p.eventId === item.eventId && p.vendorId === item.vendorId))
+    )
+    setRatingTarget(null)
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -77,36 +126,35 @@ function OrganizerDashboard() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          {!loading && events.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setPreviewEmpty((v) => !v)}
-              className="font-mono text-[11px] uppercase tracking-widest text-slate/50 underline decoration-dotted underline-offset-4 hover:text-slate"
-            >
-              {previewEmpty ? "Show events" : "Preview empty state"}
-            </button>
-          )}
-          <Button as={Link} to="/organizer/events/new" variant="primary" size="md">
-            <Plus size={16} strokeWidth={2.5} />
-            New Event
-          </Button>
-        </div>
+        <Button as={Link} to="/organizer/events/new" variant="primary" size="md">
+          <Plus size={16} strokeWidth={2.5} />
+          New Event
+        </Button>
       </div>
 
       <div className="mt-8">
+        <PendingRatings items={pendingRatings} onRate={setRatingTarget} />
+
         {loading ? (
           <DashboardSkeleton />
-        ) : visibleEvents.length === 0 ? (
+        ) : events.length === 0 ? (
           <EmptyState />
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {visibleEvents.map((event) => (
+            {events.map((event) => (
               <EventCard key={event.id} event={event} />
             ))}
           </div>
         )}
       </div>
+
+      {ratingTarget && (
+        <RateVendorModal
+          pendingRating={ratingTarget}
+          onClose={() => setRatingTarget(null)}
+          onSubmitted={handleRatingSubmitted}
+        />
+      )}
     </div>
   )
 }

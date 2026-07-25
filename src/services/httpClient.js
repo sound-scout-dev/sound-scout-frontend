@@ -73,7 +73,7 @@ export async function request(path, options = {}) {
   }
 
   if (!response.ok) {
-    throw new ApiError(body?.message ?? `Request to ${path} failed (${response.status}).`, response.status)
+    throw new ApiError(body?.error ?? body?.message ?? `Request to ${path} failed (${response.status}).`, response.status)
   }
 
   return body
