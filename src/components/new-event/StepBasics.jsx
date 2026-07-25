@@ -1,8 +1,12 @@
+import { useState } from "react"
 import FormField from "../FormField"
 import Button from "../Button"
 import { EVENT_TYPES } from "../../services/mockData"
+import { Mic } from "lucide-react"
+import VoiceInputModal from "./VoiceInputModal"
 
-function StepBasics({ values, errors, onChange, onNext }) {
+function StepBasics({ values, errors, onChange, onNext, onVoiceIntake }) {
+  const [isVoiceOpen, setIsVoiceOpen] = useState(false)
   const setField = (name) => (e) => onChange(name, e.target.value)
 
   const toggleRequirement = (req) => {
@@ -14,12 +18,37 @@ function StepBasics({ values, errors, onChange, onNext }) {
     }
   }
 
+  const handleVoiceData = (parameters) => {
+    onVoiceIntake?.(parameters)
+  }
+
   return (
     <div>
       <h2 className="font-display text-xl font-semibold text-ink-navy">Event basics</h2>
       <p className="mt-1 font-body text-sm text-slate">
         The AI consultant uses these details to size the plan.
       </p>
+
+      <div className="mt-4 flex items-center justify-between border border-signal-amber/30 bg-signal-amber/5 rounded-lg p-4">
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-signal-amber/15 text-signal-amber">
+            <Mic size={18} strokeWidth={2.5} />
+          </span>
+          <div>
+            <h4 className="font-display text-sm font-semibold text-ink-navy">Speak to Auto-Fill</h4>
+            <p className="font-body text-xs text-slate">Describe your event (English, Sinhala, Singlish) to auto-fill form.</p>
+          </div>
+        </div>
+        <Button type="button" variant="primary" size="sm" onClick={() => setIsVoiceOpen(true)}>
+          Record Voice
+        </Button>
+      </div>
+
+      <VoiceInputModal
+        isOpen={isVoiceOpen}
+        onClose={() => setIsVoiceOpen(false)}
+        onDataExtracted={handleVoiceData}
+      />
 
       <div className="mt-6 grid gap-5 sm:grid-cols-2">
         <FormField

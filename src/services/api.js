@@ -247,8 +247,11 @@ export async function createEvent({ organizerId, eventType, crowdSize, venueSize
 // no separate publish endpoint. The spec doesn't define ai_infrastructure_plan's
 // shape, so the wizard keeps showing its own client-side plan preview rather
 // than trusting this response's plan content.
-export async function generatePlan(eventId) {
-  return request(`/events/${eventId}/generate-plan`, { method: "POST" })
+export async function generatePlan(eventId, venue_photo_analysis) {
+  return request(`/events/${eventId}/generate-plan`, {
+    method: "POST",
+    body: JSON.stringify({ venue_photo_analysis }),
+  })
 }
 
 export async function finalizePlan(eventId, selected_plan) {

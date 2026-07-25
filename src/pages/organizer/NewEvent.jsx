@@ -4,6 +4,7 @@ import { X } from "lucide-react"
 import WizardProgress from "../../components/new-event/WizardProgress"
 import StepBasics from "../../components/new-event/StepBasics"
 import StepDescription from "../../components/new-event/StepDescription"
+import StepConfirmation from "../../components/new-event/StepConfirmation"
 import StepGenerating from "../../components/new-event/StepGenerating"
 import StepResults from "../../components/new-event/StepResults"
 import { createEvent, generatePlan, saveLocallyPublishedEvent, finalizePlan } from "../../services/api"
@@ -15,6 +16,7 @@ const initialValues = {
   date: "",
   crowdSize: "",
   venueSizeSqm: "",
+  budgetMin: "",
   budgetMax: "",
   location: "",
   environment: "Indoor",
@@ -72,6 +74,7 @@ function NewEvent() {
   const [plan, setPlan] = useState(null)
   const [realEventId, setRealEventId] = useState("")
   const [publishing, setPublishing] = useState(false)
+  const [isVoiceMode, setIsVoiceMode] = useState(false)
 
   function setField(name, value) {
     setValues((v) => ({ ...v, [name]: value }))
@@ -148,9 +151,44 @@ function NewEvent() {
 
       <div className="mt-10 rounded-md border border-slate/15 bg-white p-6 sm:p-8">
         {step === 1 && (
-          <StepBasics values={values} errors={errors} onChange={setField} onNext={handleBasicsNext} />
+          <StepBasics
+            values={values}
+            errors={errors}
+            onChange={setField}
+            onNext={handleBasicsNext}
+            onVoiceIntake={(extractedParams) => {
+              setValues((prev) => ({
+                ...prev,
+                eventName: extractedParams.eventName || prev.eventName,
+                eventType: extractedParams.eventType || prev.eventType,
+                crowdSize: extractedParams.crowdSize ? String(extractedParams.crowdSize) : prev.crowdSize,
+                venueSizeSqm: extractedParams.venueSizeSqm ? String(extractedParams.venueSizeSqm) : prev.venueSizeSqm,
+                budgetMin: extractedParams.budgetMin ? String(extractedParams.budgetMin) : prev.budgetMin,
+                budgetMax: extractedParams.budgetMax ? String(extractedParams.budgetMax) : prev.budgetMax,
+                location: extractedParams.location || prev.location,
+                environment: extractedParams.environment || prev.environment,
+                requirements: extractedParams.requirements || prev.requirements,
+                description: extractedParams.description || prev.description,
+              }))
+              setIsVoiceMode(true)
+              setStep(2)
+            }}
+          />
         )}
-        {step === 2 && (
+        {step === 2 && isVoiceMode && (
+          <StepConfirmation
+            values={values}
+            onChange={setField}
+            onBack={() => {
+              setIsVoiceMode(false)
+              setStep(1)
+            }}
+            onConfirm={() => {
+              setStep(3)
+            }}
+          />
+        )}
+        {step === 2 && !isVoiceMode && (
           <StepDescription
             values={values}
             errors={errors}
