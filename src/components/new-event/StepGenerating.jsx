@@ -187,7 +187,7 @@ function StepGenerating({ formValues, onComplete }) {
         }
 
         // 2. Generate the AI plan (triggers Flask LLM service)
-        const generateResponse = await generatePlan(eventId)
+        const generateResponse = await generatePlan(eventId, formValues.venue_photo_analysis)
         
         // 3. Reconstruct dual-plans from options
         const options = generateResponse?.options || {}
