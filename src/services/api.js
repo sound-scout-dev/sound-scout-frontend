@@ -76,6 +76,7 @@ export async function login({ email, password }) {
     email: session.user.email,
     role: session.user.role,
     region: session.user.region,
+    token: session.accessToken,
   }
 }
 
@@ -90,7 +91,14 @@ export async function register({ fullName, email, role, region, password }) {
   })
   const created = response.user
 
-  return { id: created.user_id, name: created.name, email: created.email, role: created.role, region: created.region }
+  return { 
+    id: created.user.user_id, 
+    name: created.user.name, 
+    email: created.user.email, 
+    role: created.user.role, 
+    region: created.user.region,
+    token: created.accessToken
+  }
 }
 
 export async function updateProfile({ name, email, region, password }) {
@@ -104,15 +112,16 @@ export async function updateProfile({ name, email, region, password }) {
 // No "list my events" endpoint exists — combine the seeded demo events with
 // anything published for real this session/browser via createEvent() below.
 export async function listOrganizerEvents() {
-  try {
-    const backendEvents = await request("/events")
-    return (backendEvents ?? []).map((e) => {
-      let parsedPlan = null
-      if (e.ai_infrastructure_plan) {
-        parsedPlan = typeof e.ai_infrastructure_plan === 'string'
-          ? JSON.parse(e.ai_infrastructure_plan)
-          : e.ai_infrastructure_plan
-      }
+      let mappedBackendEvents = []
+      try {
+        const backendEvents = await request("/events")
+        mappedBackendEvents = (backendEvents ?? []).map((e) => {
+          let parsedPlan = null
+          if (e.ai_infrastructure_plan) {
+            parsedPlan = typeof e.ai_infrastructure_plan === 'string'
+              ? JSON.parse(e.ai_infrastructure_plan)
+              : e.ai_infrastructure_plan
+          }
 
       // Reconstruct display categories based on the plan shape (single selected vs draft options)
       let displayPlan;
@@ -130,47 +139,62 @@ export async function listOrganizerEvents() {
                 if (match) {
                   return { label: match[2], qty: parseInt(match[1]) };
                 }
-                return { label: item, qty: 1 };
-              })
+              ];
+            } else if (typeof selectedRaw === 'object') {
+              categories = Object.entries(selectedRaw).map(([name, items]) => ({
+                name,
+                items: Array.isArray(items) ? items.map(item => {
+                  const match = item.match(/^(\d+)x\s+(.*)$/);
+                  if (match) {
+                    return { label: match[2], qty: parseInt(match[1]) };
+                  }
+                  return { label: item, qty: 1 };
+                }) : []
+              }));
             }
-          ];
-        } else if (typeof selectedRaw === 'object') {
-          categories = Object.entries(selectedRaw).map(([name, items]) => ({
-            name,
-            items: Array.isArray(items) ? items.map(item => {
-              const match = item.match(/^(\d+)x\s+(.*)$/);
-              if (match) {
-                return { label: match[2], qty: parseInt(match[1]) };
+            let low = 50000;
+            let high = 150000;
+            if (e.budget_range) {
+              const parts = e.budget_range.split('-');
+              if (parts.length === 2) {
+                low = Math.max(10000, Number(parts[0]) || 50000);
+                high = Number(parts[1]) || 150000;
               }
-              return { label: item, qty: 1 };
-            }) : []
-          }));
-        }
-        let low = 50000;
-        let high = 150000;
-        if (e.budget_range) {
-          const parts = e.budget_range.split('-');
-          if (parts.length === 2) {
-            low = Math.max(10000, Number(parts[0]) || 50000);
-            high = Number(parts[1]) || 150000;
-          }
-        }
-        displayPlan = {
-          eventType: e.event_type,
-          meta: `${e.crowd_count.toLocaleString()} guests`,
-          categories,
-          priceRange: { low, high }
-        }
+            }
+            displayPlan = {
+              eventType: e.event_type,
+              meta: `${e.crowd_count.toLocaleString()} guests`,
+              categories,
+              priceRange: { low, high }
+            }
 
-      } else {
-        displayPlan = buildInfrastructurePlan({
-          eventType: e.event_type,
-          crowdSize: e.crowd_count,
-          venueSizeSqm: e.venue_size_sqm,
-          budgetMin: e.budget_range ? e.budget_range.split('-')[0] : 50000,
-          budgetMax: e.budget_range ? e.budget_range.split('-')[1] : 150000,
-        });
+          } else {
+            displayPlan = buildInfrastructurePlan({
+              eventType: e.event_type,
+              crowdSize: e.crowd_count,
+              venueSizeSqm: e.venue_size_sqm,
+              budgetMin: e.budget_range ? e.budget_range.split('-')[0] : 50000,
+              budgetMax: e.budget_range ? e.budget_range.split('-')[1] : 150000,
+            });
+          }
+
+          return {
+            id: e.event_id,
+            name: e.event_type, // Use event type as fallback event name
+            eventType: e.event_type,
+            crowdSize: e.crowd_count,
+            date: e.created_at || new Date().toISOString(),
+            location: e.location || "Colombo",
+            status: e.status === "draft" ? "planning" : (e.status || "bidding_open"),
+            plan: displayPlan,
+          }
+        })
+      } catch (err) {
+        console.error("Failed to list organizer events:", err)
       }
+      
+      return mappedBackendEvents
+}
 
       return {
         id: e.event_id,
@@ -274,8 +298,8 @@ export async function getEventById(id) {
         crowdSize: backendEvent.crowd_count,
         venueSizeSqm: backendEvent.venue_size_sqm,
         budget: backendEvent.budget_range,
-        location: backendEvent.environment || "Indoor",
-        status: backendEvent.status,
+        location: backendEvent.location || backendEvent.environment || "Indoor",
+        status: backendEvent.status === "draft" ? "planning" : (backendEvent.status || "bidding_open"),
         date: backendEvent.created_at || new Date().toISOString(), // Fallback date
       }
 
@@ -294,18 +318,35 @@ export async function getEventById(id) {
         displayPlan = ensurePlanPriceRange(plan, backendEvent);
       } else if (plan && (plan.budget_plan || plan.premium_plan)) {
         const selectedRaw = plan.budget_plan || plan.premium_plan;
-        const categories = [
-          {
-            name: "Equipment List",
-            items: selectedRaw.map(item => {
-              const match = item.match(/^(\d+)x\s+(.*)$/);
-              if (match) {
-                return { label: match[2], qty: parseInt(match[1]) };
-              }
-              return { label: item, qty: 1 };
-            })
-          }
-        ];
+        
+        let categories = [];
+        if (typeof selectedRaw === 'object' && !Array.isArray(selectedRaw)) {
+          categories = Object.entries(selectedRaw).map(([name, items]) => {
+            return {
+              name,
+              items: Array.isArray(items) ? items.map(item => {
+                const match = item.match(/^(\d+)x\s+(.*)$/);
+                if (match) {
+                  return { label: match[2], qty: parseInt(match[1]) };
+                }
+                return { label: item, qty: 1 };
+              }) : []
+            };
+          });
+        } else if (Array.isArray(selectedRaw)) {
+          categories = [
+            {
+              name: "Equipment List",
+              items: selectedRaw.map(item => {
+                const match = item.match(/^(\d+)x\s+(.*)$/);
+                if (match) {
+                  return { label: match[2], qty: parseInt(match[1]) };
+                }
+                return { label: item, qty: 1 };
+              })
+            }
+          ];
+        }
         let low = 50000;
         let high = 150000;
         if (event.budget) {
@@ -356,13 +397,9 @@ export async function getEventById(id) {
       return { ...event, plan: displayPlan }
     }
   } catch (err) {
-    // Fall back to local mock data below
+    console.error("Failed to get event by id:", err)
+    return null
   }
-
-  const event =
-    mockEvents.find((e) => e.id === id) ?? getLocallyPublishedEvents().find((e) => e.id === id)
-  if (!event) return delay(null)
-  return delay({ ...event, plan: buildInfrastructurePlan(event) })
 }
 
 // Real call: GET /bids/event/{eventId}, with a fallback to local demo bids —
@@ -442,12 +479,7 @@ export async function acceptBid(eventId, bidId, organizerId) {
   return delay({ eventId, bidId, status: "booked" })
 }
 
-// Used only for the seeded "planning" demo event (evt-3) — real events created
-// through the wizard go straight to "bidding_open" via generatePlan() above,
-// since the backend has no separate publish step.
-export async function publishEvent(eventId) {
-  return delay({ eventId, status: "bidding_open" })
-}
+
 
 // Real call: GET /events/open, merged with local demo/published events so the
 // vendor feed stays populated even when the backend is unreachable (or hasn't
@@ -638,9 +670,11 @@ export async function addInstantRental(listing) {
   const newListing = {
     id: `local-rental-${Date.now()}`,
     ...listing,
+    qty: Number(listing.qty) || 1,
     distanceKm: 1.5,
     availability: "now",
     rating: 5.0,
+    status: "now"
   }
   localStorage.setItem(LOCAL_RENTAL_KEY, JSON.stringify([...current, newListing]))
   return delay(newListing, 300)
@@ -671,8 +705,11 @@ export async function searchInstantRentals({ category, location }) {
              console.error("AI Distance Fetch failed, using fallback:", e);
           }
           
-          const bookedMockIds = JSON.parse(localStorage.getItem("soundscout.booked_mock_ids") || "[]")
-          const isBooked = bookedMockIds.includes(`db-vendor-${vendor.vendor_id}`)
+          const bookedQtys = JSON.parse(localStorage.getItem("soundscout.booked_mock_qtys") || "{}")
+          const bookedQty = bookedQtys[`db-vendor-${vendor.vendor_id}`] || 0
+          const initialQty = 3 // Mock initial qty for backend vendors
+          const remainingQty = Math.max(0, initialQty - bookedQty)
+          const isBooked = remainingQty <= 0
 
           return {
             id: `db-vendor-${vendor.vendor_id}`,
@@ -682,6 +719,7 @@ export async function searchInstantRentals({ category, location }) {
             location: vendor.region,
             distanceKm: distance,
             pricePerDay: 180,
+            qty: remainingQty,
             availability: isBooked ? "booked" : "now",
             status: isBooked ? "booked" : "now",
             rating: 4.8,
@@ -713,21 +751,28 @@ export async function searchInstantRentals({ category, location }) {
         // keep original mock distance
       }
       
-      const bookedMockIds = JSON.parse(localStorage.getItem("soundscout.booked_mock_ids") || "[]")
-      const isBooked = bookedMockIds.includes(listing.id) || listing.status === "booked"
-
+      const bookedQtys = JSON.parse(localStorage.getItem("soundscout.booked_mock_qtys") || "{}")
+      const bookedQty = bookedQtys[listing.id] || 0
+      const currentQty = Number(listing.qty) || 1
+      const remainingQty = Math.max(0, currentQty - bookedQty)
+      const isBooked = remainingQty <= 0 || listing.status === "booked"
+      
       return { 
         ...listing, 
         distanceKm: distance,
-        status: isBooked ? "booked" : listing.status,
-        availability: isBooked ? "booked" : listing.availability
+        qty: remainingQty,
+        availability: isBooked ? "booked" : "now",
+        status: isBooked ? "booked" : listing.status
       }
     }))
   } else {
     // Check booked status from localStorage
     results = results.map(listing => {
-      const bookedMockIds = JSON.parse(localStorage.getItem("soundscout.booked_mock_ids") || "[]")
-      const isBooked = bookedMockIds.includes(listing.id) || listing.status === "booked"
+      const bookedQtys = JSON.parse(localStorage.getItem("soundscout.booked_mock_qtys") || "{}")
+      const bookedQty = bookedQtys[listing.id] || 0
+      const currentQty = Number(listing.qty) || 1
+      const remainingQty = Math.max(0, currentQty - bookedQty)
+      const isBooked = remainingQty <= 0 || listing.status === "booked"
       return {
         ...listing,
         status: isBooked ? "booked" : listing.status,
@@ -748,16 +793,25 @@ export async function searchInstantRentals({ category, location }) {
 }
 
 // No booking endpoint exists on the backend at all — stays fully mocked in localStorage.
-export async function bookInstantRental(listingId) {
+export async function bookInstantRental(listingId, qtyToBook = 1) {
   const current = getLocalRentals()
   const idx = current.findIndex(r => r.id === listingId)
   if (idx !== -1) {
-    current[idx].status = "booked"
+    const listing = current[idx]
+    const currentQty = Number(listing.qty) || 1
+    if (currentQty > qtyToBook) {
+      listing.qty = currentQty - qtyToBook
+    } else {
+      listing.qty = 0
+      listing.status = "booked"
+      listing.availability = "booked"
+    }
     localStorage.setItem(LOCAL_RENTAL_KEY, JSON.stringify(current))
   } else {
-    const bookedMockIds = JSON.parse(localStorage.getItem("soundscout.booked_mock_ids") || "[]")
-    bookedMockIds.push(listingId)
-    localStorage.setItem("soundscout.booked_mock_ids", JSON.stringify(bookedMockIds))
+    // For backend listings, we mock partial tracking by maintaining a booked count
+    const bookedMockQtys = JSON.parse(localStorage.getItem("soundscout.booked_mock_qtys") || "{}")
+    bookedMockQtys[listingId] = (bookedMockQtys[listingId] || 0) + qtyToBook
+    localStorage.setItem("soundscout.booked_mock_qtys", JSON.stringify(bookedMockQtys))
   }
   return delay({ listingId, status: "booked" }, 500)
 }

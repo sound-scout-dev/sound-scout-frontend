@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Radar, Plus, Package } from "lucide-react"
+import { Radar, Plus, Package, CheckCircle2 } from "lucide-react"
 import OpportunityCard from "../../components/OpportunityCard"
 import BidStatusBadge from "../../components/BidStatusBadge"
 import BidSubmissionModal from "../../components/BidSubmissionModal"
@@ -40,6 +40,7 @@ function VendorDashboard() {
   // Instant rental listing form states
   const [eqSummary, setEqSummary] = useState("")
   const [price, setPrice] = useState("")
+  const [qty, setQty] = useState("1")
   const [cat, setCat] = useState("Audio")
   const [listingSuccess, setListingSuccess] = useState("")
   const [localListings, setLocalListings] = useState([])
@@ -85,11 +86,13 @@ function VendorDashboard() {
         equipmentSummary: eqSummary,
         location: vendor.region || "Colombo",
         pricePerDay: Number(price),
+        qty: Number(qty) || 1,
       }
       const added = await addInstantRental(listing)
       setLocalListings((prev) => [...prev, added])
       setEqSummary("")
       setPrice("")
+      setQty("1")
       setListingSuccess("Rental listing added successfully!")
       setTimeout(() => setListingSuccess(""), 4000)
     } catch (err) {
@@ -214,6 +217,16 @@ function VendorDashboard() {
               />
 
               <FormField
+                label="Quantity Available"
+                name="qty"
+                type="number"
+                min="1"
+                value={qty}
+                onChange={(e) => setQty(e.target.value)}
+                placeholder="e.g. 1"
+              />
+
+              <FormField
                 as="select"
                 label="Category"
                 name="cat"
@@ -233,30 +246,59 @@ function VendorDashboard() {
             </form>
           </div>
 
-          <div className="rounded-md border border-slate/15 bg-white p-6 shadow-sm">
-            <h2 className="font-display text-lg font-semibold text-ink-navy flex items-center gap-2">
-              <Package size={20} className="text-circuit-teal" />
-              My Rental Items
-            </h2>
+          <div className="rounded-md border border-slate/15 bg-white p-6 shadow-sm space-y-6">
+            <div>
+              <h2 className="font-display text-lg font-semibold text-ink-navy flex items-center gap-2 border-b border-slate/10 pb-2">
+                <Package size={20} className="text-circuit-teal" />
+                Active Inventory Listings
+              </h2>
 
-            <div className="mt-4 space-y-3">
-              {localListings.length === 0 ? (
-                <p className="text-xs text-slate font-body text-center py-4">
-                  No instant rentals listed yet.
-                </p>
-              ) : (
-                localListings.map((listing) => (
-                  <div key={listing.id} className="rounded border border-slate/10 p-3 bg-slate/5">
-                    <p className="font-display text-xs font-semibold text-ink-navy">
-                      {listing.equipmentSummary}
-                    </p>
-                    <div className="mt-1 flex justify-between font-mono text-[10px] text-slate">
-                      <span>{listing.category}</span>
-                      <span className="font-semibold text-circuit-teal">{formatLKR(listing.pricePerDay)}/day</span>
+              <div className="mt-3 space-y-3">
+                {localListings.filter(l => l.status !== "booked" && (l.qty === undefined || l.qty > 0)).length === 0 ? (
+                  <p className="text-xs text-slate font-body text-center py-4 italic">
+                    No active inventory items listed.
+                  </p>
+                ) : (
+                  localListings.filter(l => l.status !== "booked" && (l.qty === undefined || l.qty > 0)).map((listing) => (
+                    <div key={listing.id} className="rounded border border-slate/10 p-3 bg-slate/5">
+                      <p className="font-display text-xs font-semibold text-ink-navy">
+                        {listing.equipmentSummary}
+                      </p>
+                      <div className="mt-1 flex justify-between font-mono text-[10px] text-slate">
+                        <span>{listing.category} · Qty: {listing.qty ?? 1}</span>
+                        <span className="font-semibold text-circuit-teal">{formatLKR(listing.pricePerDay)}/day</span>
+                      </div>
                     </div>
-                  </div>
-                ))
-              )}
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div>
+              <h2 className="font-display text-lg font-semibold text-ink-navy flex items-center gap-2 border-b border-slate/10 pb-2">
+                <CheckCircle2 size={20} className="text-circuit-teal" />
+                Confirmed Bookings
+              </h2>
+
+              <div className="mt-3 space-y-3">
+                {localListings.filter(l => l.status === "booked" || (l.qty !== undefined && l.qty <= 0)).length === 0 ? (
+                  <p className="text-xs text-slate font-body text-center py-4 italic">
+                    No confirmed bookings yet.
+                  </p>
+                ) : (
+                  localListings.filter(l => l.status === "booked" || (l.qty !== undefined && l.qty <= 0)).map((listing) => (
+                    <div key={listing.id} className="rounded border border-alert-red/20 p-3 bg-alert-red/5">
+                      <p className="font-display text-xs font-semibold text-ink-navy">
+                        {listing.equipmentSummary}
+                      </p>
+                      <div className="mt-1 flex justify-between font-mono text-[10px] text-slate">
+                        <span className="text-alert-red font-semibold uppercase tracking-wider text-[9px] bg-alert-red/10 px-1 rounded">Booked / Reserved</span>
+                        <span className="font-semibold text-slate">{formatLKR(listing.pricePerDay)}/day</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -197,16 +197,18 @@ function StepResults({ plan, onPlanChange, onEdit, onPublish, publishing = false
 
       {!isEditing && (
         <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:flex-row">
-          <Button
-            type="button"
-            variant="outline-dark"
-            size="lg"
-            className="flex-1"
-            onClick={onEdit}
-            disabled={publishing}
-          >
-            Adjust inputs
-          </Button>
+          {onEdit && (
+            <Button
+              type="button"
+              variant="outline-dark"
+              size="lg"
+              className="flex-1"
+              onClick={onEdit}
+              disabled={publishing}
+            >
+              Adjust inputs
+            </Button>
+          )}
           <Button
             type="button"
             variant="outline-dark"

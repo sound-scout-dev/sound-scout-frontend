@@ -13,14 +13,64 @@ export class ApiError extends Error {
 }
 
 export async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json", ...options.headers },
+  const headers = { "Content-Type": "application/json", ...options.headers }
+  
+  try {
+    const session = JSON.parse(localStorage.getItem("soundscout.session") || "{}")
+    if (session?.token) {
+      headers["Authorization"] = `Bearer ${session.token}`
+    }
+  } catch (_) {}
+
+  let response = await fetch(`${API_BASE}${path}`, {
+    headers,
     credentials: "include",
     ...options,
   })
 
-  const isJson = response.headers.get("content-type")?.includes("application/json")
-  const body = isJson ? await response.json().catch(() => null) : null
+  let isJson = response.headers.get("content-type")?.includes("application/json")
+  let body = isJson ? await response.json().catch(() => null) : null
+
+  // If unauthorized (401), attempt to silently refresh the token
+  if (response.status === 401 && path !== "/users/login" && path !== "/users/refresh") {
+    try {
+      const refreshResponse = await fetch(`${API_BASE}/users/refresh`, {
+        method: "POST",
+        credentials: "include"
+      })
+
+      if (refreshResponse.ok) {
+        const refreshData = await refreshResponse.json()
+        if (refreshData?.accessToken) {
+          // Update the session in local storage
+          try {
+            const session = JSON.parse(localStorage.getItem("soundscout.session") || "{}")
+            session.token = refreshData.accessToken
+            localStorage.setItem("soundscout.session", JSON.stringify(session))
+          } catch (_) {}
+
+          // Retry the original request with the new access token
+          headers["Authorization"] = `Bearer ${refreshData.accessToken}`
+          response = await fetch(`${API_BASE}${path}`, {
+            headers,
+            credentials: "include",
+            ...options,
+          })
+          isJson = response.headers.get("content-type")?.includes("application/json")
+          body = isJson ? await response.json().catch(() => null) : null
+        }
+      } else {
+        // Refresh token itself expired or invalid, log out the user
+        localStorage.removeItem("soundscout.session")
+        window.dispatchEvent(new Event("soundscout.session_expired"))
+        throw new ApiError("Session expired. Please log in again.", 401)
+      }
+    } catch (refreshErr) {
+      localStorage.removeItem("soundscout.session")
+      window.dispatchEvent(new Event("soundscout.session_expired"))
+      throw new ApiError("Session expired. Please log in again.", 401)
+    }
+  }
 
   if (!response.ok) {
     throw new ApiError(body?.error ?? body?.message ?? `Request to ${path} failed (${response.status}).`, response.status)
