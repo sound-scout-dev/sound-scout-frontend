@@ -1,16 +1,20 @@
+import React from "react"
+
 const VARIANTS = {
   primary:
-    "bg-signal-amber text-ink-navy hover:bg-amber-500 active:bg-amber-600 disabled:bg-slate/30",
+    "bg-[#059669] text-white hover:bg-[#047857] active:bg-[#065f46] disabled:bg-slate-200 disabled:text-slate-400 font-semibold shadow-sm",
   secondary:
-    "bg-circuit-teal text-paper hover:bg-emerald-700 active:bg-emerald-800 disabled:bg-slate/30",
+    "bg-[#0891B2] text-white hover:bg-[#0e7490] active:bg-[#155e75] disabled:bg-slate-200 disabled:text-slate-400 font-semibold shadow-sm",
   outline:
-    "bg-transparent text-paper border border-paper/30 hover:border-paper/70 hover:bg-paper/5 active:bg-paper/10 disabled:border-paper/10 disabled:text-paper/30",
+    "bg-transparent text-slate-700 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 active:bg-slate-100 disabled:border-slate-100 disabled:text-slate-300",
   "outline-dark":
-    "bg-transparent text-ink-navy border border-slate/25 hover:border-ink-navy/40 hover:bg-ink-navy/5 active:bg-ink-navy/10 disabled:border-slate/10 disabled:text-slate/30",
+    "bg-transparent text-slate-800 border border-slate-300 hover:border-slate-400 hover:bg-slate-50 active:bg-slate-100 disabled:border-slate-100 disabled:text-slate-300",
   ghost:
-    "bg-transparent text-ink-navy hover:bg-ink-navy/5 active:bg-ink-navy/10 disabled:text-slate/40",
+    "bg-transparent text-slate-700 hover:bg-slate-50 hover:text-slate-900 active:bg-slate-100 disabled:text-slate-300",
   danger:
-    "bg-alert-red text-paper hover:bg-red-600 active:bg-red-700 disabled:bg-slate/30",
+    "bg-red-600 text-white hover:bg-red-700 active:bg-red-800 disabled:bg-slate-200 disabled:text-slate-400 shadow-sm",
+  glass:
+    "bg-white/85 border border-slate-200/60 backdrop-blur-md text-slate-800 hover:bg-white hover:border-slate-300 active:bg-white/85 shadow-sm",
 }
 
 const SIZES = {
@@ -32,7 +36,7 @@ function Button({
       disabled={disabled}
       className={`inline-flex items-center justify-center gap-2 rounded font-medium
         transition-colors duration-150 ease-out
-        focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-amber
+        focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0891B2]
         disabled:cursor-not-allowed
         ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
       {...props}

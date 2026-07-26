@@ -28,25 +28,26 @@ const COLUMNS = [
 
 function Footer() {
   return (
-    <footer className="border-t border-paper/10 bg-ink-navy">
+    <footer className="border-t border-slate-100 bg-[#0B0F13]">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
           <div className="col-span-2 md:col-span-1">
-            <Logo />
-            <p className="mt-3 max-w-xs font-body text-sm text-paper/60">
+            {/* Explicitly tell Logo to render in white text for the dark footer */}
+            <Logo dark={false} />
+            <p className="mt-4 max-w-xs font-body text-sm text-gray-400">
               AI-generated infrastructure plans, matched to vendors who can build them.
             </p>
           </div>
 
           {COLUMNS.map((col) => (
             <div key={col.title}>
-              <h4 className="font-display text-sm font-semibold text-paper">{col.title}</h4>
+              <h4 className="font-display text-sm font-semibold text-white">{col.title}</h4>
               <ul className="mt-3 space-y-2">
                 {col.links.map((link) => (
                   <li key={link.label}>
                     <Link
                       to={link.to}
-                      className="text-sm text-paper/60 transition-colors duration-150 ease-out hover:text-signal-amber focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-amber rounded"
+                      className="text-sm text-gray-400 transition-colors duration-150 ease-out hover:text-[#0891B2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0891B2] rounded"
                     >
                       {link.label}
                     </Link>
@@ -57,7 +58,7 @@ function Footer() {
           ))}
         </div>
 
-        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-paper/10 pt-6 font-mono text-xs text-paper/40 sm:flex-row">
+        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/5 pt-6 font-mono text-xs text-gray-500 sm:flex-row">
           <span>© {new Date().getFullYear()} SoundScout. All rights reserved.</span>
           <span>Built for a university competition demo.</span>
         </div>

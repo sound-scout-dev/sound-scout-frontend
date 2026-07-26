@@ -14,35 +14,40 @@ function EventCard({ event }) {
   return (
     <Link
       to={`/organizer/events/${event.id}`}
-      className="group flex flex-col rounded-md border border-slate/15 bg-white p-5 transition-colors duration-150 ease-out hover:border-signal-amber/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-amber"
+      className="group flex flex-col rounded-lg border border-gray-200/80 bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:border-[#0891B2]/40 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0891B2]"
     >
       <div className="flex items-start justify-between gap-3">
-        <h3 className="font-display text-base font-semibold text-ink-navy">{event.name}</h3>
+        <h3 className="font-display text-base font-semibold text-gray-900 group-hover:text-[#0891B2] transition-colors duration-150">
+          {event.name}
+        </h3>
         <ArrowUpRight
-          size={18}
-          className="shrink-0 text-slate/40 transition-colors duration-150 ease-out group-hover:text-signal-amber"
+          size={16}
+          className="shrink-0 text-gray-400 transition-colors duration-150 ease-out group-hover:text-[#0891B2] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transform"
         />
       </div>
 
-      <p className="mt-1 font-mono text-xs text-slate">{event.eventType}</p>
+      <p className="mt-1 font-mono text-xs text-gray-500">{event.eventType}</p>
 
-      <div className="mt-4 space-y-1.5 font-mono text-xs text-slate">
+      <div className="mt-4 space-y-2 font-mono text-[11px] text-gray-500">
         <div className="flex items-center gap-2">
-          <CalendarDays size={13} strokeWidth={2} />
+          <CalendarDays size={13} strokeWidth={2} className="text-gray-400" />
           {formatDate(event.date)}
         </div>
         <div className="flex items-center gap-2">
-          <Users size={13} strokeWidth={2} />
+          <Users size={13} strokeWidth={2} className="text-gray-400" />
           {event.crowdSize.toLocaleString()} guests
         </div>
         <div className="flex items-center gap-2">
-          <MapPin size={13} strokeWidth={2} />
+          <MapPin size={13} strokeWidth={2} className="text-gray-400" />
           {event.location}
         </div>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
         <StatusBadge status={event.status} />
+        <span className="text-[10px] font-mono font-bold text-[#0891B2] opacity-0 group-hover:opacity-100 transition-opacity duration-200 uppercase tracking-wider">
+          View Details &rarr;
+        </span>
       </div>
     </Link>
   )

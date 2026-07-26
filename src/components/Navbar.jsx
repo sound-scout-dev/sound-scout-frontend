@@ -15,8 +15,8 @@ function Navbar() {
   const { user, logout } = useAuth()
 
   const linkClass = ({ isActive }) =>
-    `text-sm font-medium transition-colors duration-150 ease-out hover:text-signal-amber ${
-      isActive ? "text-signal-amber" : "text-paper/80"
+    `text-sm font-semibold transition-colors duration-150 ease-out hover:text-[#0891B2] ${
+      isActive ? "text-[#0891B2]" : "text-gray-600"
     }`
 
   const dashboardPath = user
@@ -24,10 +24,10 @@ function Navbar() {
     : "/"
 
   return (
-    <header className="sticky top-0 z-50 border-b border-paper/10 bg-ink-navy">
+    <header className="sticky top-0 z-50 border-b border-gray-200/60 bg-white/95 backdrop-blur-md">
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link to={dashboardPath} className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-signal-amber rounded">
-          <Logo />
+        <Link to={dashboardPath} className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0891B2] rounded">
+          <Logo dark={true} />
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">
@@ -38,26 +38,35 @@ function Navbar() {
           ))}
         </div>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-4 md:flex">
           <Link
             to="/instant-rental"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-alert-red transition-colors duration-150 ease-out hover:text-red-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-alert-red rounded"
+            className="inline-flex items-center gap-1.5 text-sm font-mono tracking-wide text-[#0891B2] transition-colors duration-150 ease-out hover:text-[#0e7490] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0891B2] rounded"
           >
-            <Zap size={15} strokeWidth={2.5} />
+            <Zap size={14} className="text-[#059669]" strokeWidth={2.5} />
             Instant Rental
           </Link>
           {user ? (
             <>
-              <Button as={Link} to={dashboardPath} variant="ghost" size="sm" className="text-paper hover:bg-paper/10 active:bg-paper/15">
+              <Link 
+                to={user.role === "vendor" ? "/vendor/dashboard" : "/organizer/dashboard"}
+                className="text-sm font-semibold text-gray-600 hover:text-[#0891B2] transition-colors"
+              >
                 Dashboard
-              </Button>
-              <Button onClick={logout} variant="primary" size="sm">
+              </Link>
+              <Link 
+                to={user.role === "vendor" ? "/vendor/profile" : "/organizer/profile"}
+                className="text-sm font-semibold text-gray-600 hover:text-[#0891B2] transition-colors"
+              >
+                Profile
+              </Link>
+              <Button onClick={logout} variant="outline" size="sm" className="border-gray-200 text-gray-700 hover:bg-gray-50">
                 Log out
               </Button>
             </>
           ) : (
             <>
-              <Button as={Link} to="/login" variant="ghost" size="sm" className="text-paper hover:bg-paper/10 active:bg-paper/15">
+              <Button as={Link} to="/login" variant="ghost" size="sm" className="text-gray-700 hover:bg-gray-100/50">
                 Log in
               </Button>
               <Button as={Link} to="/register" variant="primary" size="sm">
@@ -69,7 +78,7 @@ function Navbar() {
 
         <button
           type="button"
-          className="flex items-center justify-center rounded p-2 text-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-amber md:hidden"
+          className="flex items-center justify-center rounded p-2 text-gray-700 hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0891B2] md:hidden"
           onClick={() => setOpen((v) => !v)}
           aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
@@ -79,7 +88,7 @@ function Navbar() {
       </nav>
 
       {open && (
-        <div className="border-t border-paper/10 bg-ink-navy px-4 pb-6 pt-4 md:hidden">
+        <div className="border-t border-gray-100 bg-white px-4 pb-6 pt-4 md:hidden">
           <div className="flex flex-col gap-4">
             {NAV_LINKS.map((link) => (
               <NavLink
@@ -93,28 +102,39 @@ function Navbar() {
             ))}
             <Link
               to="/instant-rental"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-alert-red"
+              className="inline-flex items-center gap-1.5 text-sm font-mono tracking-wide text-[#0891B2]"
               onClick={() => setOpen(false)}
             >
-              <Zap size={15} strokeWidth={2.5} />
+              <Zap size={14} className="text-[#059669]" strokeWidth={2.5} />
               Instant Rental
             </Link>
-            <div className="flex gap-3 pt-2">
+            <div className="flex flex-col gap-3 pt-2">
               {user ? (
                 <>
-                  <Button as={Link} to={dashboardPath} variant="outline" size="sm" className="flex-1" onClick={() => setOpen(false)}>
+                  <Link 
+                    to={user.role === "vendor" ? "/vendor/dashboard" : "/organizer/dashboard"}
+                    className="text-sm font-semibold text-gray-600 hover:text-[#0891B2] transition-colors py-1"
+                    onClick={() => setOpen(false)}
+                  >
                     Dashboard
-                  </Button>
-                  <Button onClick={() => { logout(); setOpen(false); }} variant="primary" size="sm" className="flex-1">
+                  </Link>
+                  <Link 
+                    to={user.role === "vendor" ? "/vendor/profile" : "/organizer/profile"}
+                    className="text-sm font-semibold text-gray-600 hover:text-[#0891B2] transition-colors py-1"
+                    onClick={() => setOpen(false)}
+                  >
+                    Profile
+                  </Link>
+                  <Button onClick={() => { logout(); setOpen(false); }} variant="outline" size="sm" className="w-full border-gray-200 text-gray-700">
                     Log out
                   </Button>
                 </>
               ) : (
                 <>
-                  <Button as={Link} to="/login" variant="outline" size="sm" className="flex-1" onClick={() => setOpen(false)}>
+                  <Button as={Link} to="/login" variant="outline" size="sm" className="w-full border-gray-200 text-gray-700 hover:bg-gray-50" onClick={() => setOpen(false)}>
                     Log in
                   </Button>
-                  <Button as={Link} to="/register" variant="primary" size="sm" className="flex-1" onClick={() => setOpen(false)}>
+                  <Button as={Link} to="/register" variant="primary" size="sm" className="w-full" onClick={() => setOpen(false)}>
                     Get started
                   </Button>
                 </>

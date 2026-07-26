@@ -10,7 +10,10 @@
   }
 
   body {
-    @apply bg-paper text-ink-navy antialiased;
+    background-color: #f8fafc;
+    color: #0f172a;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1,
@@ -21,11 +24,39 @@
   }
 
   ::selection {
-    @apply bg-signal-amber/30;
+    background-color: rgba(8, 145, 178, 0.15);
   }
 
   *:focus-visible {
-    outline: 2px solid #ffb020;
+    outline: 2px solid #0891b2;
     outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .bg-glass {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background-color: rgba(255, 255, 255, 0.75);
+  }
+  
+  .border-glass {
+    border: 1px solid rgba(15, 23, 42, 0.08);
+  }
+  
+  .shadow-glow-cyan {
+    box-shadow: 0 10px 30px -10px rgba(8, 145, 178, 0.08), 0 1px 3px rgba(8, 145, 178, 0.02);
+  }
+  
+  .shadow-glow-green {
+    box-shadow: 0 10px 30px -10px rgba(5, 150, 105, 0.08), 0 1px 3px rgba(5, 150, 105, 0.02);
+  }
+
+  .text-glow-cyan {
+    text-shadow: 0 0 8px rgba(8, 145, 178, 0.15);
+  }
+
+  .text-glow-green {
+    text-shadow: 0 0 8px rgba(5, 150, 105, 0.15);
   }
 }

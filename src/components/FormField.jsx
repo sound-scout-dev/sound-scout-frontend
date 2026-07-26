@@ -2,7 +2,7 @@ import { useId } from "react"
 import { AlertCircle } from "lucide-react"
 
 const baseInputClass =
-  "w-full rounded border bg-white px-3 py-2.5 text-sm text-ink-navy placeholder:text-slate/50 transition-colors duration-150 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-amber disabled:bg-slate/5 disabled:text-slate/40"
+  "w-full rounded-lg border bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-450 transition-all duration-150 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0891B2] disabled:bg-gray-50 disabled:text-gray-400 shadow-sm focus:border-[#0891B2]/50"
 
 function FormField({
   label,
@@ -18,14 +18,14 @@ function FormField({
   const errorId = `${id}-error`
 
   const borderClass = error
-    ? "border-alert-red"
-    : "border-slate/25 hover:border-slate/40"
+    ? "border-red-500"
+    : "border-gray-200 hover:border-gray-300"
 
   return (
     <div className={className}>
       <label
         htmlFor={id}
-        className="mb-1.5 block font-mono text-[11px] font-medium uppercase tracking-widest text-slate"
+        className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-widest text-gray-500"
       >
         {label}
       </label>
@@ -63,7 +63,7 @@ function FormField({
       )}
 
       {error && (
-        <p id={errorId} className="mt-1.5 flex items-center gap-1.5 text-xs text-alert-red">
+        <p id={errorId} className="mt-1.5 flex items-center gap-1.5 text-xs text-red-500">
           <AlertCircle size={13} strokeWidth={2.5} />
           {error}
         </p>

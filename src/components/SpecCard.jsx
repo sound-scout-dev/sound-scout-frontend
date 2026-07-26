@@ -65,27 +65,27 @@ function SpecCard({ plan, loop = false, startRevealed = false, onDone, className
 
   return (
     <div
-      className={`overflow-hidden rounded-md border border-slate/15 bg-paper shadow-2xl shadow-black/30 ${className}`}
+      className={`overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg ${className}`}
     >
-      <div className="border-b border-slate/10 px-5 py-4">
+      <div className="border-b border-gray-100 px-5 py-4">
         <div className="flex items-center justify-between">
-          <span className="flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-widest text-ink-navy">
-            <Radar size={14} className="text-signal-amber animate-pulse" />
+          <span className="flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-widest text-gray-800">
+            <Radar size={13} className="text-[#0891B2] animate-pulse" />
             AI Infrastructure Plan
           </span>
           <span
-            className={`h-2 w-2 rounded-full ${
-              phase === "done" ? "bg-circuit-teal" : "bg-signal-amber animate-ping"
+            className={`h-1.5 w-1.5 rounded-full ${
+              phase === "done" ? "bg-[#059669]" : "bg-[#0891B2] animate-ping"
             }`}
           />
         </div>
       </div>
 
       <div className="p-6">
-        <div className="font-display text-lg font-semibold text-ink-navy">
+        <div className="font-display text-lg font-semibold text-gray-900">
           {plan.eventType}
         </div>
-        <div className="mt-1 font-mono text-xs text-slate">{plan.meta}</div>
+        <div className="mt-1 font-mono text-xs text-gray-500">{plan.meta}</div>
 
         <div className="mt-6 space-y-5">
           {sequence.current.reduce((acc, node, i) => {
@@ -95,7 +95,7 @@ function SpecCard({ plan, loop = false, startRevealed = false, onDone, className
                   key={`cat-${node.cat.name}`}
                   className={isVisible(i) ? "animate-reveal-line" : "opacity-0"}
                 >
-                  <h4 className="font-mono text-[10px] font-semibold uppercase tracking-wider text-circuit-teal">
+                  <h4 className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#0891B2]">
                     {node.cat.name}
                   </h4>
                 </div>
@@ -110,24 +110,24 @@ function SpecCard({ plan, loop = false, startRevealed = false, onDone, className
               acc.push(
                 <div
                   key={`item-${node.cat.name}-${node.item.label}`}
-                  className={`flex flex-col border-b border-slate/10 pb-1.5 transition-all duration-300 ${
+                  className={`flex flex-col border-b border-gray-100 pb-1.5 transition-all duration-300 ${
                     isOptional 
-                      ? "border-alert-red/30 bg-alert-red/5 px-2.5 py-2 my-1 rounded border shadow-sm" 
+                      ? "border-red-200 bg-red-50/50 px-2.5 py-2 my-1 rounded border shadow-sm" 
                       : ""
                   } ${
                     isVisible(i) ? "animate-reveal-line" : "opacity-0"
                   }`}
                 >
                   <div className="flex items-baseline justify-between gap-4">
-                    <span className={`font-body text-sm ${isOptional ? "text-alert-red font-semibold" : "text-ink-navy"}`}>
+                    <span className={`font-body text-sm ${isOptional ? "text-red-600 font-semibold" : "text-gray-800"}`}>
                       {cleanLabel}
                     </span>
-                    <span className="font-mono text-xs font-semibold text-ink-navy">
+                    <span className="font-mono text-xs font-bold text-[#059669]">
                       {typeof node.item.qty === "string" && node.item.qty.endsWith("x") ? node.item.qty : `${node.item.qty}x`}
                     </span>
                   </div>
                   {isOptional && (
-                    <p className="mt-1 font-body text-[11px] text-alert-red/80 italic leading-snug">
+                    <p className="mt-1 font-body text-[11px] text-red-500/80 italic leading-snug">
                       * Not compulsory: {optionalComment}
                     </p>
                   )}
@@ -140,14 +140,14 @@ function SpecCard({ plan, loop = false, startRevealed = false, onDone, className
       </div>
 
       <div
-        className={`flex items-center justify-between border-t border-signal-amber/30 bg-signal-amber/10 px-5 py-4 transition-opacity duration-300 ${
+        className={`flex items-center justify-between border-t border-gray-200/60 bg-gray-50 px-5 py-4 transition-opacity duration-300 ${
           isVisible(sequence.current.length - 1) ? "opacity-100" : "opacity-0"
         }`}
       >
-        <span className="font-mono text-[11px] uppercase tracking-widest text-slate">
+        <span className="font-mono text-[10px] uppercase tracking-wider text-gray-500">
           Estimated cost
         </span>
-        <span className="font-mono text-lg font-semibold text-ink-navy">
+        <span className="font-mono text-base font-bold text-gray-900">
           {formatLKR(plan.priceRange.low)} – {formatLKR(plan.priceRange.high)}
         </span>
       </div>

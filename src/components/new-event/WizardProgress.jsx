@@ -18,19 +18,19 @@ function WizardProgress({ currentStep, onStepClick }) {
               onClick={() => isClickable && onStepClick(stepIndex)}
             >
               <span
-                className={`flex h-8 w-8 items-center justify-center rounded-full font-mono text-xs font-semibold transition-colors duration-150 ease-out ${
+                className={`flex h-8 w-8 items-center justify-center rounded-full font-mono text-xs font-bold transition-colors duration-150 ease-out ${
                   state === "done"
-                    ? "bg-circuit-teal text-paper group-hover:bg-circuit-teal/80"
+                    ? "bg-[#059669] text-white group-hover:bg-[#047857]"
                     : state === "active"
-                      ? "bg-signal-amber text-ink-navy"
-                      : "bg-slate/10 text-slate/50"
+                      ? "bg-[#0891B2] text-white shadow-sm"
+                      : "bg-gray-150 text-gray-400"
                 }`}
               >
-                {state === "done" ? <Check size={15} strokeWidth={3} /> : String(stepIndex).padStart(2, "0")}
+                {state === "done" ? <Check size={14} strokeWidth={3} /> : String(stepIndex).padStart(2, "0")}
               </span>
               <span
-                className={`font-mono text-[11px] uppercase tracking-widest transition-colors ${
-                  state === "upcoming" ? "text-slate/40" : "text-ink-navy group-hover:text-signal-amber"
+                className={`font-mono text-[10px] uppercase font-bold tracking-widest transition-colors ${
+                  state === "upcoming" ? "text-gray-400" : "text-gray-700 group-hover:text-[#0891B2]"
                 }`}
               >
                 {label}
@@ -39,7 +39,7 @@ function WizardProgress({ currentStep, onStepClick }) {
             {stepIndex !== STEPS.length && (
               <div
                 className={`mx-3 mb-5 h-px flex-1 ${
-                  state === "done" ? "bg-circuit-teal" : "bg-slate/15"
+                  state === "done" ? "bg-[#059669]" : "bg-gray-200"
                 }`}
               />
             )}
