@@ -7,16 +7,68 @@ function formatLKR(n) {
   return "Rs. " + n.toLocaleString("en-LK", { maximumFractionDigits: 0 })
 }
 
-function sanitizeWhatsAppPhone(phone) {
-  if (!phone) return ""
-  let clean = phone.replace(/[^0-9]/g, "")
-  if (clean.startsWith("0")) {
-    clean = "94" + clean.slice(1)
+function PaymentSection({ bid, payment, paying, markingPayout, onPay, onMarkPayout }) {
+  const status = payment?.status ?? "not_started"
+
+  if (status === "not_started" || status === "failed" || status === "cancelled") {
+    return (
+      <div className="mt-2 flex flex-col items-end gap-1">
+        {status !== "not_started" && (
+          <span className="font-mono text-[10px] uppercase tracking-wide text-alert-red">
+            Payment {status}
+          </span>
+        )}
+        <Button
+          type="button"
+          variant="primary"
+          size="sm"
+          disabled={paying}
+          onClick={() => onPay(bid.id)}
+        >
+          {paying ? <Loader2 size={14} className="animate-spin" /> : <CreditCard size={14} />}
+          {paying ? "Redirecting…" : "Pay Vendor"}
+        </Button>
+      </div>
+    )
   }
-  return clean
+
+  if (status === "pending") {
+    return (
+      <span className="mt-2 font-mono text-[10px] uppercase tracking-wide text-slate/60">
+        Payment pending…
+      </span>
+    )
+  }
+
+  if (status === "completed" && payment.payout_status !== "completed") {
+    return (
+      <div className="mt-2 flex flex-col items-end gap-1.5">
+        <span className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-wide text-circuit-teal">
+          <BadgeCheck size={12} /> Payment received
+        </span>
+        <Button
+          type="button"
+          variant="outline-dark"
+          size="sm"
+          disabled={markingPayout}
+          onClick={() => onMarkPayout(payment.payment_id)}
+        >
+          {markingPayout && <Loader2 size={14} className="animate-spin" />}
+          {markingPayout ? "Updating…" : "Mark vendor paid out"}
+        </Button>
+      </div>
+    )
+  }
+
+  // payout_status === "completed"
+  return (
+    <span className="mt-2 flex items-center gap-1 font-mono text-[10px] uppercase tracking-wide text-circuit-teal">
+      <BadgeCheck size={12} /> Fully settled
+    </span>
+  )
 }
 
-function BidCard({ bid, canAccept, accepting, onAccept }) {
+function BidCard({ bid, canAccept, accepting, onAccept, payment, paying, markingPayout, onPay, onMarkPayout }) {
   const isAccepted = bid.status === "accepted"
   const isDeclined = bid.status === "declined"
   const [showReviews, setShowReviews] = useState(false)
@@ -34,6 +86,13 @@ function BidCard({ bid, canAccept, accepting, onAccept }) {
         .catch(() => setLoadingReviews(false))
     }
     setShowReviews(!showReviews)
+  }
+
+  let categories = []
+  if (bid.bid_categories) {
+    categories = typeof bid.bid_categories === "string"
+      ? JSON.parse(bid.bid_categories)
+      : bid.bid_categories
   }
 
   return (
