@@ -39,6 +39,12 @@ function validate(values) {
     }
   }
 
+  if (!values.phone) {
+    errors.phone = "Enter your phone number."
+  } else if (!/^(?:\+94|94|0)?7[0-9]{8}$/.test(values.phone.trim().replace(/\s/g, ""))) {
+    errors.phone = "Enter a valid Sri Lankan phone number (e.g. 0771234567)."
+  }
+
   return errors
 }
 
@@ -46,6 +52,7 @@ const initialValues = {
   role: "organizer",
   fullName: "",
   email: "",
+  phone: "",
   password: "",
   confirmPassword: "",
   region: "",
@@ -79,11 +86,8 @@ function Register() {
     setFormError("")
     setSubmitting(true)
     try {
-      const user = await register(values)
-      // equipmentCategory isn't part of the backend's User schema — kept in the
-      // session client-side since the vendor-matching UI reads it from here.
-      login({ ...user, equipmentCategory: values.equipmentCategory })
-      navigate(user.role === "vendor" ? "/vendor/dashboard" : "/organizer/dashboard")
+      const regResponse = await register(values)
+      navigate("/verify-otp", { state: { regResponse, equipmentCategory: values.equipmentCategory } })
     } catch {
       setFormError("We couldn't create your account. Please try again.")
     } finally {
@@ -125,6 +129,16 @@ function Register() {
           onChange={setField("email")}
           error={errors.email}
           placeholder="you@company.com"
+        />
+
+        <FormField
+          label="WhatsApp Phone Number"
+          name="phone"
+          type="tel"
+          value={values.phone}
+          onChange={setField("phone")}
+          error={errors.phone}
+          placeholder="e.g. 0771234567"
         />
 
         {values.role === "vendor" && (

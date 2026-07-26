@@ -5,6 +5,7 @@ import DashboardLayout from "./layouts/DashboardLayout"
 import Landing from "./pages/Landing"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
+import VerifyOtp from "./pages/VerifyOtp"
 import InstantRental from "./pages/InstantRental"
 import OrganizerDashboard from "./pages/organizer/OrganizerDashboard"
 import NewEvent from "./pages/organizer/NewEvent"
@@ -23,6 +24,7 @@ function App() {
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/verify-otp" element={<VerifyOtp />} />
       </Route>
 
       <Route element={<DashboardLayout role="Organizer" />}>
