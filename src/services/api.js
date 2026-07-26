@@ -5,7 +5,7 @@
 // while the backend catches up. See the "wire what exists" plan for the
 // reasoning behind each choice.
 
-import { request } from "./httpClient"
+import { request, ApiError } from "./httpClient"
 import {
   PLAN_TEMPLATES,
   mockEvents,
@@ -16,6 +16,25 @@ import {
 
 const DELAY_MS = 500
 const PUBLISHED_EVENTS_KEY = "soundscout.publishedEvents"
+
+// A stored ai_infrastructure_plan is trusted as-is when it already has a
+// "categories" shape, but nothing guarantees it also carries a priceRange
+// (e.g. a plan written directly to the database) — EventPlanSummary reads
+// plan.priceRange.low/high unconditionally, so a missing one crashes the
+// whole event detail page. Backfill it from the event's budget_range instead.
+function ensurePlanPriceRange(plan, event) {
+  if (!plan || plan.priceRange) return plan
+  let low = 50000
+  let high = 150000
+  if (event?.budget_range) {
+    const parts = event.budget_range.split('-')
+    if (parts.length === 2) {
+      low = Math.max(10000, Number(parts[0]) || low)
+      high = Number(parts[1]) || high
+    }
+  }
+  return { ...plan, priceRange: { low, high } }
+}
 
 function delay(value, ms = DELAY_MS) {
   return new Promise((resolve) => setTimeout(() => resolve(value), ms))
@@ -114,10 +133,11 @@ export async function register({ fullName, email, role, region, password, phone 
   const payload = { name: fullName, email, role, password, phone }
   if (role === "vendor") payload.region = region
 
-  const created = await request("/users/register", {
+  const response = await request("/users/register", {
     method: "POST",
     body: JSON.stringify(payload),
   })
+  const created = response.user
 
   return {
     id: created.user.user_id,
@@ -227,12 +247,21 @@ export async function listOrganizerEvents() {
       return mappedBackendEvents
 }
 
-// Used to finalize and publish draft events from the dashboard
-export async function publishEvent(eventId, selectedPlan) {
-  return request(`/events/${eventId}/finalize-plan`, {
-    method: "PUT",
-    body: JSON.stringify({ selected_plan: selectedPlan }),
-  })
+      return {
+        id: e.event_id,
+        name: e.name || e.event_type, // Fall back to event type if no custom name was set
+        eventType: e.event_type,
+        crowdSize: e.crowd_count,
+        date: e.created_at || new Date().toISOString(),
+        location: e.location || "Colombo",
+        status: e.status || "bidding_open",
+        plan: displayPlan,
+      }
+    })
+  } catch (err) {
+    // If backend is unreachable, fallback to local/mock data to prevent crashing
+    return [...mockEvents, ...getLocallyPublishedEvents()]
+  }
 }
 
 // Synchronous plan assembly. The New Event wizard renders this straight into
@@ -427,6 +456,9 @@ export async function getEventById(id) {
 export async function listBidsForEvent(eventId) {
   try {
     const bids = await request(`/bids/event/${eventId}`)
+    // Backend rows use bid_id/vendor_name/proposed_price, plus vendor_rating/
+    // vendor_rating_count from the ratings system — remap to the shape
+    // BidCard expects, same as the mock data.
     if (Array.isArray(bids)) {
       return bids.map((b) => ({
         id: b.bid_id,
@@ -434,7 +466,7 @@ export async function listBidsForEvent(eventId) {
         eventId: b.event_id,
         vendorName: b.vendor_name,
         price: Number(b.proposed_price),
-        notes: b.notes || "",
+        notes: b.notes,
         status: b.status,
         rating: Number(b.rating) || 5.0,
         bid_categories: b.bid_categories || [],
@@ -445,20 +477,57 @@ export async function listBidsForEvent(eventId) {
         vendorPhone: b.vendor_phone || "",
       }))
     }
-  } catch (err) {
-    console.error("Failed to fetch bids:", err)
+  } catch {
+    // not a real backend event id, or backend unreachable — fall through to local data
   }
   return delay(mockBids[eventId] ?? [])
 }
 
+// Real call: GET /ratings/pending — accepted vendors from past events the
+// organizer hasn't rated yet.
+export async function listPendingRatings() {
+  try {
+    const rows = await request("/ratings/pending")
+    return (rows ?? []).map((r) => ({
+      eventId: r.event_id,
+      eventType: r.event_type,
+      eventDate: r.event_date,
+      bidId: r.bid_id,
+      price: Number(r.proposed_price),
+      vendorId: r.vendor_id,
+      vendorName: r.vendor_name,
+    }))
+  } catch {
+    return []
+  }
+}
+
+// Real call: POST /ratings — organizer rates a vendor after an accepted,
+// already-happened event.
+export async function submitVendorRating({ eventId, vendorId, rating, review }) {
+  return request("/ratings", {
+    method: "POST",
+    body: JSON.stringify({ event_id: eventId, vendor_id: vendorId, rating, review }),
+  })
+}
+
+// Real call: PUT /bids/{bidId}/accept. Local bid/event status is updated by
+// the caller regardless, since demo events aren't tracked server-side.
 export async function acceptBid(eventId, bidId, organizerId) {
   try {
     await request(`/bids/${bidId}/accept`, {
       method: "PUT",
       body: JSON.stringify({ organizer_id: organizerId }),
     })
-  } catch {
-    // demo bid not tracked server-side, or backend unreachable
+  } catch (err) {
+    // 401 (expired/invalid session) and 403 (bid/event exist but caller isn't
+    // the owning organizer) are real rejections that can't happen for a demo
+    // bid id — surface them instead of silently faking success.
+    if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+      throw err
+    }
+    // Otherwise: demo bid not tracked server-side, or backend unreachable —
+    // still record locally below so the demo experience keeps working.
   }
   return delay({ eventId, bidId, status: "booked" })
 }
@@ -609,26 +678,32 @@ export async function listVendorOpportunities(equipmentCategory, vendorRegion) {
   return delay(opportunities)
 }
 
-export async function listVendorBids() {
+// No backend endpoint for a vendor's own bid history — stays fully mocked.
+export async function listVendorBids(vendorName) {
+  let realBids = []
   try {
     const bids = await request("/bids/vendor")
-    if (Array.isArray(bids)) {
-      return bids.map((b) => ({
-        id: b.bid_id,
-        eventId: b.event_id,
-        eventName: b.event_type ? `${b.event_type} at ${b.location}` : "Event",
-        price: Number(b.proposed_price),
-        status: b.status,
-        notes: b.notes || "",
-        bid_categories: b.bid_categories || [],
-        organizerName: b.organizer_name || "Organizer",
-        organizerPhone: b.organizer_phone || "",
-      }))
-    }
-  } catch (err) {
-    console.error("Failed to fetch vendor bids:", err)
+    realBids = (bids ?? []).map((b) => ({
+      id: b.bid_id,
+      eventId: b.event_id,
+      eventName: b.event_type,
+      price: Number(b.proposed_price),
+      notes: b.notes,
+      status: b.status,
+      bid_categories: b.bid_categories,
+    }))
+  } catch {
+    // backend unreachable — fall through to local mock bids only
   }
-  return []
+
+  const mockedBids = Object.entries(mockBids).flatMap(([eventId, eventBids]) => {
+    const event = mockEvents.find((e) => e.id === eventId)
+    return eventBids
+      .filter((bid) => bid.vendorName === vendorName)
+      .map((bid) => ({ ...bid, eventId, eventName: event?.name ?? "Unknown event" }))
+  })
+
+  return delay([...realBids, ...mockedBids])
 }
 
 const LOCAL_RENTAL_KEY = "soundscout.local_rentals"
@@ -802,8 +877,15 @@ export async function submitBid({ eventId, vendorId, vendorName, price, notes, r
       method: "POST",
       body: JSON.stringify({ event_id: eventId, vendor_id: vendorId, proposed_price: Number(price), notes, bid_categories: bidCategories, bid_items: bidItems }),
     })
-  } catch {
-    // demo event not tracked server-side, or backend unreachable — still record locally below
+  } catch (err) {
+    // A real event rejected the bid on business-rule/auth grounds (already
+    // bid on it, or an expired/invalid session) — surface that instead of
+    // silently faking success.
+    if (err instanceof ApiError && (err.status === 401 || err.status === 409)) {
+      throw err
+    }
+    // Otherwise: demo event not tracked server-side, or backend unreachable —
+    // still record locally below so the demo experience keeps working.
   }
 
   const bid = {

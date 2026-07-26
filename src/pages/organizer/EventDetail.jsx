@@ -33,6 +33,26 @@ function EventDetail() {
   const [notFound, setNotFound] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [acceptingId, setAcceptingId] = useState(null)
+  const [acceptError, setAcceptError] = useState("")
+  const [payments, setPayments] = useState({}) // bidId -> payment record
+  const [payingId, setPayingId] = useState(null)
+  const [markingPayoutId, setMarkingPayoutId] = useState(null)
+  const [paymentError, setPaymentError] = useState("")
+
+  // Payment status only matters for accepted bids — fetch it for those once
+  // bids are known/updated, rather than for every pending/declined bid.
+  function loadPaymentsFor(bidsList) {
+    const acceptedBids = bidsList.filter((b) => b.status === "accepted")
+    Promise.all(acceptedBids.map((b) => getPaymentStatusForBid(b.id))).then((results) => {
+      setPayments((prev) => {
+        const next = { ...prev }
+        acceptedBids.forEach((b, i) => {
+          next[b.id] = results[i]
+        })
+        return next
+      })
+    })
+  }
 
   useEffect(() => {
     if (location.state) return
@@ -47,6 +67,7 @@ function EventDetail() {
         setEvent(fetchedEvent)
         setPlan(fetchedEvent.plan)
         setBids(fetchedBids)
+        loadPaymentsFor(fetchedBids)
       }
       setLoading(false)
     })
@@ -112,29 +133,54 @@ function EventDetail() {
   }
 
   function handleAccept(bidId) {
-    const targetBid = bids.find((b) => b.id === bidId)
-    setSelectedBid(targetBid)
+    setAcceptingId(bidId)
+    setAcceptError("")
+    acceptBid(event.id, bidId, user?.id)
+      .then(() => {
+        const updatedBids = bids.map((b) => ({ ...b, status: b.id === bidId ? "accepted" : "declined" }))
+        setBids(updatedBids)
+        setEvent((e) => ({ ...e, status: "booked" }))
+        setAcceptingId(null)
+        loadPaymentsFor(updatedBids)
+      })
+      .catch((err) => {
+        setAcceptError(err.message || "Couldn't accept this bid. Please try again.")
+        setAcceptingId(null)
+      })
   }
 
-  function handlePaymentSuccess(transactionId) {
-    if (!selectedBid) return
-    setAcceptingId(selectedBid.id)
-    acceptAndPayBid(selectedBid.id, transactionId).then(() => {
-      setBids((prev) =>
-        prev.map((b) => ({
-          ...b,
-          status: b.id === selectedBid.id ? "accepted" : "declined",
-          payment_status: b.id === selectedBid.id ? "paid" : b.payment_status,
-        }))
-      )
-      setEvent((e) => ({ ...e, status: "booked" }))
-      setAcceptingId(null)
-      
-      // Re-fetch bids to pull the newly unlocked vendorPhone value from the gated backend query!
-      listBidsForEvent(id).then(fetchedBids => {
-        if (fetchedBids) setBids(fetchedBids)
+  function handlePay(bidId) {
+    setPayingId(bidId)
+    setPaymentError("")
+    initiatePayment(bidId)
+      .then((data) => {
+        // Navigates the browser away to PayHere's hosted checkout — no further
+        // state update needed here, the page is about to unload.
+        redirectToPayHereCheckout(data)
       })
-    })
+      .catch((err) => {
+        setPaymentError(err.message || "Couldn't start the payment. Please try again.")
+        setPayingId(null)
+      })
+  }
+
+  function handleMarkPayout(paymentId) {
+    setMarkingPayoutId(paymentId)
+    setPaymentError("")
+    markVendorPayout(paymentId)
+      .then(({ payment }) => {
+        setPayments((prev) => {
+          const next = { ...prev }
+          const bidEntry = Object.entries(next).find(([, p]) => p.payment_id === paymentId)
+          if (bidEntry) next[bidEntry[0]] = payment
+          return next
+        })
+        setMarkingPayoutId(null)
+      })
+      .catch((err) => {
+        setPaymentError(err.message || "Couldn't update the payout status. Please try again.")
+        setMarkingPayoutId(null)
+      })
   }
 
   if (notFound) {
@@ -298,6 +344,18 @@ function EventDetail() {
                   )}
                 </div>
 
+                {acceptError && (
+                  <p className="mt-3 rounded border border-alert-red/30 bg-alert-red/10 px-3 py-2 text-sm text-alert-red">
+                    {acceptError}
+                  </p>
+                )}
+
+                {paymentError && (
+                  <p className="mt-3 rounded border border-alert-red/30 bg-alert-red/10 px-3 py-2 text-sm text-alert-red">
+                    {paymentError}
+                  </p>
+                )}
+
                 <div className="mt-4 overflow-hidden rounded-md border border-slate/15 bg-white">
                   {filteredBids.length === 0 ? (
                     <p className="p-8 text-center font-body text-sm text-slate">
@@ -315,6 +373,11 @@ function EventDetail() {
                         canAccept={event.status === "bidding_open"}
                         accepting={acceptingId === bid.id}
                         onAccept={handleAccept}
+                        payment={payments[bid.id]}
+                        paying={payingId === bid.id}
+                        markingPayout={payments[bid.id] && markingPayoutId === payments[bid.id].payment_id}
+                        onPay={handlePay}
+                        onMarkPayout={handleMarkPayout}
                       />
                     ))
                   )}

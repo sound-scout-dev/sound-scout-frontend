@@ -136,6 +136,8 @@ function StepGenerating({ formValues, onComplete }) {
 
   const [selectedOption, setSelectedOption] = useState("budget") // "budget" | "premium"
   const fired = useRef(false)
+  const pipelineStarted = useRef(false)
+  const activeRef = useRef(true)
 
   // Cycle through progress logs for clean UX during the 10-15s AI pipeline wait
   useEffect(() => {
@@ -149,13 +151,21 @@ function StepGenerating({ formValues, onComplete }) {
   const apiFired = useRef(false)
 
   useEffect(() => {
-    let active = true
+    activeRef.current = true
+    if (pipelineStarted.current) {
+      return () => {
+        activeRef.current = false
+      }
+    }
+    pipelineStarted.current = true
+
+    let eventId = null
     async function triggerBackendPipeline() {
       if (apiFired.current) return
       apiFired.current = true
       try {
         const budgetRange = `${formValues.budgetMin}-${formValues.budgetMax}`
-        
+
         // 1. Create the event
         const created = await createEvent({
           organizerId: user?.id,
@@ -170,8 +180,8 @@ function StepGenerating({ formValues, onComplete }) {
           location: formValues.location,
           date: formValues.date,
         })
-        
-        const eventId = created?.event?.event_id ?? created?.event_id ?? created?.id
+
+        eventId = created?.event?.event_id ?? created?.event_id ?? created?.id
         if (!eventId) {
           throw new Error("Failed to retrieve event ID from database.")
         }
@@ -195,22 +205,34 @@ function StepGenerating({ formValues, onComplete }) {
            parsedPremium = parsedBudget
         }
 
-        setRealId(eventId)
-        setBudgetPlan(parsedBudget)
-        setPremiumPlan(parsedPremium)
-        setFeasibilityWarning(options.feasibility_warning || null)
-        setPriceCuttingTips(options.price_cutting_tips || [])
-        setLoading(false)
+        if (activeRef.current) {
+          setRealId(eventId)
+          setBudgetPlan(parsedBudget)
+          setPremiumPlan(parsedPremium)
+          setFeasibilityWarning(options.feasibility_warning || null)
+          setPriceCuttingTips(options.price_cutting_tips || [])
+          setLoading(false)
+        }
       } catch (err) {
         console.error("AI Generation Error:", err)
-        // Fallback to offline mock plan
-        const offlinePlan = buildInfrastructurePlan(formValues)
-        const offlinePremium = {
-          ...offlinePlan,
-          priceRange: {
-            low: Math.round(offlinePlan.priceRange.low * 1.4),
-            high: Math.round(offlinePlan.priceRange.high * 1.5)
+        if (activeRef.current) {
+          setError("AI generation failed. Proceeding with offline design...")
+          // Fallback to offline mock plan
+          const offlinePlan = buildInfrastructurePlan(formValues)
+          const offlinePremium = {
+            ...offlinePlan,
+            priceRange: {
+              low: Math.round(offlinePlan.priceRange.low * 1.4),
+              high: Math.round(offlinePlan.priceRange.high * 1.5)
+            }
           }
+          // The event row itself was created successfully before the AI step
+          // failed — keep its real database id so finalizePlan() can still
+          // publish it. Only fabricate a fake id if event creation never happened.
+          setRealId(eventId ?? `evt-fallback-${Date.now()}`)
+          setBudgetPlan(offlinePlan)
+          setPremiumPlan(offlinePremium)
+          setLoading(false)
         }
         setRealId(`evt-fallback-${Date.now()}`)
         setBudgetPlan(offlinePlan)
@@ -220,6 +242,9 @@ function StepGenerating({ formValues, onComplete }) {
     }
 
     triggerBackendPipeline()
+    return () => {
+      activeRef.current = false
+    }
   }, [formValues, user])
 
   function handleProceed() {

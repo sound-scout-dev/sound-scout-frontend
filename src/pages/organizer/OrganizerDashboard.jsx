@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-import { Plus, CalendarPlus } from "lucide-react"
+import { Plus, CalendarPlus, Star } from "lucide-react"
 import Button from "../../components/Button"
 import EventCard from "../../components/EventCard"
 import { listOrganizerEvents } from "../../services/api"
@@ -58,6 +58,9 @@ function OrganizerDashboard() {
         setLoading(false)
       }
     })
+    listPendingRatings().then((data) => {
+      if (active) setPendingRatings(data)
+    })
     return () => {
       active = false
     }
@@ -90,18 +93,28 @@ function OrganizerDashboard() {
       </div>
 
       <div className="mt-8">
+        <PendingRatings items={pendingRatings} onRate={setRatingTarget} />
+
         {loading ? (
           <DashboardSkeleton />
-        ) : visibleEvents.length === 0 ? (
+        ) : events.length === 0 ? (
           <EmptyState />
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {visibleEvents.map((event) => (
+            {events.map((event) => (
               <EventCard key={event.id} event={event} />
             ))}
           </div>
         )}
       </div>
+
+      {ratingTarget && (
+        <RateVendorModal
+          pendingRating={ratingTarget}
+          onClose={() => setRatingTarget(null)}
+          onSubmitted={handleRatingSubmitted}
+        />
+      )}
     </div>
   )
 }
