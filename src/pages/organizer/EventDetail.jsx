@@ -16,6 +16,7 @@ import {
   redirectToPayHereCheckout,
 } from "../../services/api"
 import { useAuth } from "../../context/AuthContext"
+import AcceptBidModal from "../../components/AcceptBidModal"
 
 function DetailSkeleton() {
   return (
@@ -82,6 +83,8 @@ function EventDetail() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
+
+  const [selectedBid, setSelectedBid] = useState(null)
 
   function handlePublish() {
     setPublishing(true)
@@ -240,6 +243,12 @@ function EventDetail() {
           )}
         </>
       )}
+      <AcceptBidModal
+        isOpen={!!selectedBid}
+        onClose={() => setSelectedBid(null)}
+        bid={selectedBid}
+        onPaymentSuccess={handlePaymentSuccess}
+      />
     </div>
   )
 }

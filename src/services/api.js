@@ -495,6 +495,13 @@ export async function acceptBid(eventId, bidId, organizerId) {
   return delay({ eventId, bidId, status: "booked" })
 }
 
+export async function acceptAndPayBid(bidId, transactionId) {
+  return await request(`/bids/${bidId}/accept-and-pay`, {
+    method: "PUT",
+    body: JSON.stringify({ transactionId }),
+  })
+}
+
 
 
 // Real call: GET /events/open, merged with local demo/published events so the
