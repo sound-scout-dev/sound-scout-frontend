@@ -6,8 +6,9 @@ import EventPlanSummary from "../../components/EventPlanSummary"
 import BidCard from "../../components/BidCard"
 import Button from "../../components/Button"
 import StepResults from "../../components/new-event/StepResults"
-import { getEventById, listBidsForEvent, acceptBid, publishEvent } from "../../services/api"
+import { getEventById, listBidsForEvent, publishEvent, acceptAndPayBid } from "../../services/api"
 import { useAuth } from "../../context/AuthContext"
+import AcceptBidModal from "../../components/AcceptBidModal"
 
 function DetailSkeleton() {
   return (
@@ -54,6 +55,8 @@ function EventDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
+  const [selectedBid, setSelectedBid] = useState(null)
+
   function handlePublish() {
     setPublishing(true)
     publishEvent(event.id, plan).then(() => {
@@ -63,13 +66,28 @@ function EventDetail() {
   }
 
   function handleAccept(bidId) {
-    setAcceptingId(bidId)
-    acceptBid(event.id, bidId, user?.id).then(() => {
+    const targetBid = bids.find((b) => b.id === bidId)
+    setSelectedBid(targetBid)
+  }
+
+  function handlePaymentSuccess(transactionId) {
+    if (!selectedBid) return
+    setAcceptingId(selectedBid.id)
+    acceptAndPayBid(selectedBid.id, transactionId).then(() => {
       setBids((prev) =>
-        prev.map((b) => ({ ...b, status: b.id === bidId ? "accepted" : "declined" }))
+        prev.map((b) => ({
+          ...b,
+          status: b.id === selectedBid.id ? "accepted" : "declined",
+          payment_status: b.id === selectedBid.id ? "paid" : b.payment_status,
+        }))
       )
       setEvent((e) => ({ ...e, status: "booked" }))
       setAcceptingId(null)
+      
+      // Re-fetch bids to pull the newly unlocked vendorPhone value from the gated backend query!
+      listBidsForEvent(id).then(fetchedBids => {
+        if (fetchedBids) setBids(fetchedBids)
+      })
     })
   }
 
@@ -154,6 +172,12 @@ function EventDetail() {
           )}
         </>
       )}
+      <AcceptBidModal
+        isOpen={!!selectedBid}
+        onClose={() => setSelectedBid(null)}
+        bid={selectedBid}
+        onPaymentSuccess={handlePaymentSuccess}
+      />
     </div>
   )
 }

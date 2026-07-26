@@ -415,8 +415,6 @@ export async function listBidsForEvent(eventId) {
   return delay(mockBids[eventId] ?? [])
 }
 
-// Real call: PUT /bids/{bidId}/accept. Local bid/event status is updated by
-// the caller regardless, since demo events aren't tracked server-side.
 export async function acceptBid(eventId, bidId, organizerId) {
   try {
     await request(`/bids/${bidId}/accept`, {
@@ -427,6 +425,13 @@ export async function acceptBid(eventId, bidId, organizerId) {
     // demo bid not tracked server-side, or backend unreachable
   }
   return delay({ eventId, bidId, status: "booked" })
+}
+
+export async function acceptAndPayBid(bidId, transactionId) {
+  return await request(`/bids/${bidId}/accept-and-pay`, {
+    method: "PUT",
+    body: JSON.stringify({ transactionId }),
+  })
 }
 
 
