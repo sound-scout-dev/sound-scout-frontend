@@ -12,7 +12,7 @@ function Modal({ title, onClose, children }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ink-navy/60 px-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 px-4 animate-modal-backdrop"
       onClick={onClose}
     >
       <div
@@ -20,17 +20,17 @@ function Modal({ title, onClose, children }) {
         aria-modal="true"
         aria-labelledby="modal-title"
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-md border border-slate/15 bg-paper p-6 shadow-2xl"
+        className="w-full max-w-md rounded-xl bg-glass p-6 shadow-2xl animate-modal-content focus-visible:outline-none"
       >
         <div className="flex items-center justify-between">
-          <h2 id="modal-title" className="font-display text-lg font-semibold text-ink-navy">
+          <h2 id="modal-title" className="font-display text-lg font-semibold text-gray-900">
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="rounded p-1 text-slate transition-colors duration-150 ease-out hover:text-ink-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-amber"
+            className="rounded p-1 text-gray-400 transition-colors duration-150 ease-out hover:text-[#0891B2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0891B2]"
           >
             <X size={18} strokeWidth={2} />
           </button>

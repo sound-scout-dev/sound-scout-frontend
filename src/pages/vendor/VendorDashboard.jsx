@@ -222,36 +222,36 @@ function VendorDashboard() {
         {/* Right Column: Manage Rental Inventory */}
         <div className="space-y-8">
           {/* SoundScout Premium Subscription Card */}
-          <div className="rounded-md border border-signal-amber/25 bg-signal-amber/5 p-6 shadow-sm space-y-4">
+          <div className="rounded-xl border border-[#0891B2]/30 bg-glass p-6 shadow-md space-y-4 hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 animate-fade-in-up">
             <div className="flex items-center gap-2">
-              <Award className="text-signal-amber" size={24} />
-              <h2 className="font-display text-base font-semibold text-ink-navy">
+              <Award className="text-[#0891B2]" size={24} />
+              <h2 className="font-display text-base font-semibold text-gray-900">
                 SoundScout Premium
               </h2>
             </div>
             
             {isPremium ? (
               <div className="space-y-2">
-                <span className="inline-flex items-center gap-1.5 rounded bg-signal-amber/15 px-3 py-1 font-mono text-xs font-bold uppercase tracking-wider text-signal-amber border border-signal-amber/35">
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#059669]/15 px-3 py-1 font-mono text-xs font-bold uppercase tracking-wider text-[#059669] border border-[#059669]/35">
                   ✓ Verified Premium Active
                 </span>
-                <p className="font-body text-xs text-slate leading-relaxed">
+                <p className="font-body text-xs text-gray-650 leading-relaxed">
                   Your profile is verified. Your bids are now boosted to the top of organizer matching lists!
                 </p>
               </div>
             ) : (
               <div className="space-y-3">
-                <p className="font-body text-xs text-slate leading-relaxed">
+                <p className="font-body text-xs text-gray-650 leading-relaxed">
                   Upgrade to get a gold **Verified Premium** checkmark next to your bids and rank at the **very top** of matching searches!
                 </p>
-                <div className="flex items-center justify-between font-mono text-xs text-slate font-semibold bg-white p-2.5 rounded border border-slate/10">
+                <div className="flex items-center justify-between font-mono text-xs text-gray-700 font-bold bg-white/45 backdrop-blur-sm p-2.5 rounded-lg border border-gray-200/40 shadow-sm">
                   <span>Subscription Cost</span>
-                  <span className="text-signal-amber">Rs. 4,900 / mo</span>
+                  <span className="text-[#0891B2]">Rs. 4,900 / mo</span>
                 </div>
                 <button
                   onClick={handleUpgradePremium}
                   disabled={subscribing}
-                  className="w-full rounded bg-signal-amber py-2 font-sans text-xs font-semibold text-white hover:bg-signal-amber/90 transition-colors flex items-center justify-center gap-1.5"
+                  className="w-full rounded-lg bg-[#059669] py-2.5 font-sans text-xs font-semibold text-white hover:bg-[#047857] shadow-sm transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-1.5"
                 >
                   {subscribing ? (
                     <>
@@ -266,18 +266,18 @@ function VendorDashboard() {
             )}
           </div>
 
-          <div className="rounded-md border border-slate/15 bg-white p-6 shadow-sm">
-            <h2 className="font-display text-lg font-semibold text-ink-navy flex items-center gap-2">
-              <Plus size={20} className="text-signal-amber" />
+          <div className="rounded-xl bg-glass p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 animate-fade-in-up">
+            <h2 className="font-display text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <Plus size={20} className="text-[#0891B2]" />
               List for Instant Rental
             </h2>
-            <p className="mt-1 font-body text-xs text-slate">
+            <p className="mt-1 font-body text-xs text-gray-500">
               List individual gear or equipment package for organizers to instantly book.
             </p>
 
             <form onSubmit={handleAddRental} className="mt-5 space-y-4">
               {listingSuccess && (
-                <p className="font-mono text-xs text-circuit-teal bg-circuit-teal/10 rounded px-2.5 py-1.5">
+                <p className="font-mono text-xs text-[#059669] bg-[#059669]/10 rounded px-2.5 py-1.5">
                   {listingSuccess}
                 </p>
               )}
@@ -329,10 +329,10 @@ function VendorDashboard() {
             </form>
           </div>
 
-          <div className="rounded-md border border-slate/15 bg-white p-6 shadow-sm space-y-6">
+          <div className="rounded-xl bg-glass p-6 shadow-sm space-y-6 hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 animate-fade-in-up">
             <div>
-              <h2 className="font-display text-lg font-semibold text-ink-navy flex items-center gap-2 border-b border-slate/10 pb-2">
-                <Package size={20} className="text-circuit-teal" />
+              <h2 className="font-display text-lg font-semibold text-gray-900 flex items-center gap-2 border-b border-gray-200/50 pb-2">
+                <Package size={20} className="text-[#059669]" />
                 Active Inventory Listings
               </h2>
 
@@ -343,13 +343,13 @@ function VendorDashboard() {
                   </p>
                 ) : (
                   localListings.filter(l => l.status !== "booked" && (l.qty === undefined || l.qty > 0)).map((listing) => (
-                    <div key={listing.id} className="rounded border border-slate/10 p-3 bg-slate/5">
-                      <p className="font-display text-xs font-semibold text-ink-navy">
+                    <div key={listing.id} className="rounded-lg border border-gray-200/40 p-3 bg-white/40 backdrop-blur-sm shadow-sm transition-all duration-300 hover:scale-[1.01] hover:border-[#0891B2]/30">
+                      <p className="font-display text-xs font-semibold text-gray-900">
                         {listing.equipmentSummary}
                       </p>
-                      <div className="mt-1 flex justify-between font-mono text-[10px] text-slate">
+                      <div className="mt-1.5 flex justify-between font-mono text-[10px] text-gray-500">
                         <span>{listing.category} · Qty: {listing.qty ?? 1}</span>
-                        <span className="font-semibold text-circuit-teal">{formatLKR(listing.pricePerDay)}/day</span>
+                        <span className="font-semibold text-[#0891B2]">{formatLKR(listing.pricePerDay)}/day</span>
                       </div>
                     </div>
                   ))

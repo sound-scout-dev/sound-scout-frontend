@@ -37,7 +37,7 @@ function ScrollReveal({ children, className = "", delay = 0 }) {
   return (
     <div
       ref={ref}
-      className={`transition-all duration-700 ease-out transform ${
+      className={`transition-all duration-1000 ease-out transform ${
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
       } ${className}`}
       style={{ transitionDelay: `${delay}ms` }}
@@ -48,7 +48,7 @@ function ScrollReveal({ children, className = "", delay = 0 }) {
 }
 
 // Counting Animation Component triggered when scrolled into view
-function AnimatedCounter({ targetValue, duration = 1800 }) {
+function AnimatedCounter({ targetValue, duration = 3500 }) {
   const [count, setCount] = useState(0)
   const ref = useRef(null)
   const [started, setStarted] = useState(false)

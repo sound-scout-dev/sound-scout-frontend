@@ -34,11 +34,13 @@
 }
 
 @layer utilities {
+  /* Apple liquid glassmorphism utility class */
   .bg-glass {
-    background-color: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    background-color: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.04), inset 0 1px 1px 0 rgba(255, 255, 255, 0.8);
   }
   
   .border-glass {
@@ -61,19 +63,49 @@
     text-shadow: 0 0 8px rgba(5, 150, 105, 0.15);
   }
 
-  /* Smooth page transition / content reveal animation */
+  /* Slow and cinematic fadeInUp animations */
   .animate-fade-in-up {
-    animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: fadeInUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-modal-backdrop {
+    animation: backdropFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-modal-content {
+    animation: modalScaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
   @keyframes fadeInUp {
     from {
       opacity: 0;
-      transform: translateY(12px);
+      transform: translateY(16px);
     }
     to {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+
+  @keyframes backdropFadeIn {
+    from {
+      opacity: 0;
+      backdrop-filter: blur(0px);
+    }
+    to {
+      opacity: 1;
+      backdrop-filter: blur(12px);
+    }
+  }
+
+  @keyframes modalScaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.92) translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
     }
   }
 }
