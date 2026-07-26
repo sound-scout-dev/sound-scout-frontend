@@ -11,28 +11,28 @@ function RentalListingCard({ listing, booked, onBook }) {
   const isNow = listing.availability === "now"
 
   return (
-    <div className="flex flex-col rounded-md border border-slate/15 bg-white p-5">
+    <div className="flex flex-col rounded-xl bg-glass p-5 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 animate-fade-in-up">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="font-display text-base font-semibold text-ink-navy">
+          <h3 className="font-display text-base font-semibold text-gray-900">
             {listing.vendorName}
           </h3>
-          <span className="mt-1 inline-block rounded border border-circuit-teal/30 bg-circuit-teal/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-circuit-teal">
+          <span className="mt-1 inline-block rounded border border-[#059669]/30 bg-[#059669]/10 px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wide text-[#059669]">
             {listing.category}
           </span>
         </div>
         <span
-          className={`shrink-0 rounded border px-2 py-1 font-mono text-[11px] font-medium uppercase tracking-wide ${
+          className={`shrink-0 rounded border px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide ${
             isNow
-              ? "border-circuit-teal/40 bg-circuit-teal/10 text-circuit-teal"
-              : "border-slate/20 bg-slate/10 text-slate"
+              ? "border-[#059669]/30 bg-[#059669]/10 text-[#059669]"
+              : "border-gray-200 bg-gray-50 text-gray-500"
           }`}
         >
           {AVAILABILITY_LABEL[listing.availability]}
         </span>
       </div>
 
-      <p className="mt-3 font-body text-sm text-slate">{listing.equipmentSummary}</p>
+      <p className="mt-3 font-body text-sm text-gray-600">{listing.equipmentSummary}</p>
 
       <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 font-mono text-xs text-slate">
         <span className="flex items-center gap-1.5">

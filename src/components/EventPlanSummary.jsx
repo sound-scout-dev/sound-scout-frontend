@@ -19,7 +19,7 @@ function EventPlanSummary({ event, plan }) {
   const itemCount = plan.categories.reduce((n, cat) => n + cat.items.length, 0)
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
+    <div className="rounded-xl bg-glass shadow-sm hover:shadow-md transition-shadow duration-300 animate-fade-in-up">
       <div className="p-6">
         <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#0891B2]">{event.eventType}</p>
         <h2 className="mt-1 font-display text-xl font-semibold text-gray-900">{event.name}</h2>
@@ -64,7 +64,7 @@ function EventPlanSummary({ event, plan }) {
       </div>
 
       {expanded && (
-        <div className="border-t border-gray-100 p-6 pt-5 bg-gray-50/30 rounded-b-lg">
+        <div className="border-t border-white/40 p-6 pt-5 bg-white/30 rounded-b-xl">
           <SpecCard plan={plan} loop={false} startRevealed />
         </div>
       )}

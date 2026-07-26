@@ -98,11 +98,11 @@ function OpportunityCard({ event, vendor, hasBid, onPlaceBid }) {
   const filteredCategories = event.plan.categories.filter((cat) => selectedCategories.includes(cat.name))
 
   return (
-    <div className="flex flex-col rounded-md border border-slate/15 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex flex-wrap items-start justify-between gap-2 border-b border-slate/10 pb-3">
+    <div className="flex flex-col rounded-xl bg-glass p-5 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 animate-fade-in-up">
+      <div className="flex flex-wrap items-start justify-between gap-2 border-b border-gray-200/50 pb-3">
         <div>
-          <h3 className="font-display text-base font-semibold text-ink-navy">{event.name}</h3>
-          <p className="mt-0.5 font-mono text-xs text-slate">{event.eventType}</p>
+          <h3 className="font-display text-base font-semibold text-gray-900">{event.name}</h3>
+          <p className="mt-0.5 font-mono text-xs text-gray-500">{event.eventType}</p>
         </div>
         
         {/* Toggleable categories */}
@@ -116,8 +116,8 @@ function OpportunityCard({ event, vendor, hasBid, onPlaceBid }) {
                 onClick={() => toggleCategory(cat.name)}
                 className={`rounded border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide transition-all ${
                   isChecked
-                    ? "border-circuit-teal bg-circuit-teal/10 text-circuit-teal font-semibold shadow-sm"
-                    : "border-slate/15 bg-transparent text-slate hover:bg-slate/5"
+                    ? "border-[#059669]/30 bg-[#059669]/10 text-[#059669] font-bold shadow-sm"
+                    : "border-gray-200 bg-white/40 text-gray-500 hover:bg-gray-50/50"
                 }`}
               >
                 {cat.name}

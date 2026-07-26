@@ -65,9 +65,9 @@ function SpecCard({ plan, loop = false, startRevealed = false, onDone, className
 
   return (
     <div
-      className={`overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg ${className}`}
+      className={`overflow-hidden rounded-xl bg-glass shadow-lg animate-fade-in-up ${className}`}
     >
-      <div className="border-b border-gray-100 px-5 py-4">
+      <div className="border-b border-white/40 px-5 py-4">
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-widest text-gray-800">
             <Radar size={13} className="text-[#0891B2] animate-pulse" />
@@ -140,7 +140,7 @@ function SpecCard({ plan, loop = false, startRevealed = false, onDone, className
       </div>
 
       <div
-        className={`flex items-center justify-between border-t border-gray-200/60 bg-gray-50 px-5 py-4 transition-opacity duration-300 ${
+        className={`flex items-center justify-between border-t border-white/40 bg-white/40 px-5 py-4 transition-opacity duration-300 ${
           isVisible(sequence.current.length - 1) ? "opacity-100" : "opacity-0"
         }`}
       >

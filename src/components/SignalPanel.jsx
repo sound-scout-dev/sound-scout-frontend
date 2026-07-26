@@ -9,7 +9,7 @@ function Corner({ className }) {
 function SignalPanel() {
   return (
     <div
-      className="relative flex h-56 flex-col justify-between rounded-lg border border-gray-200 bg-white p-4 sm:h-64"
+      className="relative flex h-56 flex-col justify-between rounded-xl bg-glass p-4 sm:h-64 animate-fade-in-up"
       style={{
         backgroundImage:
           "linear-gradient(rgba(8,145,178,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(8,145,178,0.03) 1px, transparent 1px)",
@@ -23,7 +23,7 @@ function SignalPanel() {
 
       <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-widest text-gray-500">
         <span>SIG—01 · Audio Spectrum</span>
-        <span className="flex items-center gap-1.5 text-red-600">
+        <span className="flex items-center gap-1.5 text-red-650">
           <span className="h-1.5 w-1.5 rounded-full bg-red-600 animate-pulse" />
           Live
         </span>
@@ -41,7 +41,7 @@ function SignalPanel() {
         ))}
       </div>
 
-      <div className="flex items-center justify-between border-t border-gray-100 pt-2 font-mono text-[9px] text-gray-400">
+      <div className="flex items-center justify-between border-t border-white/40 pt-2 font-mono text-[9px] text-gray-400">
         <span>-24dB</span>
         <span>-12dB</span>
         <span>0dB</span>

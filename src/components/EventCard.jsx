@@ -14,7 +14,7 @@ function EventCard({ event }) {
   return (
     <Link
       to={`/organizer/events/${event.id}`}
-      className="group flex flex-col rounded-lg border border-gray-200/80 bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:border-[#0891B2]/40 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0891B2]"
+      className="group flex flex-col rounded-xl bg-glass p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#0891B2]/40 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0891B2] animate-fade-in-up"
     >
       <div className="flex items-start justify-between gap-3">
         <h3 className="font-display text-base font-semibold text-gray-900 group-hover:text-[#0891B2] transition-colors duration-150">
@@ -43,7 +43,7 @@ function EventCard({ event }) {
         </div>
       </div>
 
-      <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+      <div className="mt-4 pt-3 border-t border-white/40 flex items-center justify-between">
         <StatusBadge status={event.status} />
         <span className="text-[10px] font-mono font-bold text-[#0891B2] opacity-0 group-hover:opacity-100 transition-opacity duration-200 uppercase tracking-wider">
           View Details &rarr;

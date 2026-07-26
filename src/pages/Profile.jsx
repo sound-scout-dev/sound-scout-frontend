@@ -80,7 +80,7 @@ function Profile() {
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* Section 1: Personal Details */}
-          <div className="rounded-md border border-slate/15 bg-white p-6 shadow-sm space-y-4">
+          <div className="rounded-xl bg-glass p-6 shadow-sm space-y-4 animate-fade-in-up">
             <h2 className="font-display text-lg font-semibold text-ink-navy border-b border-slate/10 pb-2 flex items-center gap-2">
               <User size={18} className="text-signal-amber" />
               Personal Details
@@ -154,7 +154,7 @@ function Profile() {
           </div>
 
           {/* Section 2: Security & Credentials */}
-          <div className="rounded-md border border-slate/15 bg-white p-6 shadow-sm space-y-4">
+          <div className="rounded-xl bg-glass p-6 shadow-sm space-y-4 animate-fade-in-up">
             <h2 className="font-display text-lg font-semibold text-ink-navy border-b border-slate/10 pb-2 flex items-center gap-2">
               <KeyRound size={18} className="text-circuit-teal" />
               Change Password
