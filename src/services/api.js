@@ -76,13 +76,15 @@ export async function login({ email, password }) {
     email: session.user.email,
     role: session.user.role,
     region: session.user.region,
+    phone: session.user.phone,
+    is_verified: session.user.is_verified,
     token: session.accessToken,
   }
 }
 
 // Real call: POST /users/register.
-export async function register({ fullName, email, role, region, password }) {
-  const payload = { name: fullName, email, role, password }
+export async function register({ fullName, email, role, region, password, phone }) {
+  const payload = { name: fullName, email, role, password, phone }
   if (role === "vendor") payload.region = region
 
   const response = await request("/users/register", {
@@ -91,14 +93,23 @@ export async function register({ fullName, email, role, region, password }) {
   })
   const created = response.user
 
-  return { 
-    id: created.user.user_id, 
-    name: created.user.name, 
-    email: created.user.email, 
-    role: created.user.role, 
+  return {
+    id: created.user.user_id,
+    name: created.user.name,
+    email: created.user.email,
+    role: created.user.role,
     region: created.user.region,
-    token: created.accessToken
+    phone: created.user.phone,
+    is_verified: created.user.is_verified,
+    token: created.accessToken,
   }
+}
+
+export async function verifyOtp({ email, otp }) {
+  return await request("/users/verify-otp", {
+    method: "POST",
+    body: JSON.stringify({ email, otp }),
+  })
 }
 
 export async function updateProfile({ name, email, region, password }) {
@@ -304,6 +315,8 @@ export async function getEventById(id) {
         location: backendEvent.location || backendEvent.environment || "Indoor",
         status: backendEvent.status === "draft" ? "planning" : (backendEvent.status || "bidding_open"),
         date: backendEvent.created_at || new Date().toISOString(), // Fallback date
+        organizerName: backendEvent.organizer_name || "Organizer",
+        organizerPhone: backendEvent.organizer_phone || "",
       }
 
       // Reconstruct the structured category display representation safely

@@ -27,6 +27,15 @@ function Skeleton() {
   )
 }
 
+function sanitizeWhatsAppPhone(phone) {
+  if (!phone) return ""
+  let clean = phone.replace(/[^0-9]/g, "")
+  if (clean.startsWith("0")) {
+    clean = "94" + clean.slice(1)
+  }
+  return clean
+}
+
 function VendorDashboard() {
   const { user } = useAuth()
   const vendor = { ...currentVendor, ...user, rating: user?.rating ?? currentVendor.rating }
@@ -36,6 +45,8 @@ function VendorDashboard() {
   const [loading, setLoading] = useState(true)
   const [activeEvent, setActiveEvent] = useState(null)
   const [activeCategories, setActiveCategories] = useState([])
+  // Derive biddedEventIds dynamically
+  const biddedEventIds = new Set(myBids.map((bid) => bid.eventId))
 
   // Instant rental listing form states
   const [eqSummary, setEqSummary] = useState("")
@@ -47,6 +58,7 @@ function VendorDashboard() {
 
   useEffect(() => {
     let active = true
+    setLoading(true)
     Promise.all([
       listVendorOpportunities(vendor.equipmentCategory, vendor.region),
       listVendorBids(vendor.name),
@@ -67,9 +79,7 @@ function VendorDashboard() {
     return () => {
       active = false
     }
-  }, [vendor.name, vendor.equipmentCategory])
-
-  const biddedEventIds = new Set(myBids.map((bid) => bid.eventId))
+  }, [vendor.name, vendor.equipmentCategory, vendor.region])
 
   function handleBidSubmitted(bid) {
     setMyBids((prev) => [...prev, bid])
@@ -81,6 +91,7 @@ function VendorDashboard() {
     if (!eqSummary.trim() || !price) return
     try {
       const listing = {
+        vendor_id: user?.id,
         vendorName: vendor.name,
         category: cat,
         equipmentSummary: eqSummary,
@@ -171,8 +182,24 @@ function VendorDashboard() {
                   >
                     <p className="font-display text-sm font-semibold text-ink-navy">{bid.eventName}</p>
                     <p className="font-mono text-sm text-ink-navy">{formatLKR(bid.price)}</p>
-                    <div className="sm:justify-self-end">
+                    <div className="sm:justify-self-end flex items-center gap-3">
                       <BidStatusBadge status={bid.status} />
+                      {bid.status === "accepted" && bid.organizerPhone && (
+                        <a
+                          href={`https://api.whatsapp.com/send?phone=${sanitizeWhatsAppPhone(bid.organizerPhone)}&text=${encodeURIComponent(
+                            `Hi ${bid.organizerName}, I'm the vendor for your event "${bid.eventName}". My bid of Rs. ${bid.price.toLocaleString()} was accepted. Looking forward to coordinating!`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 rounded bg-[#25D366] px-2.5 py-1.5 font-sans text-xs font-semibold text-white hover:bg-[#20ba5a] transition-all hover:scale-105 duration-150 ease-out"
+                          title="Chat with Organizer"
+                        >
+                          <svg className="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24">
+                            <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.835-4.577c1.611.956 3.197 1.48 4.793 1.48 5.517 0 10.005-4.486 10.008-10.004.002-2.673-1.031-5.187-2.908-7.065C16.858 2.055 14.348.99 11.693.99c-5.522 0-10.01 4.486-10.013 10.006-.001 1.77.462 3.5 1.34 5.018l-1.011 3.686 3.784-.992zm11.233-7.25c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.569-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                          </svg>
+                          Chat
+                        </a>
+                      )}
                     </div>
                   </div>
                 ))
