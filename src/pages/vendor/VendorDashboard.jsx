@@ -123,7 +123,7 @@ function VendorDashboard() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 animate-fade-in-up">
       <div className="grid gap-8 lg:grid-cols-3">
         {/* Left Column: Opportunities and Bids */}
         <div className="lg:col-span-2 space-y-12">

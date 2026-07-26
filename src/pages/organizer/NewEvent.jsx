@@ -132,7 +132,7 @@ function NewEvent() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8 animate-fade-in-up">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-2xl font-semibold text-ink-navy">New event</h1>
         <Link
@@ -148,7 +148,7 @@ function NewEvent() {
         <WizardProgress currentStep={step} onStepClick={setStep} />
       </div>
 
-      <div className="mt-10 rounded-md border border-slate/15 bg-white p-6 sm:p-8">
+      <div className="mt-10 rounded-xl bg-glass p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
         {step === 1 && (
           <StepBasics
             values={values}
