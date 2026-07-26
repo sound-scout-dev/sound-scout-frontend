@@ -5,9 +5,10 @@ import BidStatusBadge from "../../components/BidStatusBadge"
 import BidSubmissionModal from "../../components/BidSubmissionModal"
 import FormField from "../../components/FormField"
 import Button from "../../components/Button"
-import { listVendorOpportunities, listVendorBids, addInstantRental } from "../../services/api"
+import { listVendorOpportunities, listVendorBids, addInstantRental, subscribePremium } from "../../services/api"
 import { currentVendor } from "../../services/mockData"
 import { useAuth } from "../../context/AuthContext"
+import { Award, Loader2 } from "lucide-react"
 
 function formatLKR(n) {
   return "Rs. " + Number(n).toLocaleString("en-US", { maximumFractionDigits: 0 })
@@ -43,6 +44,16 @@ function VendorDashboard() {
   const [opportunities, setOpportunities] = useState([])
   const [myBids, setMyBids] = useState([])
   const [loading, setLoading] = useState(true)
+  const [subscribing, setSubscribing] = useState(false)
+  const [isPremium, setIsPremium] = useState(user?.is_premium || false)
+
+  const handleUpgradePremium = () => {
+    setSubscribing(true)
+    subscribePremium().then((res) => {
+      setIsPremium(true)
+      setSubscribing(false)
+    }).catch(() => setSubscribing(false))
+  }
   const [activeEvent, setActiveEvent] = useState(null)
   const [activeCategories, setActiveCategories] = useState([])
   // Derive biddedEventIds dynamically
@@ -210,6 +221,51 @@ function VendorDashboard() {
 
         {/* Right Column: Manage Rental Inventory */}
         <div className="space-y-8">
+          {/* SoundScout Premium Subscription Card */}
+          <div className="rounded-md border border-signal-amber/25 bg-signal-amber/5 p-6 shadow-sm space-y-4">
+            <div className="flex items-center gap-2">
+              <Award className="text-signal-amber" size={24} />
+              <h2 className="font-display text-base font-semibold text-ink-navy">
+                SoundScout Premium
+              </h2>
+            </div>
+            
+            {isPremium ? (
+              <div className="space-y-2">
+                <span className="inline-flex items-center gap-1.5 rounded bg-signal-amber/15 px-3 py-1 font-mono text-xs font-bold uppercase tracking-wider text-signal-amber border border-signal-amber/35">
+                  ✓ Verified Premium Active
+                </span>
+                <p className="font-body text-xs text-slate leading-relaxed">
+                  Your profile is verified. Your bids are now boosted to the top of organizer matching lists!
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="font-body text-xs text-slate leading-relaxed">
+                  Upgrade to get a gold **Verified Premium** checkmark next to your bids and rank at the **very top** of matching searches!
+                </p>
+                <div className="flex items-center justify-between font-mono text-xs text-slate font-semibold bg-white p-2.5 rounded border border-slate/10">
+                  <span>Subscription Cost</span>
+                  <span className="text-signal-amber">Rs. 4,900 / mo</span>
+                </div>
+                <button
+                  onClick={handleUpgradePremium}
+                  disabled={subscribing}
+                  className="w-full rounded bg-signal-amber py-2 font-sans text-xs font-semibold text-white hover:bg-signal-amber/90 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  {subscribing ? (
+                    <>
+                      <Loader2 size={12} className="animate-spin" />
+                      Upgrading...
+                    </>
+                  ) : (
+                    "Upgrade to Premium"
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+
           <div className="rounded-md border border-slate/15 bg-white p-6 shadow-sm">
             <h2 className="font-display text-lg font-semibold text-ink-navy flex items-center gap-2">
               <Plus size={20} className="text-signal-amber" />

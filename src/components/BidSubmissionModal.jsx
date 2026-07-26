@@ -43,6 +43,7 @@ function BidSubmissionModal({ event, initialCategories = [], vendor, onClose, on
   const allCategoryNames = event.plan.categories.map((c) => c.name)
   const [selectedCategories, setSelectedCategories] = useState(initialCategories.length > 0 ? initialCategories : allCategoryNames)
   
+  const [itemsInput, setItemsInput] = useState("")
   const [price, setPrice] = useState("")
   const [notes, setNotes] = useState("")
   const [error, setError] = useState("")
@@ -77,21 +78,19 @@ function BidSubmissionModal({ event, initialCategories = [], vendor, onClose, on
 
     setError("")
     setSubmitting(true)
-    try {
-      const bid = await submitBid({
-        eventId: event.id,
-        vendorId: vendor.id,
-        vendorName: vendor.name,
-        price,
-        notes,
-        rating: vendor.rating,
-        bidCategories: selectedCategories,
-      })
-      onSubmitted({ ...bid, eventId: event.id, eventName: event.name })
-    } catch (err) {
-      setError(err.message || "Couldn't submit your bid. Please try again.")
-      setSubmitting(false)
-    }
+    const bidItems = itemsInput.split(",").map((i) => i.trim()).filter(Boolean)
+    const bid = await submitBid({
+      eventId: event.id,
+      vendorId: vendor.id,
+      vendorName: vendor.name,
+      price,
+      notes,
+      rating: vendor.rating,
+      bidCategories: selectedCategories,
+      bidItems,
+    })
+    setSubmitting(false)
+    onSubmitted({ ...bid, eventId: event.id, eventName: event.name })
   }
 
   return (
@@ -113,8 +112,8 @@ function BidSubmissionModal({ event, initialCategories = [], vendor, onClose, on
               const isChecked = selectedCategories.includes(catName)
               return (
                 <button
-                  key={catName}
                   type="button"
+                  key={catName}
                   onClick={() => {
                     if (isChecked) {
                       if (selectedCategories.length > 1) {
@@ -146,6 +145,14 @@ function BidSubmissionModal({ event, initialCategories = [], vendor, onClose, on
           value={price}
           onChange={(e) => setPrice(e.target.value)}
           error={error}
+        />
+
+        <FormField
+          label="Equipment list (comma separated)"
+          name="itemsInput"
+          placeholder="e.g. 2x JBL active speakers, 1x Soundcraft mixer, 4x LED Par lights"
+          value={itemsInput}
+          onChange={(e) => setItemsInput(e.target.value)}
         />
 
         <FormField

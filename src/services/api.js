@@ -46,6 +46,52 @@ function crowdTier(crowdSize) {
   return 2
 }
 
+export function categorizeRawItems(itemsArray) {
+  const categoriesMap = {
+    Audio: [],
+    Lighting: [],
+    Staging: [],
+    Visuals: [],
+    Power: []
+  };
+
+  (itemsArray || []).forEach(item => {
+    let label = "";
+    let qty = 1;
+    if (typeof item === 'string') {
+      const match = item.match(/^(\d+)x\s+(.*)$/);
+      if (match) {
+        qty = parseInt(match[1]);
+        label = match[2];
+      } else {
+        label = item;
+      }
+    } else {
+      label = item.label || "";
+      qty = item.qty || 1;
+    }
+
+    const cleanLabel = label.toLowerCase();
+    let targetCategory = "Audio"; // default fallback
+
+    if (cleanLabel.includes("light") || cleanLabel.includes("par") || cleanLabel.includes("wash") || cleanLabel.includes("dmx") || cleanLabel.includes("beam") || cleanLabel.includes("uplight")) {
+      targetCategory = "Lighting";
+    } else if (cleanLabel.includes("stage") || cleanLabel.includes("deck") || cleanLabel.includes("truss") || cleanLabel.includes("barricade") || cleanLabel.includes("scaffold")) {
+      targetCategory = "Staging";
+    } else if (cleanLabel.includes("screen") || cleanLabel.includes("projector") || cleanLabel.includes("led wall") || cleanLabel.includes("tv") || cleanLabel.includes("display") || (cleanLabel.includes("monitor") && !cleanLabel.includes("stage monitor") && !cleanLabel.includes("audio monitor"))) {
+      targetCategory = "Visuals";
+    } else if (cleanLabel.includes("generator") || cleanLabel.includes("power") || cleanLabel.includes("distro") || cleanLabel.includes("cable run") || cleanLabel.includes("kva")) {
+      targetCategory = "Power";
+    }
+
+    categoriesMap[targetCategory].push({ label, qty });
+  });
+
+  return Object.entries(categoriesMap)
+    .filter(([_, items]) => items.length > 0)
+    .map(([name, items]) => ({ name, items }));
+}
+
 // Events published for real via createEvent()/generatePlan() below, kept
 // locally since there's no backend endpoint to list an organizer's own events.
 function getLocallyPublishedEvents() {
@@ -134,23 +180,17 @@ export async function listOrganizerEvents() {
               : e.ai_infrastructure_plan
           }
 
-      // Reconstruct display categories based on the plan shape (single selected vs draft options)
-      let displayPlan;
-      if (parsedPlan && parsedPlan.categories) {
-        displayPlan = ensurePlanPriceRange(parsedPlan, e);
-      } else if (parsedPlan && (parsedPlan.budget_plan || parsedPlan.premium_plan)) {
-        const selectedRaw = parsedPlan.budget_plan || parsedPlan.premium_plan;
-        let categories = [];
-        if (Array.isArray(selectedRaw)) {
-          categories = [
-            {
-              name: "Equipment List",
-              items: selectedRaw.map(item => {
-                const match = item.match(/^(\d+)x\s+(.*)$/);
-                if (match) {
-                  return { label: match[2], qty: parseInt(match[1]) };
-                }
-              ];
+          let displayPlan;
+          if (parsedPlan && parsedPlan.categories) {
+            if (parsedPlan.categories.length === 1 && parsedPlan.categories[0].name === "Equipment List") {
+              parsedPlan.categories = categorizeRawItems(parsedPlan.categories[0].items);
+            }
+            displayPlan = parsedPlan;
+          } else if (parsedPlan && (parsedPlan.budget_plan || parsedPlan.premium_plan)) {
+            const selectedRaw = parsedPlan.budget_plan || parsedPlan.premium_plan;
+            let categories = [];
+            if (Array.isArray(selectedRaw)) {
+              categories = categorizeRawItems(selectedRaw);
             } else if (typeof selectedRaw === 'object') {
               categories = Object.entries(selectedRaw).map(([name, items]) => ({
                 name,
@@ -191,10 +231,10 @@ export async function listOrganizerEvents() {
 
           return {
             id: e.event_id,
-            name: e.event_type, // Use event type as fallback event name
+            name: e.name || e.event_type, // Use custom name with fallback to event type
             eventType: e.event_type,
             crowdSize: e.crowd_count,
-            date: e.created_at || new Date().toISOString(),
+            date: e.event_date || e.created_at || new Date().toISOString(),
             location: e.location || "Colombo",
             status: e.status === "draft" ? "planning" : (e.status || "bidding_open"),
             plan: displayPlan,
@@ -262,7 +302,7 @@ export async function generateInfrastructurePlan(formData) {
 // Real call: POST /events. The spec only documents "201: Event created
 // successfully" with no response schema — assuming (like any typical REST
 // API) that the created event, including its id, comes back in the body.
-export async function createEvent({ organizerId, name, eventType, crowdSize, venueSizeSqm, budgetRange, environment, requirements, description, location, eventDate }) {
+export async function createEvent({ organizerId, name, eventType, crowdSize, venueSizeSqm, budgetRange, environment, requirements, description, location, date }) {
   return request("/events", {
     method: "POST",
     body: JSON.stringify({
@@ -276,7 +316,7 @@ export async function createEvent({ organizerId, name, eventType, crowdSize, ven
       requirements,
       description,
       location,
-      event_date: eventDate,
+      event_date: date,
     }),
   })
 }
@@ -307,14 +347,14 @@ export async function getEventById(id) {
     if (backendEvent) {
       const event = {
         id: backendEvent.event_id,
-        name: backendEvent.name || backendEvent.event_type,
+        name: backendEvent.name || backendEvent.event_type, // Fallback to type if name is not in schema
         eventType: backendEvent.event_type,
         crowdSize: backendEvent.crowd_count,
         venueSizeSqm: backendEvent.venue_size_sqm,
         budget: backendEvent.budget_range,
         location: backendEvent.location || backendEvent.environment || "Indoor",
         status: backendEvent.status === "draft" ? "planning" : (backendEvent.status || "bidding_open"),
-        date: backendEvent.created_at || new Date().toISOString(), // Fallback date
+        date: backendEvent.event_date || backendEvent.created_at || new Date().toISOString(), // Fallback date
         organizerName: backendEvent.organizer_name || "Organizer",
         organizerPhone: backendEvent.organizer_phone || "",
       }
@@ -331,7 +371,10 @@ export async function getEventById(id) {
       }
 
       if (plan && plan.categories) {
-        displayPlan = ensurePlanPriceRange(plan, backendEvent);
+        if (plan.categories.length === 1 && plan.categories[0].name === "Equipment List") {
+          plan.categories = categorizeRawItems(plan.categories[0].items);
+        }
+        displayPlan = plan;
       } else if (plan && (plan.budget_plan || plan.premium_plan)) {
         const selectedRaw = plan.budget_plan || plan.premium_plan;
         
@@ -350,18 +393,7 @@ export async function getEventById(id) {
             };
           });
         } else if (Array.isArray(selectedRaw)) {
-          categories = [
-            {
-              name: "Equipment List",
-              items: selectedRaw.map(item => {
-                const match = item.match(/^(\d+)x\s+(.*)$/);
-                if (match) {
-                  return { label: match[2], qty: parseInt(match[1]) };
-                }
-                return { label: item, qty: 1 };
-              })
-            }
-          ];
+          categories = categorizeRawItems(selectedRaw);
         }
         let low = 50000;
         let high = 150000;
@@ -431,13 +463,18 @@ export async function listBidsForEvent(eventId) {
       return bids.map((b) => ({
         id: b.bid_id,
         vendorId: b.vendor_id,
+        eventId: b.event_id,
         vendorName: b.vendor_name,
         price: Number(b.proposed_price),
         notes: b.notes,
         status: b.status,
-        rating: Number(b.vendor_rating ?? 0),
-        ratingCount: Number(b.vendor_rating_count ?? 0),
-        bid_categories: b.bid_categories,
+        rating: Number(b.rating) || 5.0,
+        bid_categories: b.bid_categories || [],
+        bidItems: b.bid_items || [],
+        isPremium: b.is_premium || false,
+        paymentStatus: b.payment_status || "unpaid",
+        finalPaymentStatus: b.final_payment_status || "unpaid",
+        vendorPhone: b.vendor_phone || "",
       }))
     }
   } catch {
@@ -527,23 +564,15 @@ export async function listVendorOpportunities(equipmentCategory, vendorRegion) {
 
       let displayPlan;
       if (parsedPlan && parsedPlan.categories) {
-        displayPlan = ensurePlanPriceRange(parsedPlan, e);
+        if (parsedPlan.categories.length === 1 && parsedPlan.categories[0].name === "Equipment List") {
+          parsedPlan.categories = categorizeRawItems(parsedPlan.categories[0].items);
+        }
+        displayPlan = parsedPlan;
       } else if (parsedPlan && (parsedPlan.budget_plan || parsedPlan.premium_plan)) {
         const selectedRaw = parsedPlan.budget_plan || parsedPlan.premium_plan;
         let categories = [];
         if (Array.isArray(selectedRaw)) {
-          categories = [
-            {
-              name: "Equipment List",
-              items: selectedRaw.map(item => {
-                const match = item.match(/^(\d+)x\s+(.*)$/);
-                if (match) {
-                  return { label: match[2], qty: parseInt(match[1]) };
-                }
-                return { label: item, qty: 1 };
-              })
-            }
-          ];
+          categories = categorizeRawItems(selectedRaw);
         } else if (typeof selectedRaw === 'object') {
           categories = Object.entries(selectedRaw).map(([name, items]) => ({
             name,
@@ -587,7 +616,7 @@ export async function listVendorOpportunities(equipmentCategory, vendorRegion) {
         name: e.name || e.event_type,
         eventType: e.event_type,
         crowdSize: e.crowd_count,
-        date: e.created_at || new Date().toISOString(),
+        date: e.event_date || e.created_at || new Date().toISOString(),
         location: e.location || "Colombo",
         district: e.district || "",
         status: "bidding_open",
@@ -842,11 +871,11 @@ export async function bookInstantRental(listingId, qtyToBook = 1) {
 // Real call: POST /bids. `notes` isn't in the NewBid schema, so it's kept in
 // the local enrichment layer only (not sent) — same for the display-only
 // vendorName/rating shown in bid comparison lists.
-export async function submitBid({ eventId, vendorId, vendorName, price, notes, rating, bidCategories }) {
+export async function submitBid({ eventId, vendorId, vendorName, price, notes, rating, bidCategories, bidItems }) {
   try {
     await request("/bids", {
       method: "POST",
-      body: JSON.stringify({ event_id: eventId, vendor_id: vendorId, proposed_price: Number(price), notes, bid_categories: bidCategories }),
+      body: JSON.stringify({ event_id: eventId, vendor_id: vendorId, proposed_price: Number(price), notes, bid_categories: bidCategories, bid_items: bidItems }),
     })
   } catch (err) {
     // A real event rejected the bid on business-rule/auth grounds (already
@@ -867,6 +896,7 @@ export async function submitBid({ eventId, vendorId, vendorName, price, notes, r
     rating,
     status: "pending",
     bid_categories: bidCategories,
+    bidItems: bidItems || []
   }
 
   if (!mockBids[eventId]) mockBids[eventId] = []
@@ -875,55 +905,26 @@ export async function submitBid({ eventId, vendorId, vendorName, price, notes, r
   return delay(bid)
 }
 
-// Real call: POST /payments/initiate. Returns { checkout_url, fields } for the
-// caller to POST straight to PayHere's hosted checkout via redirectToPayHereCheckout.
-export async function initiatePayment(bidId) {
-  return request("/payments/initiate", {
+export async function releaseFinalPayment(bidId, transactionId) {
+  return await request(`/bids/${bidId}/final-payment`, {
+    method: "PUT",
+    body: JSON.stringify({ transactionId }),
+  })
+}
+
+export async function submitReview({ eventId, vendorId, rating, comment }) {
+  return await request(`/bids/reviews`, {
     method: "POST",
-    body: JSON.stringify({ bid_id: bidId }),
+    body: JSON.stringify({ eventId, vendorId, rating, comment }),
   })
 }
 
-// Real call: GET /payments/bid/{bidId}. Returns { status: "not_started" } if no
-// payment has been initiated yet for this bid, rather than throwing.
-export async function getPaymentStatusForBid(bidId) {
-  try {
-    return await request(`/payments/bid/${bidId}`)
-  } catch {
-    return { status: "not_started" }
-  }
+export async function getVendorReviews(vendorId) {
+  return await request(`/bids/reviews/vendor/${vendorId}`)
 }
 
-// Real call: GET /payments/{paymentId} — used by the return/cancel redirect
-// pages, which only know the payment id (not the bid id) from the URL.
-export async function getPaymentById(paymentId) {
-  return request(`/payments/${paymentId}`)
-}
-
-// Real call: PUT /payments/{paymentId}/payout. Marks the vendor as paid out
-// OUTSIDE the app (bank transfer, etc) — PayHere has no automated marketplace
-// payout for Sri Lankan vendors, so this is a manual confirmation, not a real
-// money transfer triggered by this call.
-export async function markVendorPayout(paymentId) {
-  return request(`/payments/${paymentId}/payout`, { method: "PUT" })
-}
-
-// PayHere's hosted checkout requires an actual browser form submission (a real
-// navigation), not a fetch/XHR — it needs to redirect the whole page to its
-// domain. This builds that form on the fly and submits it.
-export function redirectToPayHereCheckout({ checkout_url, fields }) {
-  const form = document.createElement("form")
-  form.method = "POST"
-  form.action = checkout_url
-
-  Object.entries(fields).forEach(([name, value]) => {
-    const input = document.createElement("input")
-    input.type = "hidden"
-    input.name = name
-    input.value = value
-    form.appendChild(input)
+export async function subscribePremium() {
+  return await request(`/users/subscribe-premium`, {
+    method: "POST"
   })
-
-  document.body.appendChild(form)
-  form.submit()
 }
