@@ -163,10 +163,10 @@ function Register() {
                         }
                         setValues(v => ({ ...v, region: currentDistricts.join(', ') }));
                       }}
-                      className={`rounded border p-2.5 text-left text-xs font-medium transition-all duration-200 ${
+                      className={`rounded-lg border p-2.5 text-left text-xs font-semibold transition-all duration-300 transform hover:-translate-y-0.5 ${
                         isSelected
-                          ? "border-signal-amber bg-signal-amber/10 text-ink-navy shadow-sm"
-                          : "border-slate/15 hover:border-slate/30 text-slate hover:bg-slate/5"
+                          ? "border-[#0891B2]/50 bg-[#0891B2]/10 backdrop-blur-md text-[#0891B2] shadow-md scale-[1.02]"
+                          : "border-gray-200 bg-white/60 backdrop-blur-sm text-gray-600 hover:border-[#0891B2]/30 hover:bg-gray-50/50"
                       }`}
                     >
                       {dist}

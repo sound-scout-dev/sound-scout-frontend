@@ -48,7 +48,6 @@ function EmptyState() {
 function OrganizerDashboard() {
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
-  const [previewEmpty, setPreviewEmpty] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -63,7 +62,7 @@ function OrganizerDashboard() {
     }
   }, [])
 
-  const visibleEvents = previewEmpty ? [] : events
+  const visibleEvents = events
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -78,15 +77,6 @@ function OrganizerDashboard() {
         </div>
 
         <div className="flex items-center gap-3">
-          {!loading && events.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setPreviewEmpty((v) => !v)}
-              className="font-mono text-[11px] uppercase tracking-widest text-slate/50 underline decoration-dotted underline-offset-4 hover:text-slate"
-            >
-              {previewEmpty ? "Show events" : "Preview empty state"}
-            </button>
-          )}
           <Button as={Link} to="/organizer/events/new" variant="primary" size="md">
             <Plus size={16} strokeWidth={2.5} />
             New Event
