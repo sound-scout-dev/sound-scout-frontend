@@ -9,6 +9,7 @@ import { listVendorOpportunities, listVendorBids, addInstantRental, subscribePre
 import { currentVendor } from "../../services/mockData"
 import { useAuth } from "../../context/AuthContext"
 import { Award, Loader2 } from "lucide-react"
+import FullPageLoader from "../../components/FullPageLoader"
 
 function formatLKR(n) {
   return "Rs. " + Number(n).toLocaleString("en-US", { maximumFractionDigits: 0 })
@@ -91,6 +92,10 @@ function VendorDashboard() {
       active = false
     }
   }, [vendor.name, vendor.equipmentCategory, vendor.region])
+
+  if (loading) {
+    return <FullPageLoader message="SYNCING OPPORTUNITIES..." />
+  }
 
   function handleBidSubmitted(bid) {
     setMyBids((prev) => [...prev, bid])

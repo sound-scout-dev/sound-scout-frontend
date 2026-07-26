@@ -6,6 +6,7 @@ import SpecCard from "../components/SpecCard"
 import SignalPanel from "../components/SignalPanel"
 import { heroPlan } from "../services/mockData"
 import { useAuth } from "../context/AuthContext"
+import FullPageLoader from "../components/FullPageLoader"
 
 // Butter-smooth Scroll Reveal Animation Component
 function ScrollReveal({ children, className = "", delay = 0 }) {
@@ -167,6 +168,14 @@ const FEATURES = [
 function Landing() {
   const location = useLocation()
   const { user } = useAuth()
+  const [splashLoading, setSplashLoading] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSplashLoading(false)
+    }, 1800)
+    return () => clearTimeout(timer)
+  }, [])
   
   const generatePlanPath = user 
     ? (user.role === "vendor" ? "/vendor/dashboard" : "/organizer/events/new")
@@ -181,6 +190,10 @@ function Landing() {
     const target = document.querySelector(location.hash)
     target?.scrollIntoView({ behavior: "smooth", block: "start" })
   }, [location.hash])
+
+  if (splashLoading) {
+    return <FullPageLoader message="BOOTING AI SPECTRA..." />
+  }
 
   return (
     <>

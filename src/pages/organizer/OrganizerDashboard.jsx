@@ -4,6 +4,7 @@ import { Plus, CalendarPlus } from "lucide-react"
 import Button from "../../components/Button"
 import EventCard from "../../components/EventCard"
 import { listOrganizerEvents } from "../../services/api"
+import FullPageLoader from "../../components/FullPageLoader"
 
 function DashboardSkeleton() {
   return (
@@ -61,6 +62,10 @@ function OrganizerDashboard() {
       active = false
     }
   }, [])
+
+  if (loading) {
+    return <FullPageLoader message="SYNCING EVENTS..." />
+  }
 
   const visibleEvents = events
 

@@ -58,9 +58,8 @@ function Footer() {
           ))}
         </div>
 
-        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/5 pt-6 font-mono text-xs text-gray-500 sm:flex-row">
-          <span>© {new Date().getFullYear()} SoundScout. All rights reserved.</span>
-          <span>Built for a university competition demo.</span>
+        <div className="mt-10 flex flex-col items-center justify-center gap-4 border-t border-white/5 pt-6 font-mono text-xs text-gray-500 text-center">
+          <span>© {new Date().getFullYear()} AlgoStrom. All rights reserved.</span>
         </div>
       </div>
     </footer>

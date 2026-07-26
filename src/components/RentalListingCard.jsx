@@ -44,25 +44,25 @@ function RentalListingCard({ listing, booked, onBook }) {
           {listing.rating.toFixed(1)} / 5
         </span>
         {listing.qty !== undefined && (
-          <span className="text-circuit-teal font-semibold font-mono">
+          <span className="text-[#059669] font-bold font-mono">
             {listing.qty} left
           </span>
         )}
       </div>
 
       <div className="mt-5 flex items-center justify-between">
-        <span className="font-mono text-lg font-semibold text-ink-navy">
+        <span className="font-mono text-lg font-semibold text-gray-900">
           Rs. {listing.pricePerDay}
-          <span className="text-sm font-normal text-slate">/day</span>
+          <span className="text-sm font-normal text-gray-500">/day</span>
         </span>
 
         {booked || listing.status === "booked" || listing.availability === "booked" || (listing.qty !== undefined && Number(listing.qty) <= 0) ? (
-          <span className="flex items-center gap-1.5 font-mono text-xs font-medium uppercase tracking-wide text-circuit-teal">
+          <span className="flex items-center gap-1.5 font-mono text-xs font-bold uppercase tracking-wide text-[#059669]">
             <CheckCircle2 size={15} strokeWidth={2} />
             Booked
           </span>
         ) : (
-          <Button variant="danger" size="sm" onClick={() => onBook(listing)}>
+          <Button variant="secondary" size="sm" onClick={() => onBook(listing)}>
             Book Now
           </Button>
         )}

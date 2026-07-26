@@ -4,6 +4,7 @@ import RentalListingCard from "../components/RentalListingCard"
 import BookingConfirmModal from "../components/BookingConfirmModal"
 import { searchInstantRentals } from "../services/api"
 import { RENTAL_CATEGORIES } from "../services/mockData"
+import FullPageLoader from "../components/FullPageLoader"
 
 const inputClass =
   "rounded border border-slate/25 bg-white px-3 py-2.5 text-sm text-ink-navy transition-colors duration-150 ease-out hover:border-slate/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-amber"
@@ -29,6 +30,14 @@ function InstantRental() {
   const [loading, setLoading] = useState(true)
   const [bookedIds, setBookedIds] = useState(new Set())
   const [activeListing, setActiveListing] = useState(null)
+  const [initialLoading, setInitialLoading] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setInitialLoading(false)
+    }, 1200)
+    return () => clearTimeout(timer)
+  }, [])
 
   useEffect(() => {
     setLoading(true)
@@ -41,32 +50,36 @@ function InstantRental() {
     return () => clearTimeout(timer)
   }, [category, location])
 
+  if (initialLoading) {
+    return <FullPageLoader message="SEARCHING INSTANT RENTAL INVENTORY..." />
+  }
+
   function handleBooked(listingId) {
     setBookedIds((prev) => new Set(prev).add(listingId))
     setActiveListing(null)
   }
 
   return (
-    <>
-      <section className="border-b-2 border-alert-red/30 bg-ink-navy">
+    <div className="animate-fade-in-up">
+      <section className="border-b border-gray-200 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <span className="inline-flex items-center gap-2 rounded border border-alert-red/40 bg-alert-red/10 px-3 py-1 font-mono text-xs uppercase tracking-widest text-alert-red">
+          <span className="inline-flex items-center gap-2 rounded-lg border border-[#0891B2]/30 bg-[#0891B2]/5 px-3 py-1.5 font-mono text-xs uppercase tracking-widest text-[#0891B2] font-bold">
             <Zap size={14} strokeWidth={2.5} />
             Instant Rental Mode
           </span>
-          <h1 className="mt-4 font-display text-3xl font-semibold text-paper sm:text-4xl">
+          <h1 className="mt-4 font-display text-3xl font-semibold text-gray-900 sm:text-4xl">
             Need gear right now?
           </h1>
-          <p className="mt-3 max-w-xl font-body text-paper/60">
+          <p className="mt-3 max-w-xl font-body text-gray-600 leading-relaxed">
             Skip the AI plan — search live vendor availability near you and book in one tap.
             Built for last-minute, day-of, or emergency replacement gear.
           </p>
         </div>
       </section>
 
-      <section className="bg-paper">
+      <section className="bg-transparent">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-3 rounded-md border border-slate/15 bg-white p-4 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-3 rounded-xl bg-glass p-4 sm:flex-row sm:items-center shadow-sm">
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
@@ -132,7 +145,7 @@ function InstantRental() {
           onBooked={handleBooked}
         />
       )}
-    </>
+    </div>
   )
 }
 
