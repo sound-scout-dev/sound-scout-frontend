@@ -2,7 +2,8 @@
 // Mocked functions elsewhere in services/ intentionally don't use this —
 // see api.js for which is which and why.
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "/api"
+const baseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "";
+const API_BASE = baseUrl ? `${baseUrl.replace(/\/$/, "")}/api` : "/api";
 
 export class ApiError extends Error {
   constructor(message, status) {
@@ -14,13 +15,13 @@ export class ApiError extends Error {
 
 export async function request(path, options = {}) {
   const headers = { "Content-Type": "application/json", ...options.headers }
-  
+
   try {
     const session = JSON.parse(localStorage.getItem("soundscout.session") || "{}")
     if (session?.token) {
       headers["Authorization"] = `Bearer ${session.token}`
     }
-  } catch (_) {}
+  } catch (_) { }
 
   let response = await fetch(`${API_BASE}${path}`, {
     headers,
@@ -47,7 +48,7 @@ export async function request(path, options = {}) {
             const session = JSON.parse(localStorage.getItem("soundscout.session") || "{}")
             session.token = refreshData.accessToken
             localStorage.setItem("soundscout.session", JSON.stringify(session))
-          } catch (_) {}
+          } catch (_) { }
 
           // Retry the original request with the new access token
           headers["Authorization"] = `Bearer ${refreshData.accessToken}`
