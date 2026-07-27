@@ -2,8 +2,16 @@
 // Mocked functions elsewhere in services/ intentionally don't use this —
 // see api.js for which is which and why.
 
-const baseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "";
-const API_BASE = baseUrl ? `${baseUrl.replace(/\/$/, "")}/api` : "/api";
+let baseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "";
+if (baseUrl) {
+  baseUrl = baseUrl.replace(/\/$/, "");
+  if (!baseUrl.endsWith("/api")) {
+    baseUrl = `${baseUrl}/api`;
+  }
+} else {
+  baseUrl = "/api";
+}
+const API_BASE = baseUrl;
 
 export class ApiError extends Error {
   constructor(message, status) {
