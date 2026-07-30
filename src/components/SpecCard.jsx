@@ -74,9 +74,8 @@ function SpecCard({ plan, loop = false, startRevealed = false, onDone, className
             AI Infrastructure Plan
           </span>
           <span
-            className={`h-1.5 w-1.5 rounded-full ${
-              phase === "done" ? "bg-[#059669]" : "bg-[#0891B2] animate-ping"
-            }`}
+            className={`h-1.5 w-1.5 rounded-full ${phase === "done" ? "bg-[#059669]" : "bg-[#0891B2] animate-ping"
+              }`}
           />
         </div>
       </div>
@@ -110,13 +109,11 @@ function SpecCard({ plan, loop = false, startRevealed = false, onDone, className
               acc.push(
                 <div
                   key={`item-${node.cat.name}-${node.item.label}`}
-                  className={`flex flex-col border-b border-gray-100 pb-1.5 transition-all duration-300 ${
-                    isOptional 
-                      ? "border-red-200 bg-red-50/50 px-2.5 py-2 my-1 rounded border shadow-sm" 
+                  className={`flex flex-col border-b border-gray-100 pb-1.5 transition-all duration-300 ${isOptional
+                      ? "border-red-200 bg-red-50/50 px-2.5 py-2 my-1 rounded border shadow-sm"
                       : ""
-                  } ${
-                    isVisible(i) ? "animate-reveal-line" : "opacity-0"
-                  }`}
+                    } ${isVisible(i) ? "animate-reveal-line" : "opacity-0"
+                    }`}
                 >
                   <div className="flex items-baseline justify-between gap-4">
                     <span className={`font-body text-sm ${isOptional ? "text-red-600 font-semibold" : "text-gray-800"}`}>
@@ -140,9 +137,8 @@ function SpecCard({ plan, loop = false, startRevealed = false, onDone, className
       </div>
 
       <div
-        className={`flex items-center justify-between border-t border-white/40 bg-white/40 px-5 py-4 transition-opacity duration-300 ${
-          isVisible(sequence.current.length - 1) ? "opacity-100" : "opacity-0"
-        }`}
+        className={`flex items-center justify-between border-t border-white/40 bg-white/40 px-5 py-4 transition-opacity duration-300 ${isVisible(sequence.current.length - 1) ? "opacity-100" : "opacity-0"
+          }`}
       >
         <span className="font-mono text-[10px] uppercase tracking-wider text-gray-500">
           Estimated cost

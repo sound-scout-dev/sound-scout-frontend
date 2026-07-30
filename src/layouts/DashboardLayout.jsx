@@ -2,12 +2,15 @@ import { Link, Outlet, useNavigate } from "react-router-dom"
 import { LogOut } from "lucide-react"
 import Logo from "../components/Logo"
 import { useAuth } from "../context/AuthContext"
+import { useTheme } from "../context/ThemeContext"
+import ThemeToggle from "../components/ThemeToggle"
 import SessionTimeoutModal from "../components/SessionTimeoutModal"
 import { useEffect } from "react"
 
 function DashboardLayout({ role = "Organizer" }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const { isDarkMode } = useTheme()
 
   useEffect(() => {
     if (!user) {
@@ -31,38 +34,38 @@ function DashboardLayout({ role = "Organizer" }) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50/50">
-      <header className="border-b border-gray-200/60 bg-white/95 backdrop-blur-md sticky top-0 z-50">
+    <div className="flex min-h-screen flex-col bg-gray-50/50 dark:bg-zinc-950">
+      <header className="border-b border-gray-200/60 dark:border-zinc-800/80 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md sticky top-0 z-50">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link
             to="/"
             className="rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0891B2]"
           >
             {/* Logo has dark brand text visible on this light header */}
-            <Logo dark={true} />
+            <Logo dark={!isDarkMode} />
           </Link>
 
           <div className="flex items-center gap-6">
             <Link
               to={role === "Organizer" ? "/organizer/dashboard" : "/vendor/dashboard"}
-              className="font-body text-sm font-semibold text-gray-600 hover:text-[#0891B2] transition-colors"
+              className="font-body text-sm font-semibold text-gray-600 dark:text-zinc-300 hover:text-[#0891B2] dark:hover:text-[#0891B2] transition-colors"
             >
               Dashboard
             </Link>
-            
+
             <Link
               to={role === "Organizer" ? "/organizer/profile" : "/vendor/profile"}
-              className="font-body text-sm font-semibold text-gray-600 hover:text-[#0891B2] transition-colors"
+              className="font-body text-sm font-semibold text-gray-600 dark:text-zinc-300 hover:text-[#0891B2] dark:hover:text-[#0891B2] transition-colors"
             >
               Profile
             </Link>
 
-            <span className="rounded border border-gray-200 bg-gray-100/80 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-gray-600">
+            <span className="rounded border border-gray-200 dark:border-zinc-800 bg-gray-100/80 dark:bg-zinc-900 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-gray-600 dark:text-zinc-300">
               {role}
             </span>
 
             {user?.name && (
-              <span className="font-body text-sm text-gray-500 font-medium">
+              <span className="font-body text-sm text-gray-500 dark:text-zinc-400 font-medium">
                 Hi, {user.name.split(" ")[0]}
               </span>
             )}
@@ -70,11 +73,13 @@ function DashboardLayout({ role = "Organizer" }) {
             <button
               type="button"
               onClick={handleLogout}
-              className="flex items-center gap-1.5 rounded px-2 py-1.5 text-sm font-medium text-gray-600 transition-colors duration-150 ease-out hover:text-red-650 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0891B2]"
+              className="flex items-center gap-1.5 rounded px-2 py-1.5 text-sm font-medium text-gray-600 dark:text-zinc-300 transition-colors duration-150 ease-out hover:text-red-650 dark:hover:text-red-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0891B2]"
             >
               <LogOut size={14} strokeWidth={2} />
               Log out
             </button>
+
+            <ThemeToggle />
           </div>
         </div>
       </header>
