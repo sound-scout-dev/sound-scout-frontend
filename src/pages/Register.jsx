@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react"
 import RoleToggle from "../components/RoleToggle"
 import FormField from "../components/FormField"
 import Button from "../components/Button"
-import { register } from "../services/api"
+import { register, checkVerificationStatus } from "../services/api"
 import { EQUIPMENT_CATEGORIES } from "../services/mockData"
 import { useAuth } from "../context/AuthContext"
 
