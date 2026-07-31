@@ -120,15 +120,24 @@ export async function register({ fullName, email, role, region, password, phone 
   })
 
   return {
-    id: created.user.user_id,
-    name: created.user.name,
-    email: created.user.email,
-    role: created.user.role,
-    region: created.user.region,
-    phone: created.user.phone,
-    is_verified: created.user.is_verified,
+    id: created.user?.user_id,
+    name: created.user?.name,
+    email: created.user?.email,
+    role: created.user?.role,
+    region: created.user?.region,
+    phone: created.user?.phone,
+    is_verified: created.user?.is_verified,
     token: created.accessToken,
+    verificationCode: created.verificationCode,
+    botPhone: created.botPhone,
+    rawResponse: created
   }
+}
+
+export async function checkVerificationStatus(verificationCode) {
+  return await request(`/users/verification-status/${verificationCode}`, {
+    method: "GET",
+  })
 }
 
 export async function verifyOtp({ email, otp }) {

@@ -1,9 +1,9 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
-import { Loader2, KeyRound } from "lucide-react"
+import { Loader2, KeyRound, MessageSquare, CheckCircle2 } from "lucide-react"
 import FormField from "../components/FormField"
 import Button from "../components/Button"
-import { verifyOtp } from "../services/api"
+import { verifyOtp, checkVerificationStatus } from "../services/api"
 import { useAuth } from "../context/AuthContext"
 
 function VerifyOtp() {
@@ -18,9 +18,35 @@ function VerifyOtp() {
   const [otp, setOtp] = useState("")
   const [error, setError] = useState("")
   const [submitting, setSubmitting] = useState(false)
+  const [verifiedSuccess, setVerifiedSuccess] = useState(false)
+
+  const verificationCode = regResponse?.verificationCode
+  const botPhone = regResponse?.botPhone || "94XXXXXXXXX"
+
+  // Auto-polling verification status every 2 seconds if verificationCode exists
+  useEffect(() => {
+    if (!verificationCode || verifiedSuccess) return
+
+    const interval = setInterval(async () => {
+      try {
+        const status = await checkVerificationStatus(verificationCode)
+        if (status?.isVerified) {
+          clearInterval(interval)
+          setVerifiedSuccess(true)
+          setTimeout(() => {
+            login({ ...regResponse, is_verified: true, equipmentCategory })
+            navigate(regResponse?.role === "vendor" ? "/vendor/dashboard" : "/organizer/dashboard")
+          }, 1500)
+        }
+      } catch (err) {
+        console.error("Polling verification status error:", err)
+      }
+    }, 2000)
+
+    return () => clearInterval(interval)
+  }, [verificationCode, verifiedSuccess, login, navigate, regResponse, equipmentCategory])
 
   if (!regResponse) {
-    // If no registration flow in progress, bounce back to login
     return (
       <div className="text-center py-12 bg-white rounded border border-slate/15 max-w-md mx-auto my-12">
         <p className="text-slate font-mono text-sm">No registration session found.</p>
@@ -41,7 +67,6 @@ function VerifyOtp() {
     setSubmitting(true)
     try {
       await verifyOtp({ email: regResponse.email, otp })
-      // Login context on success
       login({ ...regResponse, is_verified: true, equipmentCategory })
       navigate(regResponse.role === "vendor" ? "/vendor/dashboard" : "/organizer/dashboard")
     } catch (err) {
@@ -51,43 +76,85 @@ function VerifyOtp() {
     }
   }
 
+  const whatsappUrl = `https://wa.me/${botPhone}?text=${encodeURIComponent(verificationCode || '')}`
+
   return (
     <div className="mx-auto max-w-md px-4 py-16">
       <div className="rounded-md border border-slate/15 bg-white p-8 shadow-md text-center">
-        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366]/10 text-[#25D366] mb-4">
-          <KeyRound size={22} />
-        </span>
-        <h1 className="font-display text-2xl font-semibold text-ink-navy">Verify Your WhatsApp</h1>
-        <p className="mt-2 font-body text-xs text-slate max-w-xs mx-auto leading-relaxed">
-          We have dispatched a 6-digit verification code to your WhatsApp number: <strong className="text-ink-navy">{regResponse.phone}</strong>.
-        </p>
-
-        <form className="mt-6 space-y-4" onSubmit={handleVerify}>
-          {error && (
-            <p className="font-mono text-xs text-alert-red bg-alert-red/10 rounded px-2.5 py-1.5 text-left">
-              {error}
+        {verifiedSuccess ? (
+          <div className="py-6 space-y-4">
+            <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
+              <CheckCircle2 size={36} />
+            </span>
+            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-600 font-semibold text-base shadow-sm">
+              ✅ Account Verified Successfully!
+            </div>
+            <p className="text-xs text-slate font-mono">Redirecting you to your dashboard…</p>
+          </div>
+        ) : (
+          <>
+            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366]/10 text-[#25D366] mb-4">
+              <KeyRound size={22} />
+            </span>
+            <h1 className="font-display text-2xl font-semibold text-ink-navy">Verify Your WhatsApp</h1>
+            <p className="mt-2 font-body text-xs text-slate max-w-xs mx-auto leading-relaxed">
+              Click the button below to send your pre-filled verification code on WhatsApp. This window will automatically update once verified.
             </p>
-          )}
 
-          <FormField
-            label="6-Digit Verification Code"
-            name="otp"
-            maxLength={6}
-            value={otp}
-            onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ""))}
-            placeholder="e.g. 123456"
-            className="text-left font-mono"
-          />
+            {verificationCode && (
+              <div className="mt-4 space-y-3">
+                <div className="rounded-lg border border-slate/15 bg-slate/5 p-3 font-mono text-xs text-ink-navy">
+                  <p className="text-[10px] text-slate uppercase tracking-wider">Verification Code</p>
+                  <p className="text-lg font-bold tracking-widest text-[#0891B2]">{verificationCode}</p>
+                </div>
 
-          <Button
-            type="submit"
-            className="w-full mt-2"
-            disabled={submitting}
-          >
-            {submitting && <Loader2 size={14} className="animate-spin" />}
-            {submitting ? "Verifying..." : "Verify & Activate"}
-          </Button>
-        </form>
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2.5 w-full rounded-lg bg-[#25D366] px-5 py-3 text-sm font-semibold text-white shadow-md transition-all hover:bg-[#20bd5a]"
+                >
+                  <MessageSquare size={16} />
+                  Verify via WhatsApp
+                </a>
+              </div>
+            )}
+
+            <form className="mt-6 space-y-4" onSubmit={handleVerify}>
+              {error && (
+                <p className="font-mono text-xs text-alert-red bg-alert-red/10 rounded px-2.5 py-1.5 text-left">
+                  {error}
+                </p>
+              )}
+
+              <FormField
+                label="Or enter 6-Digit Code manually"
+                name="otp"
+                maxLength={6}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ""))}
+                placeholder="e.g. 123456"
+                className="text-left font-mono"
+              />
+
+              <Button
+                type="submit"
+                className="w-full mt-2"
+                disabled={submitting}
+              >
+                {submitting && <Loader2 size={14} className="animate-spin" />}
+                {submitting ? "Verifying..." : "Verify & Activate"}
+              </Button>
+            </form>
+
+            {verificationCode && (
+              <div className="flex items-center justify-center gap-2 text-xs text-slate font-mono pt-4">
+                <Loader2 size={14} className="animate-spin text-[#0891B2]" />
+                <span>Waiting for WhatsApp verification…</span>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   )

@@ -75,6 +75,10 @@ function Register() {
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState("")
 
+  // Click-to-Verify UI & Polling state
+  const [verificationData, setVerificationData] = useState(null)
+  const [verifiedSuccess, setVerifiedSuccess] = useState(false)
+
   const setField = (name) => (e) => setValues((v) => ({ ...v, [name]: e.target.value }))
 
   async function handleSubmit(e) {
@@ -87,12 +91,100 @@ function Register() {
     setSubmitting(true)
     try {
       const regResponse = await register(values)
-      navigate("/verify-otp", { state: { regResponse, equipmentCategory: values.equipmentCategory } })
+      if (regResponse?.verificationCode) {
+        setVerificationData({
+          verificationCode: regResponse.verificationCode,
+          botPhone: regResponse.botPhone || "94XXXXXXXXX",
+          regResponse,
+          role: values.role
+        })
+      } else {
+        navigate("/verify-otp", { state: { regResponse, equipmentCategory: values.equipmentCategory } })
+      }
     } catch {
       setFormError("We couldn't create your account. Please try again.")
     } finally {
       setSubmitting(false)
     }
+  }
+
+  // Auto-polling verification status every 2 seconds
+  useEffect(() => {
+    if (!verificationData?.verificationCode || verifiedSuccess) return
+
+    const interval = setInterval(async () => {
+      try {
+        const status = await checkVerificationStatus(verificationData.verificationCode)
+        if (status?.isVerified) {
+          clearInterval(interval)
+          setVerifiedSuccess(true)
+
+          setTimeout(() => {
+            if (verificationData.regResponse) {
+              login({ ...verificationData.regResponse, is_verified: true })
+            }
+            navigate(verificationData.role === "vendor" ? "/vendor/dashboard" : "/organizer/dashboard")
+          }, 1500)
+        }
+      } catch (err) {
+        console.error("Polling verification status error:", err)
+      }
+    }, 2000)
+
+    return () => clearInterval(interval)
+  }, [verificationData, verifiedSuccess, login, navigate])
+
+  // Verification Screen UI
+  if (verificationData) {
+    const whatsappUrl = `https://wa.me/${verificationData.botPhone}?text=${encodeURIComponent(verificationData.verificationCode)}`
+
+    return (
+      <div className="rounded-md border border-paper/10 bg-paper p-8 shadow-2xl shadow-black/20 text-center max-w-lg mx-auto my-8">
+        {verifiedSuccess ? (
+          <div className="py-6 space-y-4">
+            <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
+              <Loader2 size={36} className="animate-spin text-emerald-500" />
+            </span>
+            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-600 font-semibold text-base shadow-sm">
+              ✅ Account Verified Successfully!
+            </div>
+            <p className="text-xs text-slate font-mono">Redirecting you to your dashboard…</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366]/10 text-[#25D366]">
+              <Loader2 size={28} className="animate-spin text-[#25D366]" />
+            </span>
+
+            <div>
+              <h1 className="font-display text-2xl font-semibold text-ink-navy">Verify Your Account</h1>
+              <p className="mt-2 font-body text-xs text-slate max-w-sm mx-auto leading-relaxed">
+                Click the button above to send your pre-filled verification code on WhatsApp. This window will automatically update once verified.
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-slate/15 bg-slate/5 p-4 font-mono text-xs text-ink-navy space-y-1">
+              <p className="text-[11px] text-slate uppercase tracking-wider">Your Verification Code</p>
+              <p className="text-xl font-bold tracking-widest text-[#0891B2]">{verificationData.verificationCode}</p>
+            </div>
+
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2.5 w-full rounded-lg bg-[#25D366] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#25D366]/20 transition-all hover:bg-[#20bd5a] hover:shadow-xl active:scale-[0.98]"
+            >
+              Verify via WhatsApp
+            </a>
+
+            <div className="flex items-center justify-center gap-2 text-xs text-slate font-mono pt-2">
+              <Loader2 size={14} className="animate-spin text-[#0891B2]" />
+              <span>Waiting for WhatsApp verification…</span>
+            </div>
+          </div>
+        )}
+      </div>
+    )
   }
 
   return (
