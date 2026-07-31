@@ -14,37 +14,37 @@ function Logo({ dark = true }) {
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
         </defs>
-        
+
         {/* Professional Teal wave path */}
-        <path 
-          d="M 5 30 Q 12 25 15 20 Q 18 10 21 30 Q 24 50 27 15 Q 30 -10 33 35 Q 36 65 39 30 T 45 30 H 52" 
-          stroke="#0891B2" 
-          strokeWidth="3.5" 
-          strokeLinecap="round" 
+        <path
+          d="M 5 30 Q 12 25 15 20 Q 18 10 21 30 Q 24 50 27 15 Q 30 -10 33 35 Q 36 65 39 30 T 45 30 H 52"
+          stroke="#0891B2"
+          strokeWidth="3.5"
+          strokeLinecap="round"
           strokeLinejoin="round"
           filter="url(#glow-cyan)"
         />
-        
+
         {/* Professional Emerald circular dial */}
-        <circle 
-          cx="62" 
-          cy="30" 
-          r="18" 
-          stroke="#059669" 
-          strokeWidth="3.2" 
-          strokeDasharray="80 30" 
+        <circle
+          cx="62"
+          cy="30"
+          r="18"
+          stroke="#059669"
+          strokeWidth="3.2"
+          strokeDasharray="80 30"
           strokeLinecap="round"
           transform="rotate(-45 62 30)"
         />
-        
+
         {/* Inner dial indicator line */}
-        <line 
-          x1="62" 
-          y1="30" 
-          x2="72" 
-          y2="20" 
-          stroke="#0891B2" 
-          strokeWidth="2.5" 
+        <line
+          x1="62"
+          y1="30"
+          x2="72"
+          y2="20"
+          stroke="#0891B2"
+          strokeWidth="2.5"
           strokeLinecap="round"
         />
       </svg>

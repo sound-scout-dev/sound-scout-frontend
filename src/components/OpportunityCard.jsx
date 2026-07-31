@@ -26,7 +26,7 @@ function getHeuristicPriceForCategories(categories, targetCategories) {
         const qty = Number(item.qty) || 1
         const label = item.label.toLowerCase()
         let price = 5000 // default base
-        
+
         if (label.includes("speaker") || label.includes("pa system") || label.includes("array")) {
           price = label.includes("line array") ? 25000 : 10000
         } else if (label.includes("subwoofer")) {
@@ -44,7 +44,7 @@ function getHeuristicPriceForCategories(categories, targetCategories) {
         } else if (label.includes("stage") || label.includes("deck") || label.includes("truss")) {
           price = 30000
         }
-        
+
         total += price * qty
       })
     }
@@ -55,7 +55,7 @@ function getHeuristicPriceForCategories(categories, targetCategories) {
 function OpportunityCard({ event, vendor, hasBid, onPlaceBid }) {
   const allCategoryNames = event.plan.categories.map((c) => c.name)
   const mappedVendorCategory = EQUIPMENT_TO_PLAN_CATEGORY[vendor?.equipmentCategory]
-  
+
   const [selectedCategories, setSelectedCategories] = useState(() => {
     if (mappedVendorCategory && allCategoryNames.includes(mappedVendorCategory)) {
       return [mappedVendorCategory]
@@ -90,7 +90,7 @@ function OpportunityCard({ event, vendor, hasBid, onPlaceBid }) {
 
   const priceLow = event.plan.priceRange?.low || (selectedHeuristic * 0.85)
   const priceHigh = event.plan.priceRange?.high || (selectedHeuristic * 1.15)
-  
+
   const adjustedLow = Math.round((priceLow * ratio) / 100) * 100
   const adjustedHigh = Math.round((priceHigh * ratio) / 100) * 100
 
@@ -104,7 +104,7 @@ function OpportunityCard({ event, vendor, hasBid, onPlaceBid }) {
           <h3 className="font-display text-base font-semibold text-gray-900">{event.name}</h3>
           <p className="mt-0.5 font-mono text-xs text-gray-500">{event.eventType}</p>
         </div>
-        
+
         {/* Toggleable categories */}
         <div className="flex flex-wrap gap-1.5">
           {event.plan.categories.map((cat) => {
@@ -114,11 +114,10 @@ function OpportunityCard({ event, vendor, hasBid, onPlaceBid }) {
                 key={cat.name}
                 type="button"
                 onClick={() => toggleCategory(cat.name)}
-                className={`rounded border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide transition-all ${
-                  isChecked
+                className={`rounded border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide transition-all ${isChecked
                     ? "border-[#059669]/30 bg-[#059669]/10 text-[#059669] font-bold shadow-sm"
                     : "border-gray-200 bg-white/40 text-gray-500 hover:bg-gray-50/50"
-                }`}
+                  }`}
               >
                 {cat.name}
               </button>
@@ -240,9 +239,9 @@ function OpportunityCard({ event, vendor, hasBid, onPlaceBid }) {
             Bid submitted
           </span>
         ) : (
-          <Button 
-            variant="secondary" 
-            size="sm" 
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => onPlaceBid(event, selectedCategories)}
             className="w-full sm:w-auto"
           >
