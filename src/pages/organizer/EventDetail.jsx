@@ -10,6 +10,7 @@ import { getEventById, listBidsForEvent, publishEvent, acceptAndPayBid, releaseF
 import { useAuth } from "../../context/AuthContext"
 import AcceptBidModal from "../../components/AcceptBidModal"
 import ReviewVendorModal from "../../components/ReviewVendorModal"
+import { downloadReceiptPDF } from "../../utils/downloadReceipt"
 
 function DetailSkeleton() {
   return (
@@ -189,11 +190,29 @@ function EventDetail() {
             <>
               {acceptedBid && (
                 <div className="mt-6 rounded-md border border-slate/15 bg-white p-5 space-y-4 shadow-sm">
-                  <h3 className="font-display text-xs font-bold uppercase tracking-wider text-ink-navy flex items-center justify-between">
+                  <h3 className="font-display text-xs font-bold uppercase tracking-wider text-ink-navy flex flex-wrap items-center justify-between gap-2">
                     <span>Escrow Payment Ledger</span>
-                    <span className="font-mono text-[9px] uppercase tracking-wider text-slate bg-slate/5 px-2 py-0.5 rounded border border-slate/10">
-                      Split Payout Structure (50/50)
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => downloadReceiptPDF({
+                          vendorName: acceptedBid.vendorName,
+                          eventName: event.name || event.title || "SoundScout Booking",
+                          quotePrice: acceptedBid.price,
+                          commission: acceptedBid.price * 0.06,
+                          advancePrice: acceptedBid.price * 0.50,
+                          remainingPrice: acceptedBid.price * 0.50,
+                          amountPaid: (acceptedBid.price * 0.50) + (acceptedBid.price * 0.06),
+                          status: acceptedBid.finalPaymentStatus === 'paid' ? 'FULLY PAID & RELEASED' : 'PAID (HELD IN ESCROW)'
+                        })}
+                        className="font-mono text-[10px] uppercase font-semibold text-[#0891B2] bg-[#0891B2]/10 hover:bg-[#0891B2]/20 px-2.5 py-1 rounded border border-[#0891B2]/20 transition-all flex items-center gap-1"
+                      >
+                        📄 Download Receipt (PDF)
+                      </button>
+                      <span className="font-mono text-[9px] uppercase tracking-wider text-slate bg-slate/5 px-2 py-0.5 rounded border border-slate/10">
+                        Split Payout Structure (50/50)
+                      </span>
+                    </div>
                   </h3>
                   
                   <div className="grid grid-cols-2 gap-4 text-xs font-body text-slate border-t border-slate/5 pt-3">

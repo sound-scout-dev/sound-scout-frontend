@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Loader2, CreditCard, ShieldCheck, X } from "lucide-react"
+import { downloadReceiptPDF } from "../utils/downloadReceipt"
 
 function formatLKR(n) {
   return "Rs. " + n.toLocaleString("en-LK", { maximumFractionDigits: 0 })
@@ -228,12 +229,30 @@ function AcceptBidModal({ isOpen, onClose, bid, onPaymentSuccess }) {
               </p>
             </div>
 
-            <button
-              onClick={onClose}
-              className="w-full rounded bg-[#25D366] py-2.5 font-sans text-sm font-semibold text-white hover:bg-[#20ba5a] transition-colors"
-            >
-              Continue to Dashboard
-            </button>
+            <div className="space-y-2.5 pt-1">
+              <button
+                type="button"
+                onClick={() => downloadReceiptPDF({
+                  vendorName: bid.vendorName,
+                  quotePrice: quotePrice,
+                  commission: commission,
+                  advancePrice: advancePrice,
+                  remainingPrice: remainingPrice,
+                  amountPaid: total,
+                  status: "PAID (HELD IN ESCROW)"
+                })}
+                className="w-full rounded border border-[#0891B2] bg-[#0891B2]/10 py-2.5 font-sans text-xs font-semibold text-[#0891B2] hover:bg-[#0891B2]/20 transition-colors flex items-center justify-center gap-2"
+              >
+                📄 Download Soft Copy Receipt
+              </button>
+
+              <button
+                onClick={onClose}
+                className="w-full rounded bg-[#25D366] py-2.5 font-sans text-sm font-semibold text-white hover:bg-[#20ba5a] transition-colors"
+              >
+                Continue to Dashboard
+              </button>
+            </div>
           </div>
         )}
 

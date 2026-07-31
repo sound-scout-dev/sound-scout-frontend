@@ -14,10 +14,11 @@ if (baseUrl) {
 const API_BASE = baseUrl;
 
 export class ApiError extends Error {
-  constructor(message, status) {
+  constructor(message, status, data = {}) {
     super(message)
     this.name = "ApiError"
     this.status = status
+    Object.assign(this, data)
   }
 }
 
@@ -82,7 +83,8 @@ export async function request(path, options = {}) {
   }
 
   if (!response.ok) {
-    throw new ApiError(body?.message ?? `Request to ${path} failed (${response.status}).`, response.status)
+    const errMsg = body?.message || body?.error || `Request to ${path} failed (${response.status}).`
+    throw new ApiError(errMsg, response.status, body || {})
   }
 
   return body

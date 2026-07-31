@@ -104,16 +104,26 @@ function Login() {
         </div>
 
         {formError && (
-          <div className="rounded border border-alert-red/30 bg-alert-red/10 px-3.5 py-3 text-sm text-alert-red space-y-2">
-            <p>{formError}</p>
-            {unverifiedInfo && (
+          <div className="rounded-lg border border-alert-red/30 bg-alert-red/10 p-4 text-sm text-alert-red space-y-3">
+            <p className="font-medium">{formError}</p>
+            {unverifiedInfo ? (
               <button
                 type="button"
                 onClick={() => navigate("/verify-otp", { state: { regResponse: unverifiedInfo } })}
-                className="inline-flex items-center justify-center w-full rounded bg-[#25D366] px-3.5 py-2 text-xs font-semibold text-white shadow hover:bg-[#20bd5a] transition-all"
+                className="inline-flex items-center justify-center w-full rounded-md bg-[#25D366] px-4 py-2.5 text-xs font-semibold text-white shadow-md hover:bg-[#20bd5a] transition-all"
               >
-                Verify Account via WhatsApp
+                Verify Account via WhatsApp Now
               </button>
+            ) : (
+              <div className="pt-1 flex flex-wrap gap-2 text-xs font-mono">
+                <Link to="/forgot-password" className="text-[#0891B2] underline font-semibold hover:text-[#06748f]">
+                  Forgot Password?
+                </Link>
+                <span className="text-slate">•</span>
+                <Link to="/register" className="text-signal-amber underline font-semibold hover:text-amber-600">
+                  Register New Account
+                </Link>
+              </div>
             )}
           </div>
         )}
