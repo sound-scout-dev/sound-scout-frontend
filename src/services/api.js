@@ -140,6 +140,20 @@ export async function checkVerificationStatus(verificationCode) {
   })
 }
 
+export async function forgotPassword({ email }) {
+  return await request("/users/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  })
+}
+
+export async function resetPassword({ email, code, newPassword }) {
+  return await request("/users/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ email, code, newPassword }),
+  })
+}
+
 export async function verifyOtp({ email, otp }) {
   return await request("/users/verify-otp", {
     method: "POST",

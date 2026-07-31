@@ -29,11 +29,10 @@ function Login() {
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState("")
 
+  const [unverifiedInfo, setUnverifiedInfo] = useState(null)
+
   const setField = (name) => (e) => setValues((v) => ({ ...v, [name]: e.target.value }))
 
-  // No login endpoint exists on the backend yet — this stays mocked (any
-  // password is accepted), but writes into the same AuthContext session used
-  // by real registration, so downstream pages don't care how the session started.
   async function handleSubmit(e) {
     e.preventDefault()
     const nextErrors = validate(values)
@@ -41,12 +40,22 @@ function Login() {
     if (Object.keys(nextErrors).length > 0) return
 
     setFormError("")
+    setUnverifiedInfo(null)
     setSubmitting(true)
     try {
       const user = await login(values)
       setSession(user)
       navigate(user.role === "vendor" ? "/vendor/dashboard" : "/organizer/dashboard")
     } catch (err) {
+      if (err?.status === 403 || err?.message?.includes("Account not verified")) {
+        setUnverifiedInfo({
+          email: values.email,
+          phone: err.phone || "",
+          role: err.role || "organizer",
+          verificationCode: err.verificationCode,
+          botPhone: err.botPhone || "94703252870"
+        })
+      }
       setFormError(err?.message || "We couldn't log you in. Check your details and try again.")
     } finally {
       setSubmitting(false)
@@ -73,21 +82,40 @@ function Login() {
           placeholder="you@company.com"
         />
 
-        <FormField
-          label="Password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          value={values.password}
-          onChange={setField("password")}
-          error={errors.password}
-          placeholder="••••••••"
-        />
+        <div>
+          <FormField
+            label="Password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            value={values.password}
+            onChange={setField("password")}
+            error={errors.password}
+            placeholder="••••••••"
+          />
+          <div className="mt-1.5 text-right">
+            <Link
+              to="/forgot-password"
+              className="font-body text-xs text-[#0891B2] hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
+        </div>
 
         {formError && (
-          <p className="rounded border border-alert-red/30 bg-alert-red/10 px-3 py-2 text-sm text-alert-red">
-            {formError}
-          </p>
+          <div className="rounded border border-alert-red/30 bg-alert-red/10 px-3.5 py-3 text-sm text-alert-red space-y-2">
+            <p>{formError}</p>
+            {unverifiedInfo && (
+              <button
+                type="button"
+                onClick={() => navigate("/verify-otp", { state: { regResponse: unverifiedInfo } })}
+                className="inline-flex items-center justify-center w-full rounded bg-[#25D366] px-3.5 py-2 text-xs font-semibold text-white shadow hover:bg-[#20bd5a] transition-all"
+              >
+                Verify Account via WhatsApp
+              </button>
+            )}
+          </div>
         )}
 
         <Button type="submit" variant="primary" size="lg" className="w-full" disabled={submitting}>
