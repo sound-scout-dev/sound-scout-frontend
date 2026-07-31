@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom"
 import { X } from "lucide-react"
 import WizardProgress from "../../components/new-event/WizardProgress"
 import StepBasics from "../../components/new-event/StepBasics"
-import StepDescription from "../../components/new-event/StepDescription"
 import StepConfirmation from "../../components/new-event/StepConfirmation"
 import StepGenerating from "../../components/new-event/StepGenerating"
 import StepResults from "../../components/new-event/StepResults"
@@ -175,26 +174,16 @@ function NewEvent() {
             }}
           />
         )}
-        {step === 2 && isVoiceMode && (
+        {step === 2 && (
           <StepConfirmation
             values={values}
             onChange={setField}
             onBack={() => {
-              setIsVoiceMode(false)
               setStep(1)
             }}
             onConfirm={() => {
               setStep(3)
             }}
-          />
-        )}
-        {step === 2 && !isVoiceMode && (
-          <StepDescription
-            values={values}
-            errors={errors}
-            onChange={setField}
-            onNext={handleDescriptionNext}
-            onBack={() => setStep(1)}
           />
         )}
         {step === 3 && (

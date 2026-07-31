@@ -17,7 +17,9 @@ function AcceptBidModal({ isOpen, onClose, bid, onPaymentSuccess }) {
 
   const quotePrice = bid.price
   const commission = quotePrice * 0.06
-  const total = quotePrice + commission
+  const advancePrice = quotePrice * 0.50
+  const remainingPrice = quotePrice * 0.50
+  const total = advancePrice + commission
 
   const handleCardNumberChange = (e) => {
     const val = e.target.value.replace(/[^0-9]/g, "")
@@ -100,14 +102,22 @@ function AcceptBidModal({ isOpen, onClose, bid, onPaymentSuccess }) {
                 <span>Platform Commission (6%)</span>
                 <span className="font-mono font-medium">{formatLKR(commission)}</span>
               </div>
-              <div className="border-t border-slate/10 pt-2.5 flex justify-between font-display text-base font-semibold text-ink-navy">
-                <span>Escrow Total Payable</span>
+              <div className="flex justify-between text-slate">
+                <span>Booking Advance (50%)</span>
+                <span className="font-mono font-medium">{formatLKR(advancePrice)}</span>
+              </div>
+              <div className="flex justify-between text-slate border-b border-dashed border-slate/10 pb-2">
+                <span>Remaining on Event Day (50%)</span>
+                <span className="font-mono font-medium">{formatLKR(remainingPrice)}</span>
+              </div>
+              <div className="pt-1 flex justify-between font-display text-base font-semibold text-ink-navy">
+                <span>Escrow Deposit Due Now</span>
                 <span className="font-mono text-circuit-teal">{formatLKR(total)}</span>
               </div>
             </div>
 
             <div className="text-xs text-slate bg-circuit-teal/5 border border-circuit-teal/10 rounded p-3 leading-relaxed">
-              💡 **Escrow Gate Protection:** Paying the deposit secures your equipment booking on SoundScout. Direct contact details and the WhatsApp channel will unlock immediately upon verification of payment.
+              💡 **Escrow Gate Protection:** Paying the deposit (50% booking advance + 6% platform fee) secures your equipment. The remaining 50% payout is locked and released only on the event day. Direct contact details will unlock immediately!
             </div>
 
             <button
@@ -214,7 +224,7 @@ function AcceptBidModal({ isOpen, onClose, bid, onPaymentSuccess }) {
             <div>
               <h3 className="font-display text-lg font-bold text-ink-navy">Payment Authorized!</h3>
               <p className="mt-1.5 font-body text-xs text-slate max-w-xs mx-auto leading-relaxed">
-                Platform fee of **6%** has been locked in escrow. Direct contact details and the WhatsApp compose links are now unlocked on your dashboard.
+                Platform fee of **6%** and **50%** advance booking deposit have been locked in escrow. Direct contact details and the WhatsApp compose links are now unlocked on your dashboard.
               </p>
             </div>
 
