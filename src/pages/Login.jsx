@@ -46,8 +46,8 @@ function Login() {
       const user = await login(values)
       setSession(user)
       navigate(user.role === "vendor" ? "/vendor/dashboard" : "/organizer/dashboard")
-    } catch {
-      setFormError("We couldn't log you in. Check your details and try again.")
+    } catch (err) {
+      setFormError(err?.message || "We couldn't log you in. Check your details and try again.")
     } finally {
       setSubmitting(false)
     }
