@@ -13,9 +13,10 @@ function FloatingWhatsAppWidget() {
         if (resp.ok) {
           const data = await resp.json()
           if (data && data.botPhone) {
-            const clean = String(data.botPhone).replace(/\D/g, "")
-            if (clean.length >= 9 && clean.length <= 13 && !clean.startsWith("63415")) {
-              setBotPhone(clean)
+            const rawStr = String(data.botPhone)
+            const cleanDigits = rawStr.replace(/\D/g, "")
+            if (!rawStr.includes("@lid") && cleanDigits.length >= 9 && cleanDigits.length <= 13) {
+              setBotPhone(cleanDigits)
             }
           }
         }
@@ -26,7 +27,7 @@ function FloatingWhatsAppWidget() {
     fetchBotPhone()
   }, [])
 
-  const cleanPhone = botPhone || "94703252870"
+  const cleanPhone = (botPhone && botPhone.length >= 9 && botPhone.length <= 13) ? botPhone : "94703252870"
   const defaultText = "Hi SoundScout AI! I'm using the SoundScout platform and would like to enable instant booking & payment notifications on WhatsApp."
   const whatsappUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(defaultText)}`
 
