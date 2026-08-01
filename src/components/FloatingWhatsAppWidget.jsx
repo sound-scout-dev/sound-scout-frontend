@@ -13,7 +13,10 @@ function FloatingWhatsAppWidget() {
         if (resp.ok) {
           const data = await resp.json()
           if (data && data.botPhone) {
-            setBotPhone(String(data.botPhone).replace(/\D/g, ""))
+            const clean = String(data.botPhone).replace(/\D/g, "")
+            if (clean.length >= 9 && clean.length <= 13 && !clean.startsWith("63415")) {
+              setBotPhone(clean)
+            }
           }
         }
       } catch (e) {
