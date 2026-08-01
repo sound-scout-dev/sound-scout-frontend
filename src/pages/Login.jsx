@@ -53,7 +53,7 @@ function Login() {
           phone: err.phone || "",
           role: err.role || "organizer",
           verificationCode: err.verificationCode,
-          botPhone: err.botPhone || "94703252870"
+          botPhone: err.botPhone || ""
         })
       }
       setFormError(err?.message || "We couldn't log you in. Check your details and try again.")

@@ -136,8 +136,8 @@ function Register() {
 
   // Verification Screen UI
   if (verificationData) {
-    const cleanPhone = String(verificationData.botPhone || '').replace(/\D/g, '') || '94703252870'
-    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(verificationData.verificationCode)}`
+    const cleanPhone = String(verificationData.botPhone || '').replace(/\D/g, '')
+    const whatsappUrl = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(verificationData.verificationCode)}` : '#'
 
     return (
       <div className="rounded-md border border-paper/10 bg-paper p-8 shadow-2xl shadow-black/20 text-center max-w-lg mx-auto my-8">

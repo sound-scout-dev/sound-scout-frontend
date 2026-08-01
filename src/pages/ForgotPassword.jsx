@@ -61,7 +61,7 @@ function ForgotPassword() {
       const res = await forgotPassword({ email })
       setResetData({
         resetCode: res.resetCode,
-        botPhone: res.botPhone || "94703252870",
+        botPhone: res.botPhone || "",
         email: res.email || email
       })
     } catch (err) {
