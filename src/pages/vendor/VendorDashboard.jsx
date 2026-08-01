@@ -65,6 +65,7 @@ function VendorDashboard() {
   const [price, setPrice] = useState("")
   const [qty, setQty] = useState("1")
   const [cat, setCat] = useState("Audio")
+  const [photoUrl, setPhotoUrl] = useState("")
   const [listingSuccess, setListingSuccess] = useState("")
   const [localListings, setLocalListings] = useState([])
 
@@ -91,7 +92,7 @@ function VendorDashboard() {
     return () => {
       active = false
     }
-  }, [vendor.name, vendor.equipmentCategory, vendor.region])
+  }, [user])
 
   if (loading) {
     return <FullPageLoader message="SYNCING OPPORTUNITIES..." />
@@ -114,12 +115,14 @@ function VendorDashboard() {
         location: vendor.region || "Colombo",
         pricePerDay: Number(price),
         qty: Number(qty) || 1,
+        photoUrl: photoUrl.trim() || null
       }
       const added = await addInstantRental(listing)
       setLocalListings((prev) => [...prev, added])
       setEqSummary("")
       setPrice("")
       setQty("1")
+      setPhotoUrl("")
       setListingSuccess("Rental listing added successfully!")
       setTimeout(() => setListingSuccess(""), 4000)
     } catch (err) {
@@ -312,6 +315,15 @@ function VendorDashboard() {
                 value={qty}
                 onChange={(e) => setQty(e.target.value)}
                 placeholder="e.g. 1"
+              />
+
+              <FormField
+                label="Equipment Photo / Image URL"
+                name="photoUrl"
+                type="url"
+                value={photoUrl}
+                onChange={(e) => setPhotoUrl(e.target.value)}
+                placeholder="e.g. https://images.unsplash.com/photo-..."
               />
 
               <FormField

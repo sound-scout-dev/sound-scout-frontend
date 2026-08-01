@@ -162,12 +162,13 @@ function ForgotPassword() {
             <div className="rounded-lg border border-slate/15 bg-slate/5 p-4 text-center font-mono text-xs text-ink-navy space-y-1">
               <p className="text-[10px] text-slate uppercase tracking-wider">Reset Code</p>
               <p className="text-xl font-bold tracking-widest text-[#0891B2]">{resetData.resetCode}</p>
+              {resetData.botPhone && <p className="text-[11px] text-slate/75">WhatsApp Bot Number: +{String(resetData.botPhone).replace(/\D/g, '')}</p>}
             </div>
 
             {!isCodeConfirmed ? (
               <div className="space-y-4">
                 <a
-                  href={`https://wa.me/${String(resetData.botPhone).replace(/\D/g, '')}?text=${encodeURIComponent(resetData.resetCode)}`}
+                  href={String(resetData.botPhone).replace(/\D/g, '') ? `https://api.whatsapp.com/send?phone=${String(resetData.botPhone).replace(/\D/g, '')}&text=${encodeURIComponent(resetData.resetCode)}` : '#'}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2.5 w-full rounded-lg bg-[#25D366] px-5 py-3.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-[#20bd5a]"

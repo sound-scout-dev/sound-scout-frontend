@@ -47,7 +47,7 @@ function RentalListingCard({ listing, booked, onBook }) {
       <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 font-mono text-xs text-slate">
         <span className="flex items-center gap-1.5">
           <MapPin size={13} strokeWidth={2} />
-          {listing.location} · {listing.distanceKm} km
+          {listing.location}
         </span>
         <span className="flex items-center gap-1.5">
           <Star size={13} className="fill-signal-amber text-signal-amber" />

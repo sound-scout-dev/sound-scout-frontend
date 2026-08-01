@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Loader2, ShieldCheck, Download, Calendar, Layers, Receipt, CheckCircle2 } from "lucide-react"
+import { Loader2, ShieldCheck, Download, Layers, Receipt, CheckCircle2, CreditCard, MessageSquare } from "lucide-react"
 import Modal from "./Modal"
 import Button from "./Button"
 import { bookInstantRental } from "../services/api"
@@ -16,6 +16,12 @@ function BookingConfirmModal({ listing, onClose, onBooked }) {
   const [paymentMode, setPaymentMode] = useState("advance") // "advance" (50%) | "full" (100%)
   const [completedTxn, setCompletedTxn] = useState(null)
 
+  // Card Payment details states
+  const [cardName, setCardName] = useState(user?.name || "")
+  const [cardNumber, setCardNumber] = useState("4242 •••• •••• 4242")
+  const [cardExpiry, setCardExpiry] = useState("12/28")
+  const [cardCvv, setCardCvv] = useState("789")
+
   const itemSubtotal = (Number(listing.pricePerDay) || 0) * selectedQty * rentalDays
   const insuranceFee = Math.round(itemSubtotal * 0.05) // 5% SoundScout escrow & insurance fee
   const totalPrice = itemSubtotal + insuranceFee
@@ -26,12 +32,14 @@ function BookingConfirmModal({ listing, onClose, onBooked }) {
   async function handleConfirm() {
     setBooking(true)
     try {
-      await bookInstantRental(listing.id, selectedQty)
+      const res = await bookInstantRental(listing.id, selectedQty, rentalDays, paymentMode === "advance" ? "50% Advance Escrow Deposit" : "100% Full Escrow Payment")
+      
       const txnDetails = {
         receiptNo: "RENT-2026-" + Math.floor(1000 + Math.random() * 9000),
         txnId: "TXN_RENT_" + Math.random().toString(36).substr(2, 9).toUpperCase(),
         date: new Date().toLocaleDateString("en-LK", { year: "numeric", month: "long", day: "numeric" }),
         vendorName: listing.vendorName || "Rental Shop",
+        vendorPhone: res?.vendorPhone || listing.vendorPhone || "",
         renterName: user?.name || "SoundScout Customer",
         equipmentName: listing.equipmentSummary || listing.category || "Instant Rental Equipment",
         qty: selectedQty,
@@ -60,6 +68,9 @@ function BookingConfirmModal({ listing, onClose, onBooked }) {
       downloadRentalReceiptPDF(completedTxn)
     }
   }
+
+  const cleanVendorPhone = completedTxn?.vendorPhone ? String(completedTxn.vendorPhone).replace(/\D/g, "") : ""
+  const vendorWhatsappUrl = cleanVendorPhone ? `https://api.whatsapp.com/send?phone=${cleanVendorPhone}&text=${encodeURIComponent(`Hi ${completedTxn?.vendorName}, I just booked your rental item "${completedTxn?.equipmentName}" on SoundScout! My Receipt No is ${completedTxn?.receiptNo}.`)}` : "#"
 
   return (
     <Modal title={completedTxn ? "Rental Confirmed & Escrow Receipt" : "Instant Rental Financial Ledger"} onClose={onClose}>
@@ -97,7 +108,17 @@ function BookingConfirmModal({ listing, onClose, onBooked }) {
             )}
           </div>
 
-          <div className="pt-2 flex flex-col gap-3">
+          <div className="pt-2 flex flex-col gap-2.5">
+            {cleanVendorPhone && (
+              <a
+                href={vendorWhatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3 font-display text-sm font-semibold text-white shadow-lg transition-all hover:bg-[#20bd5a]"
+              >
+                <MessageSquare size={18} /> Contact Vendor on WhatsApp
+              </a>
+            )}
             <Button type="button" variant="primary" size="md" onClick={handleDownloadReceipt} className="w-full flex items-center justify-center gap-2">
               <Download size={16} /> Download Soft Copy Receipt (PDF)
             </Button>
@@ -201,6 +222,54 @@ function BookingConfirmModal({ listing, onClose, onBooked }) {
                   </span>
                 </div>
                 <p className="mt-1 font-body text-[11px] text-slate">Pay 100% now; fully protected in SoundScout Escrow.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Credit / Debit Card Details Section */}
+          <div className="rounded-xl border border-slate/20 bg-slate/5 p-4 space-y-3">
+            <div className="flex items-center justify-between border-b border-slate/10 pb-2">
+              <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-ink-navy flex items-center gap-1.5">
+                <CreditCard size={14} className="text-circuit-teal" /> Escrow Payment Card Details
+              </span>
+              <span className="font-mono text-[10px] text-emerald-600 font-semibold">256-bit Encrypted</span>
+            </div>
+
+            <div>
+              <label className="block font-mono text-[10px] uppercase text-slate mb-1">Cardholder Name</label>
+              <input
+                type="text"
+                value={cardName}
+                onChange={(e) => setCardName(e.target.value)}
+                placeholder="Name on card"
+                className="w-full rounded border border-slate/25 bg-white px-3 py-1.5 text-xs text-ink-navy outline-none focus:border-circuit-teal"
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              <div className="col-span-2">
+                <label className="block font-mono text-[10px] uppercase text-slate mb-1">Card Number</label>
+                <input
+                  type="text"
+                  value={cardNumber}
+                  onChange={(e) => setCardNumber(e.target.value)}
+                  placeholder="4242 4242 4242 4242"
+                  className="w-full rounded border border-slate/25 bg-white px-3 py-1.5 text-xs font-mono text-ink-navy outline-none focus:border-circuit-teal"
+                />
+              </div>
+              <div>
+                <label className="block font-mono text-[10px] uppercase text-slate mb-1">Expiry / CVV</label>
+                <input
+                  type="text"
+                  value={`${cardExpiry} ${cardCvv}`}
+                  onChange={(e) => {
+                    const parts = e.target.value.split(" ")
+                    setCardExpiry(parts[0] || "")
+                    setCardCvv(parts[1] || "")
+                  }}
+                  placeholder="MM/YY CVV"
+                  className="w-full rounded border border-slate/25 bg-white px-2 py-1.5 text-xs font-mono text-center text-ink-navy outline-none focus:border-circuit-teal"
+                />
               </div>
             </div>
           </div>

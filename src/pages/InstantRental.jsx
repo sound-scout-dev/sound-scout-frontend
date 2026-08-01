@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react"
-import { Zap, Search, PackageSearch } from "lucide-react"
+import { Zap, Search, PackageSearch, UserPlus, LogIn, X } from "lucide-react"
+import { Link } from "react-router-dom"
 import RentalListingCard from "../components/RentalListingCard"
 import BookingConfirmModal from "../components/BookingConfirmModal"
+import Modal from "../components/Modal"
+import Button from "../components/Button"
 import { searchInstantRentals } from "../services/api"
 import { RENTAL_CATEGORIES } from "../services/mockData"
 import FullPageLoader from "../components/FullPageLoader"
+import { useAuth } from "../context/AuthContext"
 
 const inputClass =
   "rounded border border-slate/25 bg-white px-3 py-2.5 text-sm text-ink-navy transition-colors duration-150 ease-out hover:border-slate/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-amber"
@@ -24,21 +28,24 @@ function Skeleton() {
 }
 
 function InstantRental() {
+  const { user } = useAuth()
   const [category, setCategory] = useState("")
   const [location, setLocation] = useState("")
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(true)
   const [bookedIds, setBookedIds] = useState(new Set())
   const [activeListing, setActiveListing] = useState(null)
+  const [showAuthModal, setShowAuthModal] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true)
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setInitialLoading(false)
-    }, 1200)
+    }, 1000)
     return () => clearTimeout(timer)
   }, [])
 
+  // Initial and filtered search fetch
   useEffect(() => {
     setLoading(true)
     const timer = setTimeout(() => {
@@ -46,12 +53,54 @@ function InstantRental() {
         setResults(data)
         setLoading(false)
       })
-    }, 300)
+    }, 250)
     return () => clearTimeout(timer)
   }, [category, location])
 
+  // Real-time Web Socket / SSE Inventory Stream Listener
+  useEffect(() => {
+    let eventSource;
+    try {
+      const backendUrl = "https://sound-scout-backend.onrender.com"
+      eventSource = new EventSource(`${backendUrl}/api/rentals/stream`)
+
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data)
+          if (data.type === 'QUANTITY_UPDATED') {
+            setResults((prev) =>
+              prev.map((item) =>
+                item.id === data.itemId
+                  ? { ...item, qty: data.newQty, availability: data.newQty <= 0 ? 'booked' : 'now' }
+                  : item
+              )
+            )
+          } else if (data.type === 'ITEM_ADDED' && data.item) {
+            setResults((prev) => [data.item, ...prev])
+          }
+        } catch (err) {
+          console.warn("SSE parse error:", err)
+        }
+      }
+    } catch (err) {
+      console.warn("SSE connection error:", err)
+    }
+
+    return () => {
+      eventSource?.close()
+    }
+  }, [])
+
   if (initialLoading) {
-    return <FullPageLoader message="SEARCHING INSTANT RENTAL INVENTORY..." />
+    return <FullPageLoader message="SYNCING INSTANT RENTAL INVENTORY..." />
+  }
+
+  function handleAttemptBook(listing) {
+    if (!user) {
+      setShowAuthModal(true)
+      return
+    }
+    setActiveListing(listing)
   }
 
   function handleBooked(listingId) {
@@ -100,7 +149,7 @@ function InstantRental() {
                 type="text"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                placeholder="Search by location, e.g. Austin"
+                placeholder="Search by location, e.g. Colombo"
                 aria-label="Location"
                 className={`${inputClass} w-full pl-9`}
               />
@@ -129,7 +178,7 @@ function InstantRental() {
                     key={listing.id}
                     listing={listing}
                     booked={bookedIds.has(listing.id)}
-                    onBook={setActiveListing}
+                    onBook={handleAttemptBook}
                   />
                 ))}
               </div>
@@ -138,6 +187,37 @@ function InstantRental() {
         </div>
       </section>
 
+      {/* Auth Required Modal */}
+      {showAuthModal && (
+        <Modal title="Registration Required" onClose={() => setShowAuthModal(false)}>
+          <div className="text-center py-4 space-y-4">
+            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-circuit-teal/10 text-circuit-teal">
+              <UserPlus size={28} />
+            </span>
+            <div>
+              <h3 className="font-display text-lg font-bold text-ink-navy">Create an account to book gear</h3>
+              <p className="mt-1 font-body text-xs text-slate max-w-xs mx-auto">
+                You must be registered and logged into SoundScout to place instant rental bookings and access Escrow protection.
+              </p>
+            </div>
+
+            <div className="pt-4 flex flex-col gap-2.5">
+              <Link to="/register">
+                <Button type="button" variant="primary" size="md" className="w-full flex items-center justify-center gap-2">
+                  <UserPlus size={16} /> Register New Account
+                </Button>
+              </Link>
+              <Link to="/login">
+                <Button type="button" variant="outline-dark" size="md" className="w-full flex items-center justify-center gap-2">
+                  <LogIn size={16} /> Already have an account? Log In
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Booking Confirmation Modal */}
       {activeListing && (
         <BookingConfirmModal
           listing={activeListing}

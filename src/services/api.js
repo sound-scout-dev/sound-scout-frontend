@@ -666,154 +666,79 @@ function getLocalRentals() {
 }
 
 export async function addInstantRental(listing) {
-  const current = getLocalRentals()
-  const newListing = {
-    id: `local-rental-${Date.now()}`,
-    ...listing,
-    qty: Number(listing.qty) || 1,
-    distanceKm: 1.5,
-    availability: "now",
-    rating: 5.0,
-    status: "now"
+  try {
+    const res = await request('/rentals', {
+      method: 'POST',
+      body: JSON.stringify({
+        equipmentSummary: listing.equipmentSummary,
+        pricePerDay: listing.pricePerDay,
+        qty: listing.qty,
+        category: listing.category,
+        photoUrl: listing.photoUrl || listing.photo_url || (Array.isArray(listing.photos) ? listing.photos[0] : null)
+      })
+    });
+    return res;
+  } catch (err) {
+    console.warn("Backend addInstantRental failed, storing locally:", err);
+    const current = getLocalRentals();
+    const newListing = {
+      id: `local-rental-${Date.now()}`,
+      ...listing,
+      qty: Number(listing.qty) || 1,
+      availability: "now",
+      rating: 5.0,
+      status: "now"
+    };
+    localStorage.setItem(LOCAL_RENTAL_KEY, JSON.stringify([...current, newListing]));
+    return newListing;
   }
-  localStorage.setItem(LOCAL_RENTAL_KEY, JSON.stringify([...current, newListing]))
-  return delay(newListing, 300)
 }
 
-// /inventory/instant/{region} exists but its response shape is completely
-// undocumented and it supports no category filter — integrating against a
-// guessed shape isn't worth it yet, so this stays fully mocked.
 export async function searchInstantRentals({ category, location }) {
-  let dbResults = []
-  if (location.trim()) {
-    try {
-      const dbVendors = await request(`/inventory/instant/${encodeURIComponent(location.trim())}`)
-      if (Array.isArray(dbVendors) && dbVendors.length > 0) {
-        dbResults = await Promise.all(dbVendors.map(async (vendor) => {
-          let distance = 2.5;
-          try {
-            const aiRes = await fetch("http://localhost:8000/api/distance", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ venue: location, vendor_region: vendor.region })
-            });
-            if (aiRes.ok) {
-              const aiData = await aiRes.json();
-              distance = aiData.distance_km;
-            }
-          } catch (e) {
-             console.error("AI Distance Fetch failed, using fallback:", e);
-          }
-          
-          const bookedQtys = JSON.parse(localStorage.getItem("soundscout.booked_mock_qtys") || "{}")
-          const bookedQty = bookedQtys[`db-vendor-${vendor.vendor_id}`] || 0
-          const initialQty = 3 // Mock initial qty for backend vendors
-          const remainingQty = Math.max(0, initialQty - bookedQty)
-          const isBooked = remainingQty <= 0
+  try {
+    const queryParams = new URLSearchParams();
+    if (category) queryParams.append('category', category);
+    if (location) queryParams.append('location', location);
 
-          return {
-            id: `db-vendor-${vendor.vendor_id}`,
-            vendorName: vendor.shop_name || "Unknown Shop",
-            category: category || "Audio",
-            equipmentSummary: "Full inventory rental pack & instant gear setup",
-            location: vendor.region,
-            distanceKm: distance,
-            pricePerDay: 180,
-            qty: remainingQty,
-            availability: isBooked ? "booked" : "now",
-            status: isBooked ? "booked" : "now",
-            rating: 4.8,
-          }
-        }))
-      }
-    } catch (e) {
-      // Fall through to mock search if backend fails/returns 404
+    const dbRentals = await request(`/rentals?${queryParams.toString()}`);
+    if (Array.isArray(dbRentals) && dbRentals.length > 0) {
+      return dbRentals;
     }
+  } catch (err) {
+    console.warn("Backend searchInstantRentals fallback to local:", err);
   }
 
-  let results = [...getLocalRentals(), ...instantRentalListings]
-
-  // Resolve distance dynamically using AI distance model if location query is present
-  if (location.trim()) {
-    results = await Promise.all(results.map(async (listing) => {
-      let distance = listing.distanceKm;
-      try {
-        const aiRes = await fetch("http://localhost:8000/api/distance", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ venue: location, vendor_region: listing.location })
-        });
-        if (aiRes.ok) {
-          const aiData = await aiRes.json();
-          distance = aiData.distance_km;
-        }
-      } catch (e) {
-        // keep original mock distance
-      }
-      
-      const bookedQtys = JSON.parse(localStorage.getItem("soundscout.booked_mock_qtys") || "{}")
-      const bookedQty = bookedQtys[listing.id] || 0
-      const currentQty = Number(listing.qty) || 1
-      const remainingQty = Math.max(0, currentQty - bookedQty)
-      const isBooked = remainingQty <= 0 || listing.status === "booked"
-      
-      return { 
-        ...listing, 
-        distanceKm: distance,
-        qty: remainingQty,
-        availability: isBooked ? "booked" : "now",
-        status: isBooked ? "booked" : listing.status
-      }
-    }))
-  } else {
-    // Check booked status from localStorage
-    results = results.map(listing => {
-      const bookedQtys = JSON.parse(localStorage.getItem("soundscout.booked_mock_qtys") || "{}")
-      const bookedQty = bookedQtys[listing.id] || 0
-      const currentQty = Number(listing.qty) || 1
-      const remainingQty = Math.max(0, currentQty - bookedQty)
-      const isBooked = remainingQty <= 0 || listing.status === "booked"
-      return {
-        ...listing,
-        status: isBooked ? "booked" : listing.status,
-        availability: isBooked ? "booked" : listing.availability
-      }
-    })
-  }
-
+  let results = [...getLocalRentals(), ...instantRentalListings];
   if (category) {
-    results = results.filter((listing) => listing.category === category)
+    results = results.filter((listing) => listing.category === category);
   }
-  
-  if (dbResults.length > 0) {
-    return [...dbResults, ...results]
-  }
-
-  return delay(results, 350)
+  return results;
 }
 
-// No booking endpoint exists on the backend at all — stays fully mocked in localStorage.
-export async function bookInstantRental(listingId, qtyToBook = 1) {
-  const current = getLocalRentals()
-  const idx = current.findIndex(r => r.id === listingId)
-  if (idx !== -1) {
-    const listing = current[idx]
-    const currentQty = Number(listing.qty) || 1
-    if (currentQty > qtyToBook) {
-      listing.qty = currentQty - qtyToBook
-    } else {
-      listing.qty = 0
-      listing.status = "booked"
-      listing.availability = "booked"
+export async function bookInstantRental(listingId, qtyToBook = 1, rentalDays = 1, paymentMode = '50% Advance Escrow Deposit') {
+  try {
+    const res = await request(`/rentals/${listingId}/book`, {
+      method: 'POST',
+      body: JSON.stringify({ qtyToBook, rentalDays, paymentMode })
+    });
+    return res;
+  } catch (err) {
+    console.warn("Backend bookInstantRental failed, updating local mock:", err);
+    const current = getLocalRentals();
+    const idx = current.findIndex(r => r.id === listingId);
+    if (idx !== -1) {
+      const listing = current[idx];
+      const currentQty = Number(listing.qty) || 1;
+      const newQty = Math.max(0, currentQty - qtyToBook);
+      listing.qty = newQty;
+      if (newQty <= 0) {
+        listing.status = "booked";
+        listing.availability = "booked";
+      }
+      localStorage.setItem(LOCAL_RENTAL_KEY, JSON.stringify(current));
     }
-    localStorage.setItem(LOCAL_RENTAL_KEY, JSON.stringify(current))
-  } else {
-    // For backend listings, we mock partial tracking by maintaining a booked count
-    const bookedMockQtys = JSON.parse(localStorage.getItem("soundscout.booked_mock_qtys") || "{}")
-    bookedMockQtys[listingId] = (bookedMockQtys[listingId] || 0) + qtyToBook
-    localStorage.setItem("soundscout.booked_mock_qtys", JSON.stringify(bookedMockQtys))
+    return { success: true };
   }
-  return delay({ listingId, status: "booked" }, 500)
 }
 
 // Real call: POST /bids. `notes` isn't in the NewBid schema, so it's kept in
