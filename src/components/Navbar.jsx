@@ -43,7 +43,7 @@ function Navbar() {
         <div className="hidden items-center gap-4 md:flex">
           <Link
             to="/instant-rental"
-            className="inline-flex items-center gap-1.5 text-sm font-mono tracking-wide text-[#0891B2] transition-colors duration-150 ease-out hover:text-[#0e7490] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0891B2] rounded"
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#0891B2]/30 bg-[#0891B2]/10 px-3.5 py-1.5 font-mono text-xs font-bold uppercase tracking-wider text-[#0891B2] shadow-sm transition-all duration-150 ease-out hover:bg-[#0891B2]/20 hover:scale-105 active:scale-95"
           >
             <Zap size={14} className="text-[#059669]" strokeWidth={2.5} />
             Instant Rental

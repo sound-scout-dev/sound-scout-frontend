@@ -246,29 +246,42 @@ function BookingConfirmModal({ listing, onClose, onBooked }) {
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
-              <div className="col-span-2">
-                <label className="block font-mono text-[10px] uppercase text-slate mb-1">Card Number</label>
+            <div>
+              <label className="block font-mono text-[10px] uppercase text-slate mb-1">16-Digit Card Number</label>
+              <div className="relative">
                 <input
                   type="text"
+                  maxLength={19}
                   value={cardNumber}
                   onChange={(e) => setCardNumber(e.target.value)}
                   placeholder="4242 4242 4242 4242"
-                  className="w-full rounded border border-slate/25 bg-white px-3 py-1.5 text-xs font-mono text-ink-navy outline-none focus:border-circuit-teal"
+                  className="w-full rounded border border-slate/25 bg-white px-3 py-2 font-mono text-xs font-bold text-ink-navy outline-none focus:border-circuit-teal"
+                />
+                <CreditCard size={16} className="absolute right-3 top-2.5 text-slate/40" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-mono text-[10px] uppercase text-slate mb-1">Expiry Date (MM/YY)</label>
+                <input
+                  type="text"
+                  maxLength={5}
+                  value={cardExpiry}
+                  onChange={(e) => setCardExpiry(e.target.value)}
+                  placeholder="12/28"
+                  className="w-full rounded border border-slate/25 bg-white px-3 py-2 text-xs font-mono text-center font-bold text-ink-navy outline-none focus:border-circuit-teal"
                 />
               </div>
               <div>
-                <label className="block font-mono text-[10px] uppercase text-slate mb-1">Expiry / CVV</label>
+                <label className="block font-mono text-[10px] uppercase text-slate mb-1">CVV Code</label>
                 <input
-                  type="text"
-                  value={`${cardExpiry} ${cardCvv}`}
-                  onChange={(e) => {
-                    const parts = e.target.value.split(" ")
-                    setCardExpiry(parts[0] || "")
-                    setCardCvv(parts[1] || "")
-                  }}
-                  placeholder="MM/YY CVV"
-                  className="w-full rounded border border-slate/25 bg-white px-2 py-1.5 text-xs font-mono text-center text-ink-navy outline-none focus:border-circuit-teal"
+                  type="password"
+                  maxLength={4}
+                  value={cardCvv}
+                  onChange={(e) => setCardCvv(e.target.value)}
+                  placeholder="789"
+                  className="w-full rounded border border-slate/25 bg-white px-3 py-2 text-xs font-mono text-center font-bold text-ink-navy outline-none focus:border-circuit-teal"
                 />
               </div>
             </div>
