@@ -1,21 +1,23 @@
-import { MapPin, Star, CheckCircle2 } from "lucide-react"
+import { MapPin, Star, CheckCircle2, MessageSquare } from "lucide-react"
 import Button from "./Button"
 
 const AVAILABILITY_LABEL = {
-  now: "Available now",
-  "2h": "Available in 2 hrs",
-  "4h": "Available in 4 hrs",
+  now: "AVAILABLE NOW",
+  booked: "BOOKED",
+  maintenance: "MAINTENANCE",
 }
 
 function RentalListingCard({ listing, booked, onBook }) {
-  const isNow = listing.availability === "now"
+  const displayPhoto = listing.photoUrl || listing.photo_url || (Array.isArray(listing.photos) && listing.photos[0]) || null
+  const rawPhone = listing.vendor_phone || listing.vendorPhone || listing.phone || ""
+  const cleanPhone = String(rawPhone).replace(/\D/g, "")
 
   return (
     <div className="flex flex-col rounded-xl bg-glass p-5 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 animate-fade-in-up">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="font-display text-base font-semibold text-gray-900">
-            {listing.vendorName}
+            {listing.vendorName || listing.vendor_name || "Verified Vendor"}
           </h3>
           <span className="mt-1 inline-block rounded border border-[#059669]/30 bg-[#059669]/10 px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wide text-[#059669]">
             {listing.category}
@@ -23,9 +25,9 @@ function RentalListingCard({ listing, booked, onBook }) {
         </div>
         <span
           className={`shrink-0 rounded border px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide ${
-            isNow
-              ? "border-[#059669]/30 bg-[#059669]/10 text-[#059669]"
-              : "border-gray-200 bg-gray-50 text-gray-500"
+            listing.availability === "booked" || (listing.qty !== undefined && Number(listing.qty) <= 0)
+              ? "bg-slate/10 text-slate border-slate/20"
+              : "border-[#059669]/30 bg-[#059669]/10 text-[#059669]"
           }`}
         >
           {AVAILABILITY_LABEL[listing.availability] || listing.availability || "Available now"}
@@ -34,10 +36,10 @@ function RentalListingCard({ listing, booked, onBook }) {
 
       <p className="mt-3 font-body text-sm text-gray-600">{listing.equipmentSummary}</p>
 
-      {(listing.photoUrl || (Array.isArray(listing.photos) && listing.photos[0])) && (
+      {displayPhoto && (
         <div className="mt-3 overflow-hidden rounded-lg border border-slate/15 max-h-48 bg-slate/5">
           <img 
-            src={listing.photoUrl || listing.photos[0]} 
+            src={displayPhoto} 
             alt={listing.equipmentSummary} 
             className="w-full h-40 object-cover hover:scale-105 transition-transform duration-300" 
           />
@@ -67,10 +69,22 @@ function RentalListingCard({ listing, booked, onBook }) {
         </span>
 
         {booked || listing.status === "booked" || listing.availability === "booked" || (listing.qty !== undefined && Number(listing.qty) <= 0) ? (
-          <span className="flex items-center gap-1.5 font-mono text-xs font-bold uppercase tracking-wide text-[#059669]">
-            <CheckCircle2 size={15} strokeWidth={2} />
-            Booked
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1.5 font-mono text-xs font-bold uppercase tracking-wide text-[#059669]">
+              <CheckCircle2 size={15} strokeWidth={2} />
+              Booked
+            </span>
+            {cleanPhone && (
+              <a
+                href={`https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(`Hi ${listing.vendorName || "Vendor"}, I am contacting you regarding your SoundScout rental listing "${listing.equipmentSummary}".`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 rounded-lg bg-[#25D366] px-2.5 py-1.5 font-mono text-[11px] font-bold text-white shadow-sm hover:bg-[#20bd5a] transition-all"
+              >
+                <MessageSquare size={13} /> Contact Vendor
+              </a>
+            )}
+          </div>
         ) : (
           <Button variant="secondary" size="sm" onClick={() => onBook(listing)}>
             Book Now

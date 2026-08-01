@@ -31,15 +31,16 @@ function BookingConfirmModal({ listing, onClose, onBooked }) {
 
   async function handleConfirm() {
     setBooking(true)
+    const targetItemId = listing.item_id || listing.id || listing.itemId
     try {
-      const res = await bookInstantRental(listing.id, selectedQty, rentalDays, paymentMode === "advance" ? "50% Advance Escrow Deposit" : "100% Full Escrow Payment")
+      const res = await bookInstantRental(targetItemId, selectedQty, rentalDays, paymentMode === "advance" ? "50% Advance Escrow Deposit" : "100% Full Escrow Payment")
       
       const txnDetails = {
         receiptNo: "RENT-2026-" + Math.floor(1000 + Math.random() * 9000),
         txnId: "TXN_RENT_" + Math.random().toString(36).substr(2, 9).toUpperCase(),
         date: new Date().toLocaleDateString("en-LK", { year: "numeric", month: "long", day: "numeric" }),
-        vendorName: listing.vendorName || "Rental Shop",
-        vendorPhone: res?.vendorPhone || listing.vendorPhone || "",
+        vendorName: listing.vendorName || listing.vendor_name || "Rental Shop",
+        vendorPhone: res?.vendorPhone || listing.vendorPhone || listing.vendor_phone || listing.phone || "",
         renterName: user?.name || "SoundScout Customer",
         equipmentName: listing.equipmentSummary || listing.category || "Instant Rental Equipment",
         qty: selectedQty,
@@ -55,7 +56,7 @@ function BookingConfirmModal({ listing, onClose, onBooked }) {
       }
 
       setCompletedTxn(txnDetails)
-      onBooked(listing.id)
+      onBooked(targetItemId)
     } catch (err) {
       console.error("Booking error:", err)
     } finally {
