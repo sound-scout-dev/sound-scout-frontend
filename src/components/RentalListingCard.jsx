@@ -28,7 +28,7 @@ function RentalListingCard({ listing, booked, onBook }) {
               : "border-gray-200 bg-gray-50 text-gray-500"
           }`}
         >
-          {AVAILABILITY_LABEL[listing.availability]}
+          {AVAILABILITY_LABEL[listing.availability] || listing.availability || "Available now"}
         </span>
       </div>
 
@@ -47,11 +47,11 @@ function RentalListingCard({ listing, booked, onBook }) {
       <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 font-mono text-xs text-slate">
         <span className="flex items-center gap-1.5">
           <MapPin size={13} strokeWidth={2} />
-          {listing.location}
+          {listing.location || "Colombo"}
         </span>
         <span className="flex items-center gap-1.5">
           <Star size={13} className="fill-signal-amber text-signal-amber" />
-          {listing.rating.toFixed(1)} / 5
+          {(Number(listing.rating) || 5.0).toFixed(1)} / 5
         </span>
         {listing.qty !== undefined && (
           <span className="text-[#059669] font-bold font-mono">
