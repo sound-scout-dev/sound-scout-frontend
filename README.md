@@ -1,4 +1,4 @@
-<img width="1822" height="1054" alt="image" src="https://github.com/user-attachments/assets/388ac703-8e91-492c-b92c-17a0a680223f" /># 🎵 SoundScout Frontend
+<img width="1822" height="1054" alt="image" src="https://github.com/user-attachments/assets/d26f5a92-5ecc-4cbd-b721-ce27e1e8c9d1" />
 
 The client-side Single Page Application (SPA) providing an ultra-responsive, modern glassmorphic dashboard for Event Organizers and AV Equipment Vendors.
 
