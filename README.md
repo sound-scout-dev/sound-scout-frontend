@@ -1,16 +1,45 @@
-# React + Vite
+<img width="1822" height="1054" alt="image" src="https://github.com/user-attachments/assets/388ac703-8e91-492c-b92c-17a0a680223f" /># 🎵 SoundScout Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+The client-side Single Page Application (SPA) providing an ultra-responsive, modern glassmorphic dashboard for Event Organizers and AV Equipment Vendors.
 
-Currently, two official plugins are available:
+## 🛠️ Tech Stack
+* **Framework:** React 18, Vite 8
+* **Styling:** Vanilla CSS3 + Custom CSS Tokens (Glassmorphism, Dark/Light Mode)
+* **Icons:** Lucide React
+* **PDF Generation:** `jspdf` (Client-side escrow receipt generation)
+* **Real-Time Data:** EventSource (Server-Sent Events)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚀 Core Features
+* **Interactive Event Logistics Wizard:** Multi-step AI requirement generator feeding organizer prompts into the AI microservice.
+* **Instant Rental Marketplace:** Real-time equipment catalog with live stock availability badges (AVAILABLE NOW vs BOOKED).
+* **Smart Financial Formatting:** Custom input validation for payment cards (4-digit spacing, MM/YY auto-slashing, CVV locks).
+* **Vendor Bidding & Escrow:** View accepted bids, track deposit statuses, and download PDF receipts.
+* **Direct WhatsApp Integration:** Standardized international phone formatters for direct vendor-organizer communication.
 
-## React Compiler
+## ⚙️ Setup & Execution
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Prerequisites
+* Node.js v18+
 
-## Expanding the Oxlint configuration
+### Installation
+```bash
+git clone [https://github.com/sound-scout-dev/sound-scout-frontend.git](https://github.com/sound-scout-dev/sound-scout-frontend.git)
+cd sound-scout-frontend
+npm install
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+### Environment Variables (`.env`)
+Create a `.env` file in the root directory and add:
+```env
+VITE_API_URL=http://localhost:5000/api
+```
+
+### Run Locally
+```bash
+npm run dev
+```
+
+### Build for Production
+```bash
+npm run build
+```
