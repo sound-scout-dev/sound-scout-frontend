@@ -2,17 +2,23 @@ import { useEffect, useRef, useState } from "react"
 import { Radar } from "lucide-react"
 
 function buildSequence(plan) {
+  if (!plan || !Array.isArray(plan.categories)) return [{ type: "header" }, { type: "price" }]
   const seq = [{ type: "header" }]
   plan.categories.forEach((cat) => {
+    if (!cat) return
     seq.push({ type: "category", cat })
-    cat.items.forEach((item) => seq.push({ type: "item", cat, item }))
+    if (Array.isArray(cat.items)) {
+      cat.items.forEach((item) => {
+        if (item) seq.push({ type: "item", cat, item })
+      })
+    }
   })
   seq.push({ type: "price" })
   return seq
 }
 
 function formatLKR(n) {
-  return "Rs. " + n.toLocaleString("en-LK", { maximumFractionDigits: 0 })
+  return "Rs. " + (n || 0).toLocaleString("en-LK", { maximumFractionDigits: 0 })
 }
 
 /**
@@ -23,9 +29,9 @@ function formatLKR(n) {
  * the finished sheet (results / detail screens).
  */
 function SpecCard({ plan, loop = false, startRevealed = false, onDone, className = "" }) {
-  const sequence = useRef(buildSequence(plan))
+  const sequence = buildSequence(plan)
   const [phase, setPhase] = useState(startRevealed ? "done" : "thinking") // thinking | revealing | done
-  const [visibleCount, setVisibleCount] = useState(startRevealed ? sequence.current.length : 0)
+  const [visibleCount, setVisibleCount] = useState(startRevealed ? sequence.length : 0)
 
   useEffect(() => {
     if (startRevealed) return
@@ -39,12 +45,12 @@ function SpecCard({ plan, loop = false, startRevealed = false, onDone, className
 
     const runReveal = () => {
       setPhase("revealing")
-      sequence.current.forEach((_, i) => {
+      sequence.forEach((_, i) => {
         timers.push(
           setTimeout(() => setVisibleCount(i + 1), i * 200)
         )
       })
-      const totalDelay = sequence.current.length * 200
+      const totalDelay = sequence.length * 200
       timers.push(
         setTimeout(() => {
           setPhase("done")
@@ -59,7 +65,7 @@ function SpecCard({ plan, loop = false, startRevealed = false, onDone, className
     runThinking()
 
     return () => timers.forEach(clearTimeout)
-  }, [loop, startRevealed])
+  }, [loop, startRevealed, plan])
 
   const isVisible = (idx) => idx < visibleCount
 
@@ -82,16 +88,16 @@ function SpecCard({ plan, loop = false, startRevealed = false, onDone, className
 
       <div className="p-6">
         <div className="font-display text-lg font-semibold text-gray-900">
-          {plan.eventType}
+          {plan?.eventType || "Event Infrastructure Spec"}
         </div>
-        <div className="mt-1 font-mono text-xs text-gray-500">{plan.meta}</div>
+        <div className="mt-1 font-mono text-xs text-gray-500">{plan?.meta || ""}</div>
 
         <div className="mt-6 space-y-5">
-          {sequence.current.reduce((acc, node, i) => {
-            if (node.type === "category") {
+          {sequence.reduce((acc, node, i) => {
+            if (node.type === "category" && node.cat) {
               acc.push(
                 <div
-                  key={`cat-${node.cat.name}`}
+                  key={`cat-${node.cat.name}-${i}`}
                   className={isVisible(i) ? "animate-reveal-line" : "opacity-0"}
                 >
                   <h4 className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#0891B2]">
@@ -99,8 +105,8 @@ function SpecCard({ plan, loop = false, startRevealed = false, onDone, className
                   </h4>
                 </div>
               )
-            } else if (node.type === "item") {
-              const labelText = node.item.label;
+            } else if (node.type === "item" && node.item) {
+              const labelText = String(node.item.label || "Equipment Line");
               const optionalMatch = labelText.match(/^(.*?)\s*\(Optional:\s*(.*?)\)$/i);
               const isOptional = !!optionalMatch;
               const cleanLabel = isOptional ? optionalMatch[1] : labelText;
@@ -108,7 +114,7 @@ function SpecCard({ plan, loop = false, startRevealed = false, onDone, className
 
               acc.push(
                 <div
-                  key={`item-${node.cat.name}-${node.item.label}`}
+                  key={`item-${node.cat?.name || 'cat'}-${i}`}
                   className={`flex flex-col border-b border-gray-100 pb-1.5 transition-all duration-300 ${isOptional
                       ? "border-red-200 bg-red-50/50 px-2.5 py-2 my-1 rounded border shadow-sm"
                       : ""
@@ -120,7 +126,7 @@ function SpecCard({ plan, loop = false, startRevealed = false, onDone, className
                       {cleanLabel}
                     </span>
                     <span className="font-mono text-xs font-bold text-[#059669]">
-                      {typeof node.item.qty === "string" && node.item.qty.endsWith("x") ? node.item.qty : `${node.item.qty}x`}
+                      {typeof node.item.qty === "string" && node.item.qty.endsWith("x") ? node.item.qty : `${node.item.qty || 1}x`}
                     </span>
                   </div>
                   {isOptional && (
@@ -137,14 +143,14 @@ function SpecCard({ plan, loop = false, startRevealed = false, onDone, className
       </div>
 
       <div
-        className={`flex items-center justify-between border-t border-white/40 bg-white/40 px-5 py-4 transition-opacity duration-300 ${isVisible(sequence.current.length - 1) ? "opacity-100" : "opacity-0"
+        className={`flex items-center justify-between border-t border-white/40 bg-white/40 px-5 py-4 transition-opacity duration-300 ${isVisible(sequence.length - 1) ? "opacity-100" : "opacity-0"
           }`}
       >
         <span className="font-mono text-[10px] uppercase tracking-wider text-gray-500">
           Estimated cost
         </span>
         <span className="font-mono text-base font-bold text-gray-900">
-          {formatLKR(plan.priceRange.low)} – {formatLKR(plan.priceRange.high)}
+          {formatLKR(plan?.priceRange?.low)} – {formatLKR(plan?.priceRange?.high)}
         </span>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Gavel, Loader2, Pencil, Trash2, Plus, Check, X } from "lucide-react"
 import SpecCard from "../SpecCard"
 import Button from "../Button"
@@ -8,8 +8,21 @@ function StepResults({ plan, onPlanChange, onEdit, onPublish, publishing = false
   const [localPlan, setLocalPlan] = useState(plan)
   const [priceRatio, setPriceRatio] = useState(1)
 
+  useEffect(() => {
+    if (plan) setLocalPlan(plan)
+  }, [plan])
+
+  if (!plan) {
+    return (
+      <div className="flex flex-col items-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-signal-amber mb-2" />
+        <p className="font-mono text-sm text-slate">Loading infrastructure plan...</p>
+      </div>
+    )
+  }
+
   function formatLKR(n) {
-    return "Rs. " + n.toLocaleString("en-LK", { maximumFractionDigits: 0 })
+    return "Rs. " + (n || 0).toLocaleString("en-LK", { maximumFractionDigits: 0 })
   }
 
   function recalculatePrice(updatedPlan) {
