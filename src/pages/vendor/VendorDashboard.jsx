@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Radar, Plus, Package, CheckCircle2, Upload, Download, Award, Loader2 } from "lucide-react"
+import { Radar, Plus, Package, CheckCircle2, Upload, Download, Award, Loader2, MessageSquare } from "lucide-react"
 import OpportunityCard from "../../components/OpportunityCard"
 import BidStatusBadge from "../../components/BidStatusBadge"
 import BidSubmissionModal from "../../components/BidSubmissionModal"
@@ -10,6 +10,13 @@ import { currentVendor } from "../../services/mockData"
 import { useAuth } from "../../context/AuthContext"
 import { downloadRentalReceiptPDF } from "../../utils/downloadReceipt"
 import FullPageLoader from "../../components/FullPageLoader"
+
+function normPhone(phone) {
+  let n = String(phone || '').replace(/\D/g, '')
+  if (n.startsWith('0')) n = '94' + n.substring(1)
+  else if (n.length === 9 && n.startsWith('7')) n = '94' + n
+  return n
+}
 
 function formatLKR(n) {
   return "Rs. " + Number(n).toLocaleString("en-US", { maximumFractionDigits: 0 })
@@ -460,10 +467,21 @@ function VendorDashboard() {
                           Rs. {Number(b.deposit_paid).toLocaleString()}
                         </span>
                       </div>
-                      <div className="flex justify-between items-center pt-1 border-t border-slate/10">
-                        <span className="font-mono text-[9px] text-slate/75">
-                          {b.payment_mode}
-                        </span>
+
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-1.5 border-t border-slate/10">
+                        {b.renter_phone ? (
+                          <a
+                            href={`https://api.whatsapp.com/send?phone=${normPhone(b.renter_phone)}&text=${encodeURIComponent(`Hi ${b.renter_name}, I am contacting you regarding your SoundScout rental booking for "${b.equipment_summary}".`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 rounded bg-[#25D366] px-2 py-1 font-mono text-[10px] font-bold text-white shadow-sm hover:bg-[#20bd5a] transition-all"
+                          >
+                            <MessageSquare size={12} /> Contact Organizer
+                          </a>
+                        ) : (
+                          <span className="font-mono text-[9px] text-slate/75">{b.payment_mode}</span>
+                        )}
+
                         <button
                           type="button"
                           onClick={() => downloadRentalReceiptPDF({
