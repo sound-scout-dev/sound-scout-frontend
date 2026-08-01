@@ -41,13 +41,6 @@ function Navbar() {
         </div>
 
         <div className="hidden items-center gap-4 md:flex">
-          <Link
-            to="/instant-rental"
-            className="inline-flex items-center gap-1.5 rounded-full border border-[#0891B2]/30 bg-[#0891B2]/10 px-3.5 py-1.5 font-mono text-xs font-bold uppercase tracking-wider text-[#0891B2] shadow-sm transition-all duration-150 ease-out hover:bg-[#0891B2]/20 hover:scale-105 active:scale-95"
-          >
-            <Zap size={14} className="text-[#059669]" strokeWidth={2.5} />
-            Instant Rental
-          </Link>
           {user ? (
             <>
               <Link
@@ -62,12 +55,26 @@ function Navbar() {
               >
                 Profile
               </Link>
+              <Link
+                to="/instant-rental"
+                className="inline-flex items-center gap-1.5 rounded-full border border-[#0891B2]/40 bg-[#0891B2]/10 px-3.5 py-1.5 font-mono text-xs font-bold uppercase tracking-wider text-[#0891B2] shadow-sm transition-all duration-150 ease-out hover:bg-[#0891B2]/20 hover:scale-105 active:scale-95"
+              >
+                <Zap size={14} className="text-[#059669]" strokeWidth={2.5} />
+                Instant Rental
+              </Link>
               <Button onClick={logout} variant="outline" size="sm" className="border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-zinc-800 dark:text-zinc-350 dark:hover:bg-zinc-900 dark:hover:text-white">
                 Log out
               </Button>
             </>
           ) : (
             <>
+              <Link
+                to="/instant-rental"
+                className="inline-flex items-center gap-1.5 rounded-full border border-[#0891B2]/40 bg-[#0891B2]/10 px-3.5 py-1.5 font-mono text-xs font-bold uppercase tracking-wider text-[#0891B2] shadow-sm transition-all duration-150 ease-out hover:bg-[#0891B2]/20 hover:scale-105 active:scale-95"
+              >
+                <Zap size={14} className="text-[#059669]" strokeWidth={2.5} />
+                Instant Rental
+              </Link>
               <Button as={Link} to="/login" variant="ghost" size="sm" className="text-gray-700 hover:bg-gray-100/50 dark:text-zinc-350 dark:hover:bg-zinc-900/50 dark:hover:text-white">
                 Log in
               </Button>

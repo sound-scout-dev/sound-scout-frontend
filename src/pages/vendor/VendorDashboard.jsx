@@ -82,12 +82,15 @@ function VendorDashboard() {
       setLoading(false)
     })
 
-    // Load vendor's own local instant rentals
-    try {
-      const allLocal = JSON.parse(localStorage.getItem("soundscout.local_rentals") || "[]")
-      const vendorLocal = allLocal.filter((l) => l.vendorName === vendor.name)
-      setLocalListings(vendorLocal)
-    } catch (_) {}
+    // Load vendor's active instant rentals from backend PostgreSQL database
+    searchInstantRentals({ category: "", location: "" }).then((allDbRentals) => {
+      if (active && Array.isArray(allDbRentals)) {
+        const myRentals = allDbRentals.filter(
+          (r) => r.vendorName === vendor.name || r.vendorId === user?.id || r.vendor_id === user?.user_id
+        )
+        setLocalListings(myRentals)
+      }
+    }).catch(() => {})
 
     return () => {
       active = false
@@ -118,13 +121,23 @@ function VendorDashboard() {
         photoUrl: photoUrl.trim() || null
       }
       const added = await addInstantRental(listing)
-      setLocalListings((prev) => [...prev, added])
+      setLocalListings((prev) => [added, ...prev])
       setEqSummary("")
       setPrice("")
       setQty("1")
       setPhotoUrl("")
       setListingSuccess("Rental listing added successfully!")
       setTimeout(() => setListingSuccess(""), 4000)
+
+      // Re-fetch backend database items
+      searchInstantRentals({ category: "", location: "" }).then((allDbRentals) => {
+        if (Array.isArray(allDbRentals)) {
+          const myRentals = allDbRentals.filter(
+            (r) => r.vendorName === vendor.name || r.vendorId === user?.id || r.vendor_id === user?.user_id
+          )
+          setLocalListings(myRentals)
+        }
+      }).catch(() => {})
     } catch (err) {
       console.error(err)
     }
