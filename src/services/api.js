@@ -701,14 +701,14 @@ export async function searchInstantRentals({ category, location }) {
     if (location) queryParams.append('location', location);
 
     const dbRentals = await request(`/rentals?${queryParams.toString()}`);
-    if (Array.isArray(dbRentals) && dbRentals.length > 0) {
+    if (Array.isArray(dbRentals)) {
       return dbRentals;
     }
   } catch (err) {
     console.warn("Backend searchInstantRentals fallback to local:", err);
   }
 
-  let results = [...getLocalRentals(), ...instantRentalListings];
+  let results = getLocalRentals();
   if (category) {
     results = results.filter((listing) => listing.category === category);
   }

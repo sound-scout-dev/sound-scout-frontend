@@ -69,8 +69,10 @@ function BookingConfirmModal({ listing, onClose, onBooked }) {
     }
   }
 
-  const cleanVendorPhone = completedTxn?.vendorPhone ? String(completedTxn.vendorPhone).replace(/\D/g, "") : ""
-  const vendorWhatsappUrl = cleanVendorPhone ? `https://api.whatsapp.com/send?phone=${cleanVendorPhone}&text=${encodeURIComponent(`Hi ${completedTxn?.vendorName}, I just booked your rental item "${completedTxn?.equipmentName}" on SoundScout! My Receipt No is ${completedTxn?.receiptNo}.`)}` : "#"
+  const rawVendorPhone = completedTxn?.vendorPhone || listing?.vendorPhone || listing?.vendor_phone || listing?.phone || ""
+  const cleanVendorPhone = String(rawVendorPhone).replace(/\D/g, "")
+  const vendorName = completedTxn?.vendorName || listing?.vendorName || listing?.vendor_name || "Vendor"
+  const vendorWhatsappUrl = cleanVendorPhone ? `https://api.whatsapp.com/send?phone=${cleanVendorPhone}&text=${encodeURIComponent(`Hi ${vendorName}, I am contacting you regarding your SoundScout rental listing "${listing.equipmentSummary}".`)}` : "#"
 
   return (
     <Modal title={completedTxn ? "Rental Confirmed & Escrow Receipt" : "Instant Rental Financial Ledger"} onClose={onClose}>
@@ -253,8 +255,12 @@ function BookingConfirmModal({ listing, onClose, onBooked }) {
                   type="text"
                   maxLength={19}
                   value={cardNumber}
-                  onChange={(e) => setCardNumber(e.target.value)}
-                  placeholder="4242 4242 4242 4242"
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, "").slice(0, 16)
+                    const formatted = digits.match(/.{1,4}/g)?.join(" ") || digits
+                    setCardNumber(formatted)
+                  }}
+                  placeholder="3298 7487 3487 3398"
                   className="w-full rounded border border-slate/25 bg-white px-3 py-2 font-mono text-xs font-bold text-ink-navy outline-none focus:border-circuit-teal"
                 />
                 <CreditCard size={16} className="absolute right-3 top-2.5 text-slate/40" />
@@ -268,8 +274,15 @@ function BookingConfirmModal({ listing, onClose, onBooked }) {
                   type="text"
                   maxLength={5}
                   value={cardExpiry}
-                  onChange={(e) => setCardExpiry(e.target.value)}
-                  placeholder="12/28"
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, "").slice(0, 4)
+                    if (digits.length >= 3) {
+                      setCardExpiry(`${digits.slice(0, 2)}/${digits.slice(2)}`)
+                    } else {
+                      setCardExpiry(digits)
+                    }
+                  }}
+                  placeholder="10/28"
                   className="w-full rounded border border-slate/25 bg-white px-3 py-2 text-xs font-mono text-center font-bold text-ink-navy outline-none focus:border-circuit-teal"
                 />
               </div>
@@ -277,9 +290,12 @@ function BookingConfirmModal({ listing, onClose, onBooked }) {
                 <label className="block font-mono text-[10px] uppercase text-slate mb-1">CVV Code</label>
                 <input
                   type="password"
-                  maxLength={4}
+                  maxLength={3}
                   value={cardCvv}
-                  onChange={(e) => setCardCvv(e.target.value)}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, "").slice(0, 3)
+                    setCardCvv(digits)
+                  }}
                   placeholder="789"
                   className="w-full rounded border border-slate/25 bg-white px-3 py-2 text-xs font-mono text-center font-bold text-ink-navy outline-none focus:border-circuit-teal"
                 />
