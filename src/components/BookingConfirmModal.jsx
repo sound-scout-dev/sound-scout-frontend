@@ -70,8 +70,15 @@ function BookingConfirmModal({ listing, onClose, onBooked }) {
     }
   }
 
+  function normPhone(phone) {
+    let n = String(phone || '').replace(/\D/g, '')
+    if (n.startsWith('0')) n = '94' + n.substring(1)
+    else if (n.length === 9 && n.startsWith('7')) n = '94' + n
+    return n
+  }
+
   const rawVendorPhone = completedTxn?.vendorPhone || listing?.vendorPhone || listing?.vendor_phone || listing?.phone || ""
-  const cleanVendorPhone = String(rawVendorPhone).replace(/\D/g, "")
+  const cleanVendorPhone = normPhone(rawVendorPhone)
   const vendorName = completedTxn?.vendorName || listing?.vendorName || listing?.vendor_name || "Vendor"
   const vendorWhatsappUrl = cleanVendorPhone ? `https://api.whatsapp.com/send?phone=${cleanVendorPhone}&text=${encodeURIComponent(`Hi ${vendorName}, I am contacting you regarding your SoundScout rental listing "${listing.equipmentSummary}".`)}` : "#"
 

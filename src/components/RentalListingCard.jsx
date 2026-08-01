@@ -7,10 +7,17 @@ const AVAILABILITY_LABEL = {
   maintenance: "MAINTENANCE",
 }
 
+function normPhone(phone) {
+  let n = String(phone || '').replace(/\D/g, '')
+  if (n.startsWith('0')) n = '94' + n.substring(1)
+  else if (n.length === 9 && n.startsWith('7')) n = '94' + n
+  return n
+}
+
 function RentalListingCard({ listing, booked, onBook }) {
   const displayPhoto = listing.photoUrl || listing.photo_url || (Array.isArray(listing.photos) && listing.photos[0]) || null
-  const rawPhone = listing.vendor_phone || listing.vendorPhone || listing.phone || ""
-  const cleanPhone = String(rawPhone).replace(/\D/g, "")
+  const rawPhone = listing.vendorPhone || listing.vendor_phone || listing.phone || ""
+  const cleanPhone = normPhone(rawPhone)
 
   return (
     <div className="flex flex-col rounded-xl bg-glass p-5 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 animate-fade-in-up">
