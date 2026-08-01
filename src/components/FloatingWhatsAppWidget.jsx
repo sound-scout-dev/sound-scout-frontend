@@ -9,13 +9,15 @@ function FloatingWhatsAppWidget() {
     async function fetchBotPhone() {
       try {
         const workerUrl = "https://sound-scout-whatsapp-worker.onrender.com"
-        const resp = await fetch(`${workerUrl}/`)
-        const data = await resp.json()
-        if (data && data.botPhone) {
-          setBotPhone(String(data.botPhone).replace(/\D/g, ""))
+        const resp = await fetch(`${workerUrl}/`, { mode: "cors" })
+        if (resp.ok) {
+          const data = await resp.json()
+          if (data && data.botPhone) {
+            setBotPhone(String(data.botPhone).replace(/\D/g, ""))
+          }
         }
       } catch (e) {
-        console.warn("Could not fetch bot phone for floating widget:", e)
+        // Fallback gracefully without error notice
       }
     }
     fetchBotPhone()
