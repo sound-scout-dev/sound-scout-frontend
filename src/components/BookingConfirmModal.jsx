@@ -16,11 +16,11 @@ function BookingConfirmModal({ listing, onClose, onBooked }) {
   const [paymentMode, setPaymentMode] = useState("advance") // "advance" (50%) | "full" (100%)
   const [completedTxn, setCompletedTxn] = useState(null)
 
-  // Card Payment details states
-  const [cardName, setCardName] = useState(user?.name || "")
-  const [cardNumber, setCardNumber] = useState("4242 •••• •••• 4242")
-  const [cardExpiry, setCardExpiry] = useState("12/28")
-  const [cardCvv, setCardCvv] = useState("789")
+  // Card Payment details states (empty inputs to be filled by organizer)
+  const [cardName, setCardName] = useState("")
+  const [cardNumber, setCardNumber] = useState("")
+  const [cardExpiry, setCardExpiry] = useState("")
+  const [cardCvv, setCardCvv] = useState("")
 
   const itemSubtotal = (Number(listing.pricePerDay) || 0) * selectedQty * rentalDays
   const insuranceFee = Math.round(itemSubtotal * 0.05) // 5% SoundScout escrow & insurance fee

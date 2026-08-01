@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react"
-import { Radar, Plus, Package, CheckCircle2, Upload } from "lucide-react"
+import { Radar, Plus, Package, CheckCircle2, Upload, Download, Award, Loader2 } from "lucide-react"
 import OpportunityCard from "../../components/OpportunityCard"
 import BidStatusBadge from "../../components/BidStatusBadge"
 import BidSubmissionModal from "../../components/BidSubmissionModal"
 import FormField from "../../components/FormField"
 import Button from "../../components/Button"
-import { listVendorOpportunities, listVendorBids, addInstantRental, searchInstantRentals, subscribePremium } from "../../services/api"
+import { listVendorOpportunities, listVendorBids, addInstantRental, searchInstantRentals, fetchMyRentalBookings, subscribePremium } from "../../services/api"
 import { currentVendor } from "../../services/mockData"
 import { useAuth } from "../../context/AuthContext"
-import { Award, Loader2 } from "lucide-react"
+import { downloadRentalReceiptPDF } from "../../utils/downloadReceipt"
 import FullPageLoader from "../../components/FullPageLoader"
 
 function formatLKR(n) {
@@ -68,6 +68,7 @@ function VendorDashboard() {
   const [photoUrl, setPhotoUrl] = useState("")
   const [listingSuccess, setListingSuccess] = useState("")
   const [localListings, setLocalListings] = useState([])
+  const [myBookings, setMyBookings] = useState([])
 
   useEffect(() => {
     let active = true
@@ -89,6 +90,13 @@ function VendorDashboard() {
           (r) => r.vendorName === vendor.name || r.vendorId === user?.id || r.vendor_id === user?.user_id
         )
         setLocalListings(myRentals)
+      }
+    }).catch(() => {})
+
+    // Load vendor's confirmed rental bookings for PDF receipt download
+    fetchMyRentalBookings().then((bList) => {
+      if (active && Array.isArray(bList)) {
+        setMyBookings(bList)
       }
     }).catch(() => {})
 
@@ -428,23 +436,58 @@ function VendorDashboard() {
             <div>
               <h2 className="font-display text-lg font-semibold text-ink-navy flex items-center gap-2 border-b border-slate/10 pb-2">
                 <CheckCircle2 size={20} className="text-circuit-teal" />
-                Confirmed Bookings
+                Confirmed Bookings & Escrow Receipts
               </h2>
 
               <div className="mt-3 space-y-3">
-                {localListings.filter(l => l.status === "booked" || (l.qty !== undefined && l.qty <= 0)).length === 0 ? (
+                {myBookings.length === 0 ? (
                   <p className="text-xs text-slate font-body text-center py-4 italic">
                     No confirmed bookings yet.
                   </p>
                 ) : (
-                  localListings.filter(l => l.status === "booked" || (l.qty !== undefined && l.qty <= 0)).map((listing) => (
-                    <div key={listing.id} className="rounded border border-alert-red/20 p-3 bg-alert-red/5">
-                      <p className="font-display text-xs font-semibold text-ink-navy">
-                        {listing.equipmentSummary}
-                      </p>
-                      <div className="mt-1 flex justify-between font-mono text-[10px] text-slate">
-                        <span className="text-alert-red font-semibold uppercase tracking-wider text-[9px] bg-alert-red/10 px-1 rounded">Booked / Reserved</span>
-                        <span className="font-semibold text-slate">{formatLKR(listing.pricePerDay)}/day</span>
+                  myBookings.map((b) => (
+                    <div key={b.booking_id} className="rounded-lg border border-emerald-500/20 p-3 bg-emerald-500/5 space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-display text-xs font-bold text-ink-navy">
+                            {b.equipment_summary}
+                          </p>
+                          <p className="font-body text-[10px] text-slate">
+                            Renter: {b.renter_name} ({b.qty_booked} qty · {b.rental_days} days)
+                          </p>
+                        </div>
+                        <span className="font-mono text-xs font-bold text-emerald-600">
+                          Rs. {Number(b.deposit_paid).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center pt-1 border-t border-slate/10">
+                        <span className="font-mono text-[9px] text-slate/75">
+                          {b.payment_mode}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => downloadRentalReceiptPDF({
+                            receiptNo: `RENT-2026-${b.booking_id + 1000}`,
+                            txnId: `TXN_RENT_${b.booking_id}`,
+                            date: new Date(b.created_at || Date.now()).toLocaleDateString(),
+                            vendorName: vendor.name,
+                            renterName: b.renter_name,
+                            equipmentName: b.equipment_summary,
+                            qty: b.qty_booked,
+                            days: b.rental_days,
+                            pricePerDay: Math.round(Number(b.total_price) / (b.qty_booked * b.rental_days)),
+                            subtotal: Number(b.total_price),
+                            insuranceFee: Math.round(Number(b.total_price) * 0.05),
+                            totalPrice: Number(b.total_price),
+                            paymentMode: b.payment_mode,
+                            depositPaid: Number(b.deposit_paid),
+                            balanceDue: Number(b.total_price) - Number(b.deposit_paid),
+                            status: "PAID & RESERVED (IN ESCROW)"
+                          })}
+                          className="inline-flex items-center gap-1 font-mono text-[10px] font-bold text-circuit-teal hover:underline"
+                        >
+                          <Download size={12} /> Download Receipt PDF
+                        </button>
                       </div>
                     </div>
                   ))

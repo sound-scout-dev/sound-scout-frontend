@@ -741,6 +741,15 @@ export async function bookInstantRental(listingId, qtyToBook = 1, rentalDays = 1
   }
 }
 
+export async function fetchMyRentalBookings() {
+  try {
+    return await request('/rentals/my-bookings');
+  } catch (err) {
+    console.warn("fetchMyRentalBookings fallback to empty:", err);
+    return [];
+  }
+}
+
 // Real call: POST /bids. `notes` isn't in the NewBid schema, so it's kept in
 // the local enrichment layer only (not sent) — same for the display-only
 // vendorName/rating shown in bid comparison lists.
