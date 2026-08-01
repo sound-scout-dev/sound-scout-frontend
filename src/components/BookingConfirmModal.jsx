@@ -71,9 +71,13 @@ function BookingConfirmModal({ listing, onClose, onBooked }) {
   }
 
   function normPhone(phone) {
-    let n = String(phone || '').replace(/\D/g, '')
+    const str = String(phone || '')
+    if (str.includes('@lid')) return ''
+    let n = str.replace(/\D/g, '')
+    if (n.length >= 14) return ''  // Baileys LID — reject
     if (n.startsWith('0')) n = '94' + n.substring(1)
     else if (n.length === 9 && n.startsWith('7')) n = '94' + n
+    if (n.length < 9 || n.length > 13) return ''
     return n
   }
 
