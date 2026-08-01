@@ -137,7 +137,7 @@ function Register() {
   // Verification Screen UI
   if (verificationData) {
     const cleanPhone = String(verificationData.botPhone || '').replace(/\D/g, '')
-    const whatsappUrl = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(verificationData.verificationCode)}` : '#'
+    const whatsappUrl = cleanPhone ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(verificationData.verificationCode)}` : '#'
 
     return (
       <div className="rounded-md border border-paper/10 bg-paper p-8 shadow-2xl shadow-black/20 text-center max-w-lg mx-auto my-8">
@@ -160,13 +160,14 @@ function Register() {
             <div>
               <h1 className="font-display text-2xl font-semibold text-ink-navy">Verify Your Account</h1>
               <p className="mt-2 font-body text-xs text-slate max-w-sm mx-auto leading-relaxed">
-                Click the button above to send your pre-filled verification code on WhatsApp. This window will automatically update once verified.
+                Click the button below to send your pre-filled verification code on WhatsApp. If WhatsApp doesn't open automatically, send code <span className="font-mono font-bold text-ink-navy">{verificationData.verificationCode}</span> directly to <span className="font-mono font-bold text-ink-navy">+{cleanPhone}</span>.
               </p>
             </div>
 
             <div className="rounded-lg border border-slate/15 bg-slate/5 p-4 font-mono text-xs text-ink-navy space-y-1">
               <p className="text-[11px] text-slate uppercase tracking-wider">Your Verification Code</p>
               <p className="text-xl font-bold tracking-widest text-[#0891B2]">{verificationData.verificationCode}</p>
+              {cleanPhone && <p className="text-[11px] text-slate/75">WhatsApp Bot Number: +{cleanPhone}</p>}
             </div>
 
             <a

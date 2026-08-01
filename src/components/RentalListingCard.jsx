@@ -34,6 +34,16 @@ function RentalListingCard({ listing, booked, onBook }) {
 
       <p className="mt-3 font-body text-sm text-gray-600">{listing.equipmentSummary}</p>
 
+      {(listing.photoUrl || (Array.isArray(listing.photos) && listing.photos[0])) && (
+        <div className="mt-3 overflow-hidden rounded-lg border border-slate/15 max-h-48 bg-slate/5">
+          <img 
+            src={listing.photoUrl || listing.photos[0]} 
+            alt={listing.equipmentSummary} 
+            className="w-full h-40 object-cover hover:scale-105 transition-transform duration-300" 
+          />
+        </div>
+      )}
+
       <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 font-mono text-xs text-slate">
         <span className="flex items-center gap-1.5">
           <MapPin size={13} strokeWidth={2} />
