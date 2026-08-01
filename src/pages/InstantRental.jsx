@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Zap, Search, PackageSearch, UserPlus, LogIn, X } from "lucide-react"
+import { Zap, Search, PackageSearch, UserPlus, LogIn } from "lucide-react"
 import { Link } from "react-router-dom"
 import RentalListingCard from "../components/RentalListingCard"
 import BookingConfirmModal from "../components/BookingConfirmModal"
@@ -41,53 +41,80 @@ function InstantRental() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setInitialLoading(false)
-    }, 1000)
+    }, 800)
     return () => clearTimeout(timer)
   }, [])
 
-  // Initial and filtered search fetch
+  // Search fetch with safety catch to prevent unhandled rejections
   useEffect(() => {
     setLoading(true)
+    let active = true
+
     const timer = setTimeout(() => {
-      searchInstantRentals({ category, location }).then((data) => {
-        setResults(data)
-        setLoading(false)
-      })
-    }, 250)
-    return () => clearTimeout(timer)
+      searchInstantRentals({ category, location })
+        .then((data) => {
+          if (!active) return
+          setResults(Array.isArray(data) ? data : [])
+          setLoading(false)
+        })
+        .catch((err) => {
+          console.warn("Search rentals caught error:", err)
+          if (!active) return
+          setResults([])
+          setLoading(false)
+        })
+    }, 200)
+
+    return () => {
+      active = false
+      clearTimeout(timer)
+    }
   }, [category, location])
 
-  // Real-time Web Socket / SSE Inventory Stream Listener
+  // Real-time Web Socket / SSE Inventory Stream Listener with safe error fallback
   useEffect(() => {
-    let eventSource;
+    let eventSource = null
     try {
-      const backendUrl = "https://sound-scout-backend.onrender.com"
-      eventSource = new EventSource(`${backendUrl}/api/rentals/stream`)
+      if (typeof window !== "undefined" && "EventSource" in window) {
+        const backendUrl = "https://sound-scout-backend.onrender.com"
+        eventSource = new EventSource(`${backendUrl}/api/rentals/stream`)
 
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data)
-          if (data.type === 'QUANTITY_UPDATED') {
-            setResults((prev) =>
-              prev.map((item) =>
-                item.id === data.itemId
-                  ? { ...item, qty: data.newQty, availability: data.newQty <= 0 ? 'booked' : 'now' }
-                  : item
+        eventSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data)
+            if (data.type === "QUANTITY_UPDATED") {
+              setResults((prev) =>
+                Array.isArray(prev)
+                  ? prev.map((item) =>
+                      item.id === data.itemId
+                        ? { ...item, qty: data.newQty, availability: data.newQty <= 0 ? "booked" : "now" }
+                        : item
+                    )
+                  : []
               )
-            )
-          } else if (data.type === 'ITEM_ADDED' && data.item) {
-            setResults((prev) => [data.item, ...prev])
+            } else if (data.type === "ITEM_ADDED" && data.item) {
+              setResults((prev) => (Array.isArray(prev) ? [data.item, ...prev] : [data.item]))
+            }
+          } catch (err) {
+            console.warn("SSE message parse warning:", err)
           }
-        } catch (err) {
-          console.warn("SSE parse error:", err)
+        }
+
+        eventSource.onerror = () => {
+          console.warn("SSE stream network notice - closing listener safely")
+          eventSource?.close()
         }
       }
     } catch (err) {
-      console.warn("SSE connection error:", err)
+      console.warn("SSE initialization warning:", err)
     }
 
     return () => {
-      eventSource?.close()
+      try {
+        eventSource?.close()
+      } catch (e) {
+        // ignore close error
+      }
     }
   }, [])
 
@@ -107,6 +134,8 @@ function InstantRental() {
     setBookedIds((prev) => new Set(prev).add(listingId))
     setActiveListing(null)
   }
+
+  const safeResults = Array.isArray(results) ? results : []
 
   return (
     <div className="animate-fade-in-up">
@@ -159,7 +188,7 @@ function InstantRental() {
           <div className="mt-8">
             {loading ? (
               <Skeleton />
-            ) : results.length === 0 ? (
+            ) : safeResults.length === 0 ? (
               <div className="flex flex-col items-center rounded-md border border-dashed border-slate/25 bg-white px-6 py-16 text-center">
                 <span className="flex h-12 w-12 items-center justify-center rounded-full bg-alert-red/10 text-alert-red">
                   <PackageSearch size={22} strokeWidth={2} />
@@ -173,9 +202,9 @@ function InstantRental() {
               </div>
             ) : (
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {results.map((listing) => (
+                {safeResults.map((listing) => (
                   <RentalListingCard
-                    key={listing.id}
+                    key={listing.id || `listing-${Math.random()}`}
                     listing={listing}
                     booked={bookedIds.has(listing.id)}
                     onBook={handleAttemptBook}

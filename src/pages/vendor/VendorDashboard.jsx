@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Radar, Plus, Package, CheckCircle2 } from "lucide-react"
+import { Radar, Plus, Package, CheckCircle2, Upload } from "lucide-react"
 import OpportunityCard from "../../components/OpportunityCard"
 import BidStatusBadge from "../../components/BidStatusBadge"
 import BidSubmissionModal from "../../components/BidSubmissionModal"
@@ -317,14 +317,52 @@ function VendorDashboard() {
                 placeholder="e.g. 1"
               />
 
-              <FormField
-                label="Equipment Photo / Image URL"
-                name="photoUrl"
-                type="url"
-                value={photoUrl}
-                onChange={(e) => setPhotoUrl(e.target.value)}
-                placeholder="e.g. https://images.unsplash.com/photo-..."
-              />
+              <div className="space-y-1.5">
+                <label className="block font-mono text-xs font-semibold uppercase tracking-wider text-slate">
+                  Equipment Photo (Upload File or Paste URL)
+                </label>
+
+                {photoUrl ? (
+                  <div className="relative overflow-hidden rounded-lg border border-slate/20 bg-slate/5 p-2">
+                    <img src={photoUrl} alt="Equipment Preview" className="h-32 w-full object-cover rounded border border-slate/15" />
+                    <button
+                      type="button"
+                      onClick={() => setPhotoUrl("")}
+                      className="absolute top-3 right-3 rounded-md bg-alert-red px-2.5 py-1 font-mono text-[10px] font-bold text-white shadow hover:bg-alert-red/90"
+                    >
+                      ✕ Remove Image
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-circuit-teal/40 bg-circuit-teal/5 py-3.5 font-mono text-xs font-semibold text-circuit-teal hover:bg-circuit-teal/10 transition-colors">
+                      <Upload size={16} /> Upload Image File
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) {
+                            const reader = new FileReader()
+                            reader.onloadend = () => {
+                              setPhotoUrl(reader.result)
+                            }
+                            reader.readAsDataURL(file)
+                          }
+                        }}
+                      />
+                    </label>
+                    <input
+                      type="url"
+                      value={photoUrl}
+                      onChange={(e) => setPhotoUrl(e.target.value)}
+                      placeholder="Or paste image URL (https://...)"
+                      className="w-full rounded border border-slate/25 bg-white px-3 py-2 text-xs text-ink-navy focus:border-circuit-teal focus:outline-none"
+                    />
+                  </div>
+                )}
+              </div>
 
               <FormField
                 as="select"
