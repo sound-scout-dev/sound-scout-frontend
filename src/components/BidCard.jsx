@@ -9,10 +9,14 @@ function formatLKR(n) {
 
 function sanitizeWhatsAppPhone(phone) {
   if (!phone) return ""
-  let clean = phone.replace(/[^0-9]/g, "")
-  if (clean.startsWith("0")) {
-    clean = "94" + clean.slice(1)
-  }
+  const str = String(phone)
+  // Reject internal Baileys LIDs (contain @lid or are 14+ digits)
+  if (str.includes('@lid') || str.replace(/\D/g, '').length >= 14) return ""
+  let clean = str.replace(/[^0-9]/g, "")
+  if (clean.startsWith("0")) clean = "94" + clean.slice(1)
+  else if (clean.length === 9 && clean.startsWith("7")) clean = "94" + clean
+  // Final sanity check — must be 11-12 digits for Sri Lanka
+  if (clean.length < 9 || clean.length > 13) return ""
   return clean
 }
 
