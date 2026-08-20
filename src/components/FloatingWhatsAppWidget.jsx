@@ -27,7 +27,7 @@ function FloatingWhatsAppWidget() {
     fetchBotPhone()
   }, [])
 
-  const cleanPhone = (botPhone && botPhone.length >= 9 && botPhone.length <= 13) ? botPhone : "94703252870"
+  const cleanPhone = (botPhone && botPhone.length >= 9 && botPhone.length <= 13) ? botPhone : "94784475700"
   const defaultText = "Hi SoundScout AI! I'm using the SoundScout platform and would like to enable instant booking & payment notifications on WhatsApp."
   const whatsappUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(defaultText)}`
 
