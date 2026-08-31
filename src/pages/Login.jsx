@@ -63,7 +63,7 @@ function Login() {
   }
 
   return (
-    <div className="rounded-md border border-paper/10 bg-paper p-8 shadow-2xl shadow-black/20">
+    <div className="auth-card rounded-md border border-paper/10 bg-paper p-8 shadow-2xl shadow-black/20">
       <h1 className="font-display text-2xl font-semibold text-ink-navy dark:!text-ink-navy">Log in</h1>
       <p className="mt-1 font-body text-sm text-slate">
         Welcome back to SoundScout.

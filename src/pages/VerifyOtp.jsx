@@ -48,7 +48,7 @@ function VerifyOtp() {
 
   if (!regResponse) {
     return (
-      <div className="text-center py-12 bg-[#ffffff] rounded border border-slate/15 max-w-md mx-auto my-12">
+      <div className="auth-card text-center py-12 bg-[#ffffff] rounded border border-slate/15 max-w-md mx-auto my-12">
         <p className="text-slate font-mono text-sm">No registration session found.</p>
         <button onClick={() => navigate("/login")} className="mt-4 text-xs font-semibold text-circuit-teal underline">
           Go to Login
@@ -81,7 +81,7 @@ function VerifyOtp() {
 
   return (
     <div className="mx-auto max-w-md px-4 py-16">
-      <div className="rounded-md border border-slate/15 bg-[#ffffff] p-8 shadow-md text-center">
+      <div className="auth-card rounded-md border border-slate/15 bg-[#ffffff] p-8 shadow-md text-center">
         {verifiedSuccess ? (
           <div className="py-6 space-y-4">
             <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">

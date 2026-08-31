@@ -140,7 +140,7 @@ function Register() {
     const whatsappUrl = cleanPhone ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(verificationData.verificationCode)}` : '#'
 
     return (
-      <div className="rounded-md border border-paper/10 bg-paper p-8 shadow-2xl shadow-black/20 text-center max-w-lg mx-auto my-8">
+      <div className="auth-card rounded-md border border-paper/10 bg-paper p-8 shadow-2xl shadow-black/20 text-center max-w-lg mx-auto my-8">
         {verifiedSuccess ? (
           <div className="py-6 space-y-4">
             <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
@@ -190,7 +190,7 @@ function Register() {
   }
 
   return (
-    <div className="rounded-md border border-paper/10 bg-paper p-8 shadow-2xl shadow-black/20">
+    <div className="auth-card rounded-md border border-paper/10 bg-paper p-8 shadow-2xl shadow-black/20">
       <h1 className="font-display text-2xl font-semibold text-ink-navy dark:!text-ink-navy">Create an account</h1>
       <p className="mt-1 font-body text-sm text-slate">
         Get started with SoundScout.

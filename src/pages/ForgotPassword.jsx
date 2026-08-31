@@ -103,7 +103,7 @@ function ForgotPassword() {
 
   return (
     <div className="mx-auto max-w-md px-4 py-12">
-      <div className="rounded-md border border-paper/10 bg-paper p-8 shadow-2xl shadow-black/20">
+      <div className="auth-card rounded-md border border-paper/10 bg-paper p-8 shadow-2xl shadow-black/20">
         {resetSuccess ? (
           <div className="text-center py-6 space-y-4">
             <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">

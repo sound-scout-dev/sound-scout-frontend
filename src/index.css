@@ -7,6 +7,24 @@
 @layer base {
   html {
     font-family: "Inter", sans-serif;
+    color-scheme: light;
+  }
+
+  /* Native form controls (select dropdown popups, scrollbars, date pickers) are
+     rendered by the browser/OS, not by our CSS — they only follow the page's dark
+     styling if color-scheme says so. Without this, a <select>'s closed box could
+     look right (author styles win there) while its open option list stays on the
+     browser's light default, silently mismatching dark-mode text colors. */
+  html.dark {
+    color-scheme: dark;
+  }
+
+  /* .auth-card is intentionally always-light regardless of theme (see the
+     .auth-card overrides below), so its native controls must stay on the light
+     scheme too, or an open <select> inside it would get a dark native popup
+     behind text colors that were forced light-card-appropriate. */
+  html.dark .auth-card {
+    color-scheme: light;
   }
 
   body {
@@ -65,6 +83,39 @@
 
   html.dark .bg-gray-100 {
     background-color: #2c2c2e !important;
+  }
+
+  /* Custom brand text tokens (ink-navy, slate) have no dark-mode value of their
+     own, so on any card that DOES go dark (via the overrides above), this text
+     was staying at its light-mode color and going near-invisible. */
+  html.dark .text-ink-navy {
+    color: #f4f4f5 !important;
+  }
+
+  html.dark .text-slate {
+    color: #d4d4d8 !important;
+  }
+
+  html.dark .text-slate\/30 { color: rgb(212 212 216 / 0.3) !important; }
+  html.dark .text-slate\/40 { color: rgb(212 212 216 / 0.4) !important; }
+  html.dark .text-slate\/50 { color: rgb(212 212 216 / 0.5) !important; }
+  html.dark .text-slate\/60 { color: rgb(212 212 216 / 0.6) !important; }
+  html.dark .text-slate\/75 { color: rgb(212 212 216 / 0.75) !important; }
+  html.dark .text-slate\/80 { color: rgb(212 212 216 / 0.8) !important; }
+  html.dark .text-slate\/85 { color: rgb(212 212 216 / 0.85) !important; }
+
+  /* .auth-card (Login/Register/ForgotPassword/VerifyOtp) is a fixed-light card on a
+     fixed-dark backdrop by design — it never itself follows the theme toggle — so its
+     text must stay at the light-mode values regardless of html.dark. Higher specificity
+     (class + class, vs. the bare-class overrides above) wins regardless of source order. */
+  html.dark .auth-card.text-ink-navy,
+  html.dark .auth-card .text-ink-navy {
+    color: #12122B !important;
+  }
+
+  html.dark .auth-card.text-slate,
+  html.dark .auth-card .text-slate {
+    color: #5C5C6E !important;
   }
 
   html.dark [class*="border-gray-"] {
