@@ -1,0 +1,159 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: "Inter", sans-serif;
+  }
+
+  body {
+    background-color: #f1f5f9;
+    color: #0f172a;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 300ms ease, color 300ms ease;
+  }
+
+  html.dark body {
+    background-color: #121212;
+    color: #f8fafc;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: "Space Grotesk", sans-serif;
+  }
+
+  ::selection {
+    background-color: rgba(8, 145, 178, 0.15);
+  }
+
+  *:focus-visible {
+    outline: 2px solid #0891b2;
+    outline-offset: 2px;
+  }
+
+  /* Global Dark Mode Helper Overrides */
+  html.dark h1,
+  html.dark h2,
+  html.dark h3,
+  html.dark h4,
+  html.dark .text-gray-900,
+  html.dark .text-slate-900,
+  html.dark .text-slate-800,
+  html.dark .text-gray-800,
+  html.dark .text-gray-700 {
+    color: #f4f4f5 !important;
+  }
+
+  html.dark .text-gray-600,
+  html.dark .text-slate-600,
+  html.dark .text-gray-500,
+  html.dark .text-slate-500 {
+    color: #d4d4d8 !important;
+  }
+
+  html.dark .bg-white,
+  html.dark .bg-gray-50 {
+    background-color: #1c1c1e !important;
+  }
+
+  html.dark .bg-gray-100 {
+    background-color: #2c2c2e !important;
+  }
+
+  html.dark [class*="border-gray-"] {
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+}
+
+@layer utilities {
+
+  /* Apple liquid glassmorphism utility class */
+  .bg-glass {
+    background-color: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.04), inset 0 1px 1px 0 rgba(255, 255, 255, 0.8);
+    transition: background-color 300ms ease, border-color 300ms ease;
+  }
+
+  html.dark .bg-glass {
+    background-color: rgba(24, 24, 27, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3), inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .border-glass {
+    border: 1px solid rgba(255, 255, 255, 0.4);
+  }
+
+  .shadow-glow-cyan {
+    box-shadow: 0 10px 30px -10px rgba(8, 145, 178, 0.08), 0 1px 3px rgba(8, 145, 178, 0.02);
+  }
+
+  .shadow-glow-green {
+    box-shadow: 0 10px 30px -10px rgba(5, 150, 105, 0.08), 0 1px 3px rgba(5, 150, 105, 0.02);
+  }
+
+  .text-glow-cyan {
+    text-shadow: 0 0 8px rgba(8, 145, 178, 0.15);
+  }
+
+  .text-glow-green {
+    text-shadow: 0 0 8px rgba(5, 150, 105, 0.15);
+  }
+
+  /* Slow and cinematic fadeInUp animations */
+  .animate-fade-in-up {
+    animation: fadeInUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-modal-backdrop {
+    animation: backdropFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-modal-content {
+    animation: modalScaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes backdropFadeIn {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes modalScaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95) translateY(8px);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+}
