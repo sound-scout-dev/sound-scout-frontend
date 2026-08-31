@@ -109,11 +109,7 @@ function ForgotPassword() {
             <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
               <CheckCircle2 size={36} />
             </span>
-<<<<<<< HEAD
             <h2 className="font-display text-xl font-semibold text-ink-navy dark:!text-ink-navy">Password Reset Complete!</h2>
-=======
-            <h2 className="font-display text-xl font-semibold text-ink-navy">Password Reset Complete!</h2>
->>>>>>> 22d08c27bb413cfd23ddb2b1f114a8878693c029
             <p className="text-xs text-slate font-mono">Your password has been updated. Redirecting to login…</p>
             <Button onClick={() => navigate("/login")} className="w-full mt-4">
               Go to Login
@@ -122,21 +118,13 @@ function ForgotPassword() {
         ) : !resetData ? (
           /* Step 1: Request Reset Code */
           <>
-<<<<<<< HEAD
             <h1 className="font-display text-2xl font-semibold text-ink-navy dark:!text-ink-navy">Reset Your Password</h1>
-=======
-            <h1 className="font-display text-2xl font-semibold text-ink-navy">Reset Your Password</h1>
->>>>>>> 22d08c27bb413cfd23ddb2b1f114a8878693c029
             <p className="mt-1 font-body text-sm text-slate">
               Enter your account email to verify your identity via WhatsApp.
             </p>
 
             <form className="mt-6 space-y-5" onSubmit={handleRequestCode} noValidate>
-<<<<<<< HEAD
               <FormField forceLight
-=======
-              <FormField
->>>>>>> 22d08c27bb413cfd23ddb2b1f114a8878693c029
                 label="Email address"
                 name="email"
                 type="email"
@@ -165,11 +153,7 @@ function ForgotPassword() {
               <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#0891B2]/10 text-[#0891B2]">
                 <KeyRound size={22} />
               </span>
-<<<<<<< HEAD
               <h1 className="font-display text-2xl font-semibold text-ink-navy dark:!text-ink-navy">Verify & Reset Password</h1>
-=======
-              <h1 className="font-display text-2xl font-semibold text-ink-navy">Verify & Reset Password</h1>
->>>>>>> 22d08c27bb413cfd23ddb2b1f114a8878693c029
               <p className="font-body text-xs text-slate max-w-xs mx-auto">
                 Send the reset code via WhatsApp to unlock password change for <strong className="text-ink-navy">{resetData.email}</strong>.
               </p>
@@ -215,11 +199,7 @@ function ForgotPassword() {
                   <span>Identity Confirmed! Set your new password below.</span>
                 </div>
 
-<<<<<<< HEAD
                 <FormField forceLight
-=======
-                <FormField
->>>>>>> 22d08c27bb413cfd23ddb2b1f114a8878693c029
                   label="New Password"
                   name="newPassword"
                   type="password"
@@ -229,11 +209,7 @@ function ForgotPassword() {
                   placeholder="At least 8 characters"
                 />
 
-<<<<<<< HEAD
                 <FormField forceLight
-=======
-                <FormField
->>>>>>> 22d08c27bb413cfd23ddb2b1f114a8878693c029
                   label="Confirm New Password"
                   name="confirmPassword"
                   type="password"
