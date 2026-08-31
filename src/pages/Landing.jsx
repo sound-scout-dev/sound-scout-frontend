@@ -249,7 +249,7 @@ function Landing() {
           <div className="mt-12 grid gap-10 md:grid-cols-3 md:gap-8">
             {STEPS.map((step, i) => (
               <ScrollReveal key={step.title} delay={i * 150}>
-                <div className="relative group bg-gray-50/50 border border-gray-100 p-6 rounded-lg hover:shadow-md transition-all duration-350 hover:-translate-y-1">
+                <div className="relative group bg-gray-50/50 dark:bg-white/5 border border-gray-100 p-6 rounded-lg hover:shadow-md transition-all duration-350 hover:-translate-y-1">
                   {/* Hover interactive pop up badge */}
                   <span className="absolute -top-2.5 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 scale-75 group-hover:scale-100 bg-[#0891B2] text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm uppercase tracking-wide">
                     {step.badge}
@@ -315,7 +315,7 @@ function Landing() {
               { value: "98%", label: "Organizer satisfaction" },
             ].map((stat, i) => (
               <ScrollReveal key={stat.label} delay={i * 100}>
-                <div className="bg-gray-50/50 border border-gray-100 p-5 rounded-lg hover:shadow-sm transition-shadow">
+                <div className="bg-gray-50/50 dark:bg-white/5 border border-gray-100 p-5 rounded-lg hover:shadow-sm transition-shadow">
                   <p className="font-mono text-3xl font-bold text-[#0891B2]">
                     <AnimatedCounter targetValue={stat.value} />
                   </p>

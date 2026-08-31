@@ -285,10 +285,10 @@ function StepGenerating({ formValues, onComplete }) {
           <div className="grid md:grid-cols-2 gap-6">
             {/* Budget Option */}
             <div 
-              className={`relative cursor-pointer transition-all duration-300 rounded-xl overflow-hidden border-2 ${selectedOption === 'budget' ? 'border-[#0891B2] shadow-lg shadow-[#0891B2]/10 scale-[1.02]' : 'border-gray-200/60 hover:border-gray-400/60 opacity-80 hover:opacity-100 bg-white/40'}`}
+              className={`relative cursor-pointer transition-all duration-300 rounded-xl overflow-hidden border-2 ${selectedOption === 'budget' ? 'border-[#0891B2] shadow-lg shadow-[#0891B2]/10 scale-[1.02]' : 'border-gray-200/60 dark:border-white/10 hover:border-gray-400/60 opacity-80 hover:opacity-100 bg-white/40 dark:bg-white/5'}`}
               onClick={() => setSelectedOption('budget')}
             >
-              <div className="absolute top-0 left-0 w-full bg-gray-50/80 py-2 px-4 border-b border-gray-200/50 flex justify-between items-center z-10">
+              <div className="absolute top-0 left-0 w-full bg-gray-50/80 dark:bg-white/5 py-2 px-4 border-b border-gray-200/50 dark:border-white/10 flex justify-between items-center z-10">
                 <span className="font-display font-medium text-gray-900">Budget Friendly</span>
                 {selectedOption === 'budget' && <Check className="w-4 h-4 text-[#0891B2]" />}
               </div>
@@ -299,10 +299,10 @@ function StepGenerating({ formValues, onComplete }) {
 
             {/* Premium Option */}
             <div 
-              className={`relative cursor-pointer transition-all duration-300 rounded-xl overflow-hidden border-2 ${selectedOption === 'premium' ? 'border-[#0891B2] shadow-lg shadow-[#0891B2]/10 scale-[1.02]' : 'border-gray-200/60 hover:border-gray-400/60 opacity-80 hover:opacity-100 bg-white/40'}`}
+              className={`relative cursor-pointer transition-all duration-300 rounded-xl overflow-hidden border-2 ${selectedOption === 'premium' ? 'border-[#0891B2] shadow-lg shadow-[#0891B2]/10 scale-[1.02]' : 'border-gray-200/60 dark:border-white/10 hover:border-gray-400/60 opacity-80 hover:opacity-100 bg-white/40 dark:bg-white/5'}`}
               onClick={() => setSelectedOption('premium')}
             >
-              <div className="absolute top-0 left-0 w-full bg-gray-50/80 py-2 px-4 border-b border-gray-200/50 flex justify-between items-center z-10">
+              <div className="absolute top-0 left-0 w-full bg-gray-50/80 dark:bg-white/5 py-2 px-4 border-b border-gray-200/50 dark:border-white/10 flex justify-between items-center z-10">
                 <span className="font-display font-medium text-gray-900">Premium Quality</span>
                 {selectedOption === 'premium' && <Check className="w-4 h-4 text-[#0891B2]" />}
               </div>

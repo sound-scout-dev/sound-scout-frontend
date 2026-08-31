@@ -143,7 +143,7 @@ function SpecCard({ plan, loop = false, startRevealed = false, onDone, className
       </div>
 
       <div
-        className={`flex items-center justify-between border-t border-white/40 bg-white/40 px-5 py-4 transition-opacity duration-300 ${isVisible(sequence.length - 1) ? "opacity-100" : "opacity-0"
+        className={`flex items-center justify-between border-t border-white/40 dark:border-white/10 bg-white/40 dark:bg-white/5 px-5 py-4 transition-opacity duration-300 ${isVisible(sequence.length - 1) ? "opacity-100" : "opacity-0"
           }`}
       >
         <span className="font-mono text-[10px] uppercase tracking-wider text-gray-500">

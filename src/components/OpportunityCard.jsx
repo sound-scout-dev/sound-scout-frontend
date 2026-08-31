@@ -116,7 +116,7 @@ function OpportunityCard({ event, vendor, hasBid, onPlaceBid }) {
                 onClick={() => toggleCategory(cat.name)}
                 className={`rounded border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide transition-all ${isChecked
                     ? "border-[#059669]/30 bg-[#059669]/10 text-[#059669] font-bold shadow-sm"
-                    : "border-gray-200 bg-white/40 text-gray-500 hover:bg-gray-50/50"
+                    : "border-gray-200 dark:border-white/10 bg-white/40 dark:bg-white/5 text-gray-500 dark:text-zinc-400 hover:bg-gray-50/50 dark:hover:bg-white/10"
                   }`}
               >
                 {cat.name}

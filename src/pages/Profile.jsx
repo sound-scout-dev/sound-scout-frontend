@@ -140,7 +140,7 @@ function Profile() {
                           className={`rounded-lg border p-2.5 text-left text-xs font-semibold transition-all duration-300 transform hover:-translate-y-0.5 ${
                             isSelected
                               ? "border-[#0891B2]/50 bg-[#0891B2]/10 backdrop-blur-md text-[#0891B2] shadow-md scale-[1.02]"
-                              : "border-gray-200 bg-white/60 backdrop-blur-sm text-gray-600 hover:border-[#0891B2]/30 hover:bg-gray-50/50"
+                              : "border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 backdrop-blur-sm text-gray-600 dark:text-zinc-300 hover:border-[#0891B2]/30 hover:bg-gray-50/50 dark:hover:bg-white/10"
                           }`}
                         >
                           {dist}

@@ -288,7 +288,7 @@ function VendorDashboard() {
                 <p className="font-body text-xs text-gray-650 leading-relaxed">
                   Upgrade to get a gold **Verified Premium** checkmark next to your bids and rank at the **very top** of matching searches!
                 </p>
-                <div className="flex items-center justify-between font-mono text-xs text-gray-700 font-bold bg-white/45 backdrop-blur-sm p-2.5 rounded-lg border border-gray-200/40 shadow-sm">
+                <div className="flex items-center justify-between font-mono text-xs text-gray-700 dark:text-zinc-200 font-bold bg-white/45 dark:bg-white/10 backdrop-blur-sm p-2.5 rounded-lg border border-gray-200/40 dark:border-white/10 shadow-sm">
                   <span>Subscription Cost</span>
                   <span className="text-[#0891B2]">Rs. 4,900 / mo</span>
                 </div>
@@ -434,7 +434,7 @@ function VendorDashboard() {
                   </p>
                 ) : (
                   localListings.filter(l => l.status !== "booked" && (l.qty === undefined || l.qty > 0)).map((listing) => (
-                    <div key={listing.id} className="rounded-lg border border-gray-200/40 p-3 bg-white/40 backdrop-blur-sm shadow-sm transition-all duration-300 hover:scale-[1.01] hover:border-[#0891B2]/30">
+                    <div key={listing.id} className="rounded-lg border border-gray-200/40 dark:border-white/10 p-3 bg-white/40 dark:bg-white/5 backdrop-blur-sm shadow-sm transition-all duration-300 hover:scale-[1.01] hover:border-[#0891B2]/30">
                       <p className="font-display text-xs font-semibold text-gray-900">
                         {listing.equipmentSummary}
                       </p>

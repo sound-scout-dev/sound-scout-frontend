@@ -64,7 +64,7 @@ function EventPlanSummary({ event, plan }) {
       </div>
 
       {expanded && (
-        <div className="border-t border-white/40 p-6 pt-5 bg-white/30 rounded-b-xl">
+        <div className="border-t border-white/40 dark:border-white/10 p-6 pt-5 bg-white/30 dark:bg-white/5 rounded-b-xl">
           <SpecCard plan={plan} loop={false} startRevealed />
         </div>
       )}
