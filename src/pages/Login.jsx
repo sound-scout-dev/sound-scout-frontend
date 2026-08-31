@@ -64,14 +64,22 @@ function Login() {
 
   return (
     <div className="rounded-md border border-paper/10 bg-paper p-8 shadow-2xl shadow-black/20">
+<<<<<<< HEAD
       <h1 className="font-display text-2xl font-semibold text-ink-navy dark:!text-ink-navy">Log in</h1>
+=======
+      <h1 className="font-display text-2xl font-semibold text-ink-navy">Log in</h1>
+>>>>>>> 22d08c27bb413cfd23ddb2b1f114a8878693c029
       <p className="mt-1 font-body text-sm text-slate">
         Welcome back to SoundScout.
       </p>
 
       <form className="mt-6 space-y-5" onSubmit={handleSubmit} noValidate>
 
+<<<<<<< HEAD
         <FormField forceLight
+=======
+        <FormField
+>>>>>>> 22d08c27bb413cfd23ddb2b1f114a8878693c029
           label="Email address"
           name="email"
           type="email"
@@ -83,7 +91,11 @@ function Login() {
         />
 
         <div>
+<<<<<<< HEAD
           <FormField forceLight
+=======
+          <FormField
+>>>>>>> 22d08c27bb413cfd23ddb2b1f114a8878693c029
             label="Password"
             name="password"
             type="password"

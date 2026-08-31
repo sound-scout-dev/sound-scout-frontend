@@ -158,7 +158,11 @@ function Register() {
             </span>
 
             <div>
+<<<<<<< HEAD
               <h1 className="font-display text-2xl font-semibold text-ink-navy dark:!text-ink-navy">Verify Your Account</h1>
+=======
+              <h1 className="font-display text-2xl font-semibold text-ink-navy">Verify Your Account</h1>
+>>>>>>> 22d08c27bb413cfd23ddb2b1f114a8878693c029
               <p className="mt-2 font-body text-xs text-slate max-w-sm mx-auto leading-relaxed">
                 Click the button below to send your pre-filled verification code on WhatsApp. If WhatsApp doesn't open automatically, send code <span className="font-mono font-bold text-ink-navy">{verificationData.verificationCode}</span> directly to <span className="font-mono font-bold text-ink-navy">+{cleanPhone}</span>.
               </p>
@@ -191,7 +195,11 @@ function Register() {
 
   return (
     <div className="rounded-md border border-paper/10 bg-paper p-8 shadow-2xl shadow-black/20">
+<<<<<<< HEAD
       <h1 className="font-display text-2xl font-semibold text-ink-navy dark:!text-ink-navy">Create an account</h1>
+=======
+      <h1 className="font-display text-2xl font-semibold text-ink-navy">Create an account</h1>
+>>>>>>> 22d08c27bb413cfd23ddb2b1f114a8878693c029
       <p className="mt-1 font-body text-sm text-slate">
         Get started with SoundScout.
       </p>
@@ -204,7 +212,11 @@ function Register() {
           <RoleToggle value={values.role} onChange={(role) => setValues((v) => ({ ...v, role }))} />
         </div>
 
+<<<<<<< HEAD
         <FormField forceLight
+=======
+        <FormField
+>>>>>>> 22d08c27bb413cfd23ddb2b1f114a8878693c029
           label="Full name"
           name="fullName"
           autoComplete="name"
@@ -214,7 +226,11 @@ function Register() {
           placeholder="Jordan Lee"
         />
 
+<<<<<<< HEAD
         <FormField forceLight
+=======
+        <FormField
+>>>>>>> 22d08c27bb413cfd23ddb2b1f114a8878693c029
           label="Email address"
           name="email"
           type="email"
@@ -225,7 +241,11 @@ function Register() {
           placeholder="you@company.com"
         />
 
+<<<<<<< HEAD
         <FormField forceLight
+=======
+        <FormField
+>>>>>>> 22d08c27bb413cfd23ddb2b1f114a8878693c029
           label="WhatsApp Phone Number"
           name="phone"
           type="tel"
@@ -273,7 +293,11 @@ function Register() {
               )}
             </div>
 
+<<<<<<< HEAD
             <FormField forceLight
+=======
+            <FormField
+>>>>>>> 22d08c27bb413cfd23ddb2b1f114a8878693c029
               as="select"
               label="Equipment category"
               name="equipmentCategory"
@@ -293,7 +317,11 @@ function Register() {
 
         {/* Backend's UserRegistration schema has no password field yet — collected
             here for expected signup UX, but not sent until the API supports it. */}
+<<<<<<< HEAD
         <FormField forceLight
+=======
+        <FormField
+>>>>>>> 22d08c27bb413cfd23ddb2b1f114a8878693c029
           label="Password"
           name="password"
           type="password"
@@ -304,7 +332,11 @@ function Register() {
           placeholder="At least 8 characters"
         />
 
+<<<<<<< HEAD
         <FormField forceLight
+=======
+        <FormField
+>>>>>>> 22d08c27bb413cfd23ddb2b1f114a8878693c029
           label="Confirm password"
           name="confirmPassword"
           type="password"

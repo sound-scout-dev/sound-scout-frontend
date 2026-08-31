@@ -48,7 +48,11 @@ function VerifyOtp() {
 
   if (!regResponse) {
     return (
+<<<<<<< HEAD
       <div className="text-center py-12 bg-[#ffffff] rounded border border-slate/15 max-w-md mx-auto my-12">
+=======
+      <div className="text-center py-12 bg-white rounded border border-slate/15 max-w-md mx-auto my-12">
+>>>>>>> 22d08c27bb413cfd23ddb2b1f114a8878693c029
         <p className="text-slate font-mono text-sm">No registration session found.</p>
         <button onClick={() => navigate("/login")} className="mt-4 text-xs font-semibold text-circuit-teal underline">
           Go to Login
@@ -81,7 +85,11 @@ function VerifyOtp() {
 
   return (
     <div className="mx-auto max-w-md px-4 py-16">
+<<<<<<< HEAD
       <div className="rounded-md border border-slate/15 bg-[#ffffff] p-8 shadow-md text-center">
+=======
+      <div className="rounded-md border border-slate/15 bg-white p-8 shadow-md text-center">
+>>>>>>> 22d08c27bb413cfd23ddb2b1f114a8878693c029
         {verifiedSuccess ? (
           <div className="py-6 space-y-4">
             <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
@@ -97,7 +105,11 @@ function VerifyOtp() {
             <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366]/10 text-[#25D366] mb-4">
               <KeyRound size={22} />
             </span>
+<<<<<<< HEAD
             <h1 className="font-display text-2xl font-semibold text-ink-navy dark:!text-ink-navy">Verify Your WhatsApp</h1>
+=======
+            <h1 className="font-display text-2xl font-semibold text-ink-navy">Verify Your WhatsApp</h1>
+>>>>>>> 22d08c27bb413cfd23ddb2b1f114a8878693c029
             <p className="mt-2 font-body text-xs text-slate max-w-xs mx-auto leading-relaxed">
               Click the button below to send your pre-filled verification code on WhatsApp. This window will automatically update once verified.
             </p>
@@ -128,7 +140,11 @@ function VerifyOtp() {
                 </p>
               )}
 
+<<<<<<< HEAD
               <FormField forceLight
+=======
+              <FormField
+>>>>>>> 22d08c27bb413cfd23ddb2b1f114a8878693c029
                 label="Or enter 6-Digit Code manually"
                 name="otp"
                 maxLength={6}

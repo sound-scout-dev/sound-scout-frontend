@@ -35,27 +35,45 @@ function FloatingWhatsAppWidget() {
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 font-body">
       {/* Expanded Encourage Popover */}
       {isOpen && (
+<<<<<<< HEAD
         <div className="w-72 sm:w-80 rounded-2xl border border-emerald-500/20 dark:border-emerald-500/25 bg-paper/95 dark:bg-[#1c1c1e]/95 p-4 shadow-2xl backdrop-blur-md animate-fade-in-up">
           <div className="flex items-start justify-between border-b border-slate/10 dark:border-white/10 pb-3">
+=======
+        <div className="w-72 sm:w-80 rounded-2xl border border-emerald-500/20 bg-paper/95 p-4 shadow-2xl backdrop-blur-md animate-fade-in-up">
+          <div className="flex items-start justify-between border-b border-slate/10 pb-3">
+>>>>>>> 22d08c27bb413cfd23ddb2b1f114a8878693c029
             <div className="flex items-center gap-2">
               <span className="relative flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
               </span>
+<<<<<<< HEAD
               <span className="font-display text-sm font-semibold text-ink-navy dark:text-[#f4f4f5]">
+=======
+              <span className="font-display text-sm font-semibold text-ink-navy">
+>>>>>>> 22d08c27bb413cfd23ddb2b1f114a8878693c029
                 SoundScout WhatsApp Bot
               </span>
             </div>
             <button
               onClick={() => setIsOpen(false)}
+<<<<<<< HEAD
               className="text-slate/60 hover:text-ink-navy dark:text-zinc-400 dark:hover:text-white transition-colors p-1"
+=======
+              className="text-slate/60 hover:text-ink-navy transition-colors p-1"
+>>>>>>> 22d08c27bb413cfd23ddb2b1f114a8878693c029
             >
               <X size={16} />
             </button>
           </div>
 
+<<<<<<< HEAD
           <p className="mt-3 text-xs text-slate dark:text-zinc-300 leading-relaxed">
             💬 <span className="font-semibold text-ink-navy dark:text-[#f4f4f5]">Enable Instant Notifications!</span> Message our WhatsApp bot once to receive instant booking receipts, bid alerts, and escrow payment updates directly on WhatsApp without delivery blocks!
+=======
+          <p className="mt-3 text-xs text-slate leading-relaxed">
+            💬 <span className="font-semibold text-ink-navy">Enable Instant Notifications!</span> Message our WhatsApp bot once to receive instant booking receipts, bid alerts, and escrow payment updates directly on WhatsApp without delivery blocks!
+>>>>>>> 22d08c27bb413cfd23ddb2b1f114a8878693c029
           </p>
 
           <a
