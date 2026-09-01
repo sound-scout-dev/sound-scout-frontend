@@ -5,6 +5,15 @@
 @tailwind utilities;
 
 @layer base {
+  /* An installed/standalone PWA window doesn't always inherit a sized initial containing
+     block the way a normal browser tab does, so html/body/#root need an explicit 100% here --
+     without it, min-h-screen containers throughout the app (DashboardLayout, etc.) can resolve
+     against a collapsed ancestor and render narrower than the actual window. */
+  html, body, #root {
+    width: 100%;
+    min-height: 100%;
+  }
+
   html {
     font-family: "Inter", sans-serif;
     color-scheme: light;
