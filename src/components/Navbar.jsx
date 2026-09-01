@@ -26,7 +26,10 @@ function Navbar() {
     : "/"
 
   return (
-    <header className="sticky top-0 z-50 border-b border-gray-200/60 bg-white/95 backdrop-blur-md dark:border-zinc-800/80 dark:bg-zinc-950/95">
+    <header
+      className="sticky top-0 z-50 border-b border-gray-200/60 bg-white/95 backdrop-blur-md dark:border-zinc-800/80 dark:bg-zinc-950/95"
+      style={{ paddingTop: "env(safe-area-inset-top)" }}
+    >
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link to={dashboardPath} className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0891B2] rounded">
           <Logo dark={!isDarkMode} />

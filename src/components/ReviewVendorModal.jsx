@@ -20,7 +20,7 @@ function ReviewVendorModal({ isOpen, onClose, bid, onSubmitReview }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-navy/60 p-4 backdrop-blur-sm">
-      <div className="relative w-full max-w-md overflow-hidden rounded-md border border-slate/15 bg-white shadow-2xl p-6 space-y-6">
+      <div className="relative w-full max-w-md max-h-[85vh] overflow-y-auto rounded-md border border-slate/15 bg-white shadow-2xl p-6 space-y-6">
         
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate/10 pb-4">

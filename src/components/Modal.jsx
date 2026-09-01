@@ -21,7 +21,7 @@ function Modal({ title, onClose, children }) {
         aria-modal="true"
         aria-labelledby="modal-title"
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-2xl animate-modal-content focus-visible:outline-none"
+        className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-xl border border-gray-200 bg-white p-6 shadow-2xl animate-modal-content focus-visible:outline-none"
       >
         <div className="flex items-center justify-between">
           <h2 id="modal-title" className="font-display text-lg font-semibold text-gray-900">

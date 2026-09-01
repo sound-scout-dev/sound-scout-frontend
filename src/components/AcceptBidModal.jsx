@@ -71,7 +71,7 @@ function AcceptBidModal({ isOpen, onClose, bid, onPaymentSuccess }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-navy/60 p-4 backdrop-blur-sm">
-      <div className="relative w-full max-w-md overflow-hidden rounded-md border border-slate/15 bg-white shadow-2xl">
+      <div className="relative w-full max-w-md max-h-[85vh] overflow-y-auto rounded-md border border-slate/15 bg-white shadow-2xl">
         
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate/10 p-5">

@@ -1,13 +1,13 @@
 import React from "react"
 
-function Logo({ dark = true }) {
+function Logo({ dark = true, compact = false }) {
   // dark=true means the logo text should be dark (for light theme backgrounds)
   const textColor = dark ? "text-slate-900" : "text-white"
 
   return (
-    <div className="flex items-center gap-2.5">
+    <div className="flex items-center gap-2 sm:gap-2.5">
       {/* Icon: Wave + Dial */}
-      <svg className="w-9 h-7.5" viewBox="0 0 100 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg className="w-7 h-5.5 sm:w-9 sm:h-7.5" viewBox="0 0 100 60" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <filter id="glow-cyan" x="-10%" y="-10%" width="120%" height="120%">
             <feGaussianBlur stdDeviation="1.5" result="blur" />
@@ -51,12 +51,14 @@ function Logo({ dark = true }) {
 
       {/* Brand text */}
       <div className="flex flex-col leading-none">
-        <span className={`font-display text-[12.5px] font-extrabold tracking-wider uppercase ${textColor}`}>
+        <span className={`font-display text-[11px] sm:text-[12.5px] font-extrabold tracking-wider uppercase ${textColor}`}>
           SOUNDSCOUT <span className="text-[#059669]">AI</span>
         </span>
-        <span className="mt-0.5 font-mono text-[6.5px] font-bold uppercase tracking-[0.2em] text-[#0891B2]">
-          AUDIO LOGISTICS
-        </span>
+        {!compact && (
+          <span className="mt-0.5 font-mono text-[6.5px] font-bold uppercase tracking-[0.2em] text-[#0891B2] hidden sm:inline">
+            AUDIO LOGISTICS
+          </span>
+        )}
       </div>
     </div>
   )

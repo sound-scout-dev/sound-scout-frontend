@@ -32,7 +32,13 @@ function FloatingWhatsAppWidget() {
   const whatsappUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(defaultText)}`
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 font-body">
+    <div
+      className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 font-body"
+      style={{
+        marginBottom: "env(safe-area-inset-bottom)",
+        marginRight: "env(safe-area-inset-right)",
+      }}
+    >
       {/* Expanded Encourage Popover */}
       {isOpen && (
         <div className="w-72 sm:w-80 rounded-2xl border border-emerald-500/20 dark:border-emerald-500/25 bg-paper/95 dark:bg-[#1c1c1e]/95 p-4 shadow-2xl backdrop-blur-md animate-fade-in-up">
