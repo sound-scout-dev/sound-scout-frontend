@@ -36,6 +36,12 @@ export default defineConfig({
       devOptions: {
         enabled: false,
       },
+      // The default injected registerSW.js just calls register() once and leans on the browser's
+      // own (slow, inconsistent) background revalidation to ever notice a new deploy -- a tab
+      // that already installed an older service worker can keep being served its stale precached
+      // bundle indefinitely. Registering manually lets us poll for updates and apply them
+      // immediately, so a deploy actually reaches already-open tabs instead of only new visitors.
+      injectRegister: false,
     }),
   ],
   server: {
