@@ -76,7 +76,7 @@ function VerifyOtp() {
     }
   }
 
-  const cleanPhone = String(botPhone || '').replace(/\D/g, '') || '94703252870'
+  const cleanPhone = String(botPhone || '').replace(/\D/g, '') || '94784475700'
   const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(verificationCode || '')}`
 
   return (

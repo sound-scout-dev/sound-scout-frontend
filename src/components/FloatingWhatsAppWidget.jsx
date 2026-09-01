@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { MessageSquare, X } from "lucide-react"
+import { request } from "../services/httpClient"
 
 function FloatingWhatsAppWidget() {
   const [botPhone, setBotPhone] = useState("")
@@ -8,16 +9,15 @@ function FloatingWhatsAppWidget() {
   useEffect(() => {
     async function fetchBotPhone() {
       try {
-        const workerUrl = "https://sound-scout-whatsapp-worker.onrender.com"
-        const resp = await fetch(`${workerUrl}/`, { mode: "cors" })
-        if (resp.ok) {
-          const data = await resp.json()
-          if (data && data.botPhone) {
-            const rawStr = String(data.botPhone)
-            const cleanDigits = rawStr.replace(/\D/g, "")
-            if (!rawStr.includes("@lid") && cleanDigits.length >= 9 && cleanDigits.length <= 13) {
-              setBotPhone(cleanDigits)
-            }
+        // Go through our own backend rather than the worker directly -- there's no public route
+        // to the worker for the browser to reach, and a hardcoded direct URL here previously
+        // pointed at a stale, disconnected standalone deployment that kept answering with a
+        // long-dead placeholder number.
+        const data = await request("/users/bot-phone")
+        if (data && data.botPhone) {
+          const cleanDigits = String(data.botPhone).replace(/\D/g, "")
+          if (cleanDigits.length >= 9 && cleanDigits.length <= 13) {
+            setBotPhone(cleanDigits)
           }
         }
       } catch (e) {
