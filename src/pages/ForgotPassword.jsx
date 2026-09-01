@@ -181,16 +181,6 @@ function ForgotPassword() {
                   <Loader2 size={14} className="animate-spin text-[#0891B2]" />
                   <span>Waiting for WhatsApp confirmation…</span>
                 </div>
-
-                <div className="text-center pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsCodeConfirmed(true)}
-                    className="text-xs text-slate underline hover:text-ink-navy font-mono"
-                  >
-                    I have sent the code on WhatsApp
-                  </button>
-                </div>
               </div>
             ) : (
               <form className="space-y-4 pt-2" onSubmit={handleResetPassword}>

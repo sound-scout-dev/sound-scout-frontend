@@ -116,13 +116,13 @@ function SpecCard({ plan, loop = false, startRevealed = false, onDone, className
                 <div
                   key={`item-${node.cat?.name || 'cat'}-${i}`}
                   className={`flex flex-col border-b border-gray-100 pb-1.5 transition-all duration-300 ${isOptional
-                      ? "border-red-200 bg-red-50/50 px-2.5 py-2 my-1 rounded border shadow-sm"
+                      ? "border-red-200 dark:border-red-500/30 bg-red-50/50 dark:bg-red-500/10 px-2.5 py-2 my-1 rounded border shadow-sm"
                       : ""
                     } ${isVisible(i) ? "animate-reveal-line" : "opacity-0"
                     }`}
                 >
                   <div className="flex items-baseline justify-between gap-4">
-                    <span className={`font-body text-sm ${isOptional ? "text-red-600 font-semibold" : "text-gray-800"}`}>
+                    <span className={`font-body text-sm ${isOptional ? "text-red-600 dark:text-red-400 font-semibold" : "text-gray-800"}`}>
                       {cleanLabel}
                     </span>
                     <span className="font-mono text-xs font-bold text-[#059669]">
@@ -130,7 +130,7 @@ function SpecCard({ plan, loop = false, startRevealed = false, onDone, className
                     </span>
                   </div>
                   {isOptional && (
-                    <p className="mt-1 font-body text-[11px] text-red-500/80 italic leading-snug">
+                    <p className="mt-1 font-body text-[11px] text-red-500/80 dark:text-red-400/80 italic leading-snug">
                       * Not compulsory: {optionalComment}
                     </p>
                   )}
