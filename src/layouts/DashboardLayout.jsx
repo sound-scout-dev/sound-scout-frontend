@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext"
 import { useTheme } from "../context/ThemeContext"
 import ThemeToggle from "../components/ThemeToggle"
 import SessionTimeoutModal from "../components/SessionTimeoutModal"
+import FullPageLoader from "../components/FullPageLoader"
 import { useEffect } from "react"
 
 function DashboardLayout({ role = "Organizer" }) {
@@ -30,7 +31,10 @@ function DashboardLayout({ role = "Organizer" }) {
   }
 
   if (!user || user.role?.toLowerCase() !== role.toLowerCase()) {
-    return null
+    // Rendering null here (e.g. right when a session expires mid-session) blanked the entire
+    // page for a frame before the redirect effect above could run. Show a themed loader instead
+    // so an in-flight session expiry reads as "redirecting" rather than a jarring blank screen.
+    return <FullPageLoader message="REDIRECTING..." />
   }
 
   return (

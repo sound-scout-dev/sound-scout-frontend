@@ -2,7 +2,7 @@ import React from "react"
 
 function FullPageLoader({ message = "LOADING SYSTEMS..." }) {
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#f1f5f9] animate-modal-backdrop">
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#f1f5f9] dark:bg-[#121212] animate-modal-backdrop">
       <div className="flex flex-col items-center gap-6 scale-125">
         {/* Animated logo drawing container */}
         <div className="relative flex items-center justify-center">
