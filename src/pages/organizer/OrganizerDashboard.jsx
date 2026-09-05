@@ -5,6 +5,8 @@ import Button from "../../components/Button"
 import EventCard from "../../components/EventCard"
 import { listOrganizerEvents } from "../../services/api"
 import FullPageLoader from "../../components/FullPageLoader"
+import OnboardingTour from "../../components/OnboardingTour"
+import { organizerDashboardSteps } from "../../onboarding/tourSteps"
 
 function DashboardSkeleton() {
   return (
@@ -71,6 +73,7 @@ function OrganizerDashboard() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 animate-fade-in-up">
+      <OnboardingTour tourKey="organizer-dashboard" steps={organizerDashboardSteps} />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink-navy sm:text-3xl">
@@ -82,14 +85,14 @@ function OrganizerDashboard() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button as={Link} to="/organizer/events/new" variant="primary" size="md">
+          <Button as={Link} to="/organizer/events/new" variant="primary" size="md" data-tour="new-event-button">
             <Plus size={16} strokeWidth={2.5} />
             New Event
           </Button>
         </div>
       </div>
 
-      <div className="mt-8">
+      <div className="mt-8" data-tour="events-list">
         {loading ? (
           <DashboardSkeleton />
         ) : visibleEvents.length === 0 ? (

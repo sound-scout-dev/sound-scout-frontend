@@ -10,6 +10,8 @@ import { currentVendor } from "../../services/mockData"
 import { useAuth } from "../../context/AuthContext"
 import { downloadRentalReceiptPDF } from "../../utils/downloadReceipt"
 import FullPageLoader from "../../components/FullPageLoader"
+import OnboardingTour from "../../components/OnboardingTour"
+import { vendorDashboardSteps } from "../../onboarding/tourSteps"
 
 function normPhone(phone) {
   const str = String(phone || '')
@@ -168,10 +170,11 @@ function VendorDashboard() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 animate-fade-in-up">
+      <OnboardingTour tourKey="vendor-dashboard" steps={vendorDashboardSteps} />
       <div className="grid gap-8 lg:grid-cols-3">
         {/* Left Column: Opportunities and Bids */}
         <div className="lg:col-span-2 space-y-12">
-          <div>
+          <div data-tour="open-opportunities">
             <p className="font-mono text-xs uppercase tracking-widest text-circuit-teal">
               {vendor.equipmentCategory}
             </p>
@@ -217,7 +220,7 @@ function VendorDashboard() {
             )}
           </div>
 
-          <div>
+          <div data-tour="my-bids">
             <h2 className="font-display text-xl font-semibold text-ink-navy">My bids</h2>
 
             <div className="mt-4 overflow-hidden rounded-md border border-slate/15 bg-white">
@@ -266,7 +269,7 @@ function VendorDashboard() {
         {/* Right Column: Manage Rental Inventory */}
         <div className="space-y-8">
           {/* SoundScout Premium Subscription Card */}
-          <div className="rounded-xl border border-[#0891B2]/30 bg-glass p-6 shadow-md space-y-4 hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 animate-fade-in-up">
+          <div data-tour="premium-card" className="rounded-xl border border-[#0891B2]/30 bg-glass p-6 shadow-md space-y-4 hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 animate-fade-in-up">
             <div className="flex items-center gap-2">
               <Award className="text-[#0891B2]" size={24} />
               <h2 className="font-display text-base font-semibold text-gray-900">
@@ -310,7 +313,7 @@ function VendorDashboard() {
             )}
           </div>
 
-          <div className="rounded-xl bg-glass p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 animate-fade-in-up">
+          <div data-tour="list-rental-form" className="rounded-xl bg-glass p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 animate-fade-in-up">
             <h2 className="font-display text-lg font-semibold text-gray-900 flex items-center gap-2">
               <Plus size={20} className="text-[#0891B2]" />
               List for Instant Rental

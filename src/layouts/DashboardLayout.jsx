@@ -1,11 +1,12 @@
 import { Link, Outlet, useNavigate } from "react-router-dom"
-import { LogOut } from "lucide-react"
+import { LogOut, HelpCircle } from "lucide-react"
 import Logo from "../components/Logo"
 import { useAuth } from "../context/AuthContext"
 import { useTheme } from "../context/ThemeContext"
 import ThemeToggle from "../components/ThemeToggle"
 import SessionTimeoutModal from "../components/SessionTimeoutModal"
 import FullPageLoader from "../components/FullPageLoader"
+import { restartCurrentTour } from "../onboarding/tourStorage"
 import { useEffect } from "react"
 
 function DashboardLayout({ role = "Organizer" }) {
@@ -62,6 +63,7 @@ function DashboardLayout({ role = "Organizer" }) {
 
             <Link
               to={role === "Organizer" ? "/organizer/profile" : "/vendor/profile"}
+              data-tour="nav-profile"
               className="shrink-0 font-body text-xs sm:text-sm font-semibold text-gray-600 dark:text-zinc-300 hover:text-[#0891B2] dark:hover:text-[#0891B2] transition-colors"
             >
               Profile
@@ -70,6 +72,16 @@ function DashboardLayout({ role = "Organizer" }) {
             <span className="hidden md:inline-block shrink-0 rounded border border-gray-200 dark:border-zinc-800 bg-gray-100/80 dark:bg-zinc-900 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-gray-600 dark:text-zinc-300">
               {role}
             </span>
+
+            <button
+              type="button"
+              onClick={restartCurrentTour}
+              aria-label="Restart the onboarding tour"
+              title="Take a tour"
+              className="shrink-0 flex items-center rounded p-1.5 text-gray-500 dark:text-zinc-400 transition-colors duration-150 ease-out hover:text-[#0891B2] dark:hover:text-[#0891B2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0891B2]"
+            >
+              <HelpCircle size={16} strokeWidth={2} />
+            </button>
 
             {user?.name && (
               <span className="hidden lg:inline shrink-0 font-body text-sm text-gray-500 dark:text-zinc-400 font-medium">
