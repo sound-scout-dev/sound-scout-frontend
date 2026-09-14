@@ -8,6 +8,8 @@ import StepGenerating from "../../components/new-event/StepGenerating"
 import StepResults from "../../components/new-event/StepResults"
 import { createEvent, generatePlan, saveLocallyPublishedEvent, finalizePlan } from "../../services/api"
 import { useAuth } from "../../context/AuthContext"
+import FeedbackModal from "../../components/FeedbackModal"
+import { hasFeedbackBeenAsked } from "../../utils/feedbackPrompt"
 
 const initialValues = {
   eventName: "",
@@ -74,6 +76,8 @@ function NewEvent() {
   const [realEventId, setRealEventId] = useState("")
   const [publishing, setPublishing] = useState(false)
   const [isVoiceMode, setIsVoiceMode] = useState(false)
+  const [showFeedback, setShowFeedback] = useState(false)
+  const [publishedEvent, setPublishedEvent] = useState(null)
 
   function setField(name, value) {
     setValues((v) => ({ ...v, [name]: value }))
@@ -128,7 +132,18 @@ function NewEvent() {
 
     saveLocallyPublishedEvent(event)
     setPublishing(false)
-    navigate(`/organizer/events/${realEventId}`, { state: { event, plan } })
+
+    if (hasFeedbackBeenAsked("event_created", realEventId)) {
+      navigate(`/organizer/events/${realEventId}`, { state: { event, plan } })
+    } else {
+      setPublishedEvent(event)
+      setShowFeedback(true)
+    }
+  }
+
+  function handleFeedbackClose() {
+    setShowFeedback(false)
+    navigate(`/organizer/events/${publishedEvent.id}`, { state: { event: publishedEvent, plan } })
   }
 
   return (
@@ -205,6 +220,13 @@ function NewEvent() {
           />
         )}
       </div>
+
+      <FeedbackModal
+        isOpen={showFeedback}
+        onClose={handleFeedbackClose}
+        triggerType="event_created"
+        referenceId={publishedEvent?.id}
+      />
     </div>
   )
 }

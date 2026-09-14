@@ -11,6 +11,8 @@ import { useAuth } from "../../context/AuthContext"
 import AcceptBidModal from "../../components/AcceptBidModal"
 import ReviewVendorModal from "../../components/ReviewVendorModal"
 import { downloadReceiptPDF } from "../../utils/downloadReceipt"
+import FeedbackModal from "../../components/FeedbackModal"
+import { hasFeedbackBeenAsked } from "../../utils/feedbackPrompt"
 
 function DetailSkeleton() {
   return (
@@ -62,6 +64,7 @@ function EventDetail() {
 
   const [showReviewModal, setShowReviewModal] = useState(false)
   const [releasingTxn, setReleasingTxn] = useState(false)
+  const [showAppFeedback, setShowAppFeedback] = useState(false)
 
   const acceptedBid = bids.find((b) => b.status === "accepted")
   const planCategories = plan?.categories?.map((c) => c.name) || []
@@ -351,9 +354,20 @@ function EventDetail() {
       />
       <ReviewVendorModal
         isOpen={showReviewModal}
-        onClose={() => setShowReviewModal(false)}
+        onClose={() => {
+          setShowReviewModal(false)
+          if (event && !hasFeedbackBeenAsked("event_finished", event.id)) {
+            setShowAppFeedback(true)
+          }
+        }}
         bid={acceptedBid}
         onSubmitReview={handleSubmitReview}
+      />
+      <FeedbackModal
+        isOpen={showAppFeedback}
+        onClose={() => setShowAppFeedback(false)}
+        triggerType="event_finished"
+        referenceId={event?.id}
       />
     </div>
   )

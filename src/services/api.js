@@ -798,6 +798,15 @@ export async function getVendorReviews(vendorId) {
   return await request(`/bids/reviews/vendor/${vendorId}`)
 }
 
+// "Rate SoundScout" platform feedback -- distinct from submitReview above, which rates a
+// vendor. triggerType is one of "event_created" | "bid_placed" | "event_finished".
+export async function submitAppFeedback({ triggerType, referenceId, rating, comment }) {
+  return await request(`/feedback`, {
+    method: "POST",
+    body: JSON.stringify({ triggerType, referenceId, rating, comment }),
+  })
+}
+
 export async function subscribePremium() {
   return await request(`/users/subscribe-premium`, {
     method: "POST"
