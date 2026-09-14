@@ -12,6 +12,8 @@ import { downloadRentalReceiptPDF } from "../../utils/downloadReceipt"
 import FullPageLoader from "../../components/FullPageLoader"
 import OnboardingTour from "../../components/OnboardingTour"
 import { vendorDashboardSteps } from "../../onboarding/tourSteps"
+import FeedbackModal from "../../components/FeedbackModal"
+import { hasFeedbackBeenAsked } from "../../utils/feedbackPrompt"
 
 function normPhone(phone) {
   const str = String(phone || '')
@@ -73,6 +75,8 @@ function VendorDashboard() {
     }).catch(() => setSubscribing(false))
   }
   const [activeEvent, setActiveEvent] = useState(null)
+  const [showFeedback, setShowFeedback] = useState(false)
+  const [feedbackEventId, setFeedbackEventId] = useState(null)
   const [activeCategories, setActiveCategories] = useState([])
   // Derive biddedEventIds dynamically
   const biddedEventIds = new Set(myBids.map((bid) => bid.eventId))
@@ -129,6 +133,10 @@ function VendorDashboard() {
   function handleBidSubmitted(bid) {
     setMyBids((prev) => [...prev, bid])
     setActiveEvent(null)
+    if (!hasFeedbackBeenAsked("bid_placed", bid.eventId)) {
+      setFeedbackEventId(bid.eventId)
+      setShowFeedback(true)
+    }
   }
 
   async function handleAddRental(e) {
@@ -539,6 +547,13 @@ function VendorDashboard() {
           onSubmitted={handleBidSubmitted}
         />
       )}
+
+      <FeedbackModal
+        isOpen={showFeedback}
+        onClose={() => setShowFeedback(false)}
+        triggerType="bid_placed"
+        referenceId={feedbackEventId}
+      />
     </div>
   )
 }
