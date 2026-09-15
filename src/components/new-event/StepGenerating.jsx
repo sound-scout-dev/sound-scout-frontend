@@ -135,9 +135,12 @@ function StepGenerating({ formValues, onComplete }) {
   const [priceCuttingTips, setPriceCuttingTips] = useState([])
 
   const [selectedOption, setSelectedOption] = useState("budget") // "budget" | "premium"
+  const [usingFallback, setUsingFallback] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
   const fired = useRef(false)
 
-  // Cycle through progress logs for clean UX during the 10-15s AI pipeline wait
+  // Cycle through progress logs for clean UX during the AI pipeline wait
+  // (can take up to ~60s on the current cluster's limited node resources)
   useEffect(() => {
     if (!loading) return
     const interval = setInterval(() => {
@@ -147,6 +150,14 @@ function StepGenerating({ formValues, onComplete }) {
   }, [loading])
 
   const apiFired = useRef(false)
+
+  function handleRetryLiveAi() {
+    apiFired.current = false
+    setUsingFallback(false)
+    setError("")
+    setLoading(true)
+    setRetryCount((n) => n + 1)
+  }
 
   useEffect(() => {
     let active = true
@@ -200,10 +211,14 @@ function StepGenerating({ formValues, onComplete }) {
         setPremiumPlan(parsedPremium)
         setFeasibilityWarning(options.feasibility_warning || null)
         setPriceCuttingTips(options.price_cutting_tips || [])
+        setUsingFallback(false)
+        setError("")
         setLoading(false)
       } catch (err) {
         console.error("AI Generation Error:", err)
-        // Fallback to offline mock plan
+        // Fallback to an offline example plan so the wizard still completes
+        // (e.g. for a live demo), but this is now surfaced to the user
+        // instead of silently pretending it's a real AI-generated quote.
         const offlinePlan = buildInfrastructurePlan(formValues)
         const offlinePremium = {
           ...offlinePlan,
@@ -215,12 +230,18 @@ function StepGenerating({ formValues, onComplete }) {
         setRealId(`evt-fallback-${Date.now()}`)
         setBudgetPlan(offlinePlan)
         setPremiumPlan(offlinePremium)
+        setUsingFallback(true)
+        setError(
+          err?.status === 401 || err?.status === 403
+            ? "Your session expired — this is an example plan, not a live AI quote. Log out and back in, then retry."
+            : "The live AI service didn't respond in time — this is an example plan, not a real quote for this venue. You can retry below."
+        )
         setLoading(false)
       }
     }
 
     triggerBackendPipeline()
-  }, [formValues, user])
+  }, [formValues, user, retryCount])
 
   function handleProceed() {
     if (fired.current) return
@@ -254,9 +275,18 @@ function StepGenerating({ formValues, onComplete }) {
       ) : (
         <div className="mt-8 w-full max-w-4xl">
           {error && (
-            <p className="mb-4 text-center font-mono text-[11px] text-alert-red bg-alert-red/10 rounded px-2.5 py-1">
-              {error}
-            </p>
+            <div className="mb-4 flex flex-col items-center gap-2 rounded-lg border border-alert-red/30 bg-alert-red/10 px-4 py-3 text-center">
+              <p className="font-mono text-xs text-alert-red">
+                ⚠️ {error}
+              </p>
+              <button
+                type="button"
+                onClick={handleRetryLiveAi}
+                className="font-mono text-[11px] font-semibold text-alert-red underline underline-offset-2 hover:text-alert-red/80"
+              >
+                Retry live AI generation
+              </button>
+            </div>
           )}
 
           {feasibilityWarning && (
