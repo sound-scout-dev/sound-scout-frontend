@@ -89,3 +89,36 @@ export async function request(path, options = {}) {
 
   return body
 }
+
+// Like request(), but for multipart/form-data uploads (a File/Blob body).
+// request() always sets Content-Type: application/json, which would break a
+// multipart upload -- the browser needs to set that header itself so it can
+// include the multipart boundary. No 401-refresh-retry here (uploads aren't
+// idempotent to silently replay); a stale token just surfaces as a normal
+// ApiError the caller can react to.
+export async function requestMultipart(path, formData) {
+  const headers = {}
+  try {
+    const session = JSON.parse(localStorage.getItem("soundscout.session") || "{}")
+    if (session?.token) {
+      headers["Authorization"] = `Bearer ${session.token}`
+    }
+  } catch (_) { }
+
+  const response = await fetch(`${API_BASE}${path}`, {
+    method: "POST",
+    headers,
+    credentials: "include",
+    body: formData,
+  })
+
+  const isJson = response.headers.get("content-type")?.includes("application/json")
+  const body = isJson ? await response.json().catch(() => null) : null
+
+  if (!response.ok) {
+    const errMsg = body?.message || body?.error || `Request to ${path} failed (${response.status}).`
+    throw new ApiError(errMsg, response.status, body || {})
+  }
+
+  return body
+}

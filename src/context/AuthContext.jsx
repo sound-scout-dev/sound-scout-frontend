@@ -28,6 +28,18 @@ export function AuthProvider({ children }) {
     setUser(nextUser)
   }
 
+  // Patches fields on the stored session without a full re-login -- e.g. after
+  // subscribePremium() succeeds, so is_premium reflects immediately instead of
+  // requiring the user to log out and back in.
+  function updateUser(patch) {
+    setUser((prev) => {
+      if (!prev) return prev
+      const next = { ...prev, ...patch }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+      return next
+    })
+  }
+
   async function logout() {
     try {
       const apiBase = import.meta.env.VITE_API_BASE_URL || "/api"
@@ -42,7 +54,7 @@ export function AuthProvider({ children }) {
     setUser(null)
   }
 
-  return <AuthContext.Provider value={{ user, login, logout }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, login, logout, updateUser }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {
