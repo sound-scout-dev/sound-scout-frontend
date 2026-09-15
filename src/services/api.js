@@ -5,7 +5,7 @@
 // while the backend catches up. See the "wire what exists" plan for the
 // reasoning behind each choice.
 
-import { request } from "./httpClient"
+import { request, requestMultipart } from "./httpClient"
 import {
   PLAN_TEMPLATES,
   mockEvents,
@@ -320,6 +320,17 @@ export async function createEvent({ organizerId, name, eventType, crowdSize, ven
 // no separate publish endpoint. The spec doesn't define ai_infrastructure_plan's
 // shape, so the wizard keeps showing its own client-side plan preview rather
 // than trusting this response's plan content.
+// Premium Venue Blueprint: proxies a drone/venue photo to Gemini Vision via
+// the backend (POST /api/events/:eventId/blueprint/analyze-photo), which
+// enforces the premium + outdoor-event + ownership checks server-side.
+// Returns { image_width_px, image_height_px, meters_per_pixel, stage_box,
+// scale_confidence, scale_reasoning, stage_reasoning }.
+export async function analyzeVenuePhoto(eventId, file) {
+  const form = new FormData()
+  form.append("image", file)
+  return await requestMultipart(`/events/${eventId}/blueprint/analyze-photo`, form)
+}
+
 export async function generatePlan(eventId, venue_photo_analysis) {
   return request(`/events/${eventId}/generate-plan`, {
     method: "POST",
@@ -347,6 +358,7 @@ export async function getEventById(id) {
         venueSizeSqm: backendEvent.venue_size_sqm,
         budget: backendEvent.budget_range,
         location: backendEvent.location || backendEvent.environment || "Indoor",
+        environment: backendEvent.environment || "Indoor",
         status: backendEvent.status === "draft" ? "planning" : (backendEvent.status || "bidding_open"),
         date: backendEvent.event_date || backendEvent.created_at || new Date().toISOString(), // Fallback date
         organizerName: backendEvent.organizer_name || "Organizer",

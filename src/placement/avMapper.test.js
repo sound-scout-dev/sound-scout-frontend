@@ -31,6 +31,67 @@ describe("item parsing", () => {
     expect(item.label).toBe("JBL VTX A12 Line Array Speakers")
     expect(item.quantity).toBe(8)
   })
+
+  it("also accepts the {label, qty} shape event.plan.categories items are already in", () => {
+    const [item] = parseItems([{ label: "JBL VTX A12 Line Array Speakers", qty: 8 }])
+    expect(item.label).toBe("JBL VTX A12 Line Array Speakers")
+    expect(item.quantity).toBe(8)
+    expect(item.role).toBe("main_pa")
+  })
+
+  it("produces identical placements from equivalent string and object input", () => {
+    const fromStrings = mapAvItems({ items: ["4x Delay Speakers"], stage: STAGE, crowd: CROWD })
+    const fromObjects = mapAvItems({ items: [{ label: "Delay Speakers", qty: 4 }], stage: STAGE, crowd: CROWD })
+    expect(fromStrings.placements).toEqual(fromObjects.placements)
+  })
+
+  // Real event_id=4 plan pulled from local Postgres: every structured qty is
+  // hardcoded to 1 by this AI service version, and the actual count is
+  // embedded in the label instead. Without LABEL_QUANTITY_PATTERN, every one
+  // of these silently placed a single unit no matter how many were budgeted.
+  it("extracts the real count from a live plan's label text, not the always-1 qty field", () => {
+    const [linearray] = parseItems([{ qty: 1, label: "L-Acoustics K3 Line Array (12 units)" }])
+    expect(linearray.quantity).toBe(12)
+    expect(linearray.label).toBe("L-Acoustics K3 Line Array")
+
+    const [wireless] = parseItems([{ qty: 1, label: "Shure Axient Digital Wireless System (4 channels)" }])
+    expect(wireless.quantity).toBe(4)
+
+    // "19x15W" is a wattage spec mid-label, not a leading quantity -- must not
+    // be misread as 19 units.
+    const [wash] = parseItems([{ qty: 1, label: "19x15W RGBW LED Wash (12 units)" }])
+    expect(wash.quantity).toBe(12)
+    expect(wash.label).toBe("19x15W RGBW LED Wash")
+
+    // A parenthetical that isn't a unit count ("100A" is an amperage rating,
+    // not a quantity) must fall back to the structured qty instead of matching.
+    const [distro] = parseItems([{ qty: 1, label: "200A 3-Phase IP65 Distro (Optional: scalable to 100A for smaller setups)" }])
+    expect(distro.quantity).toBe(1)
+
+    // No parenthetical at all -- falls back to structured qty.
+    const [console_] = parseItems([{ qty: 1, label: "DiGiCo SD12 Digital Console" }])
+    expect(console_.quantity).toBe(1)
+  })
+
+  it("does not misclassify a delay SCREEN (video relay) as a delay TOWER (audio)", () => {
+    // Real event_id=4 plan item -- "delay" alone as a keyword swallowed this
+    // into delay_tower, producing a phantom "2 delay towers needed" warning
+    // for a plan that had zero actual delay speakers.
+    expect(classifyRole("3m x 2m P3.9 Delay Screens (2 units)")).toBe("led_screen")
+    expect(classifyRole("2x Delay Speakers")).toBe("delay_tower")
+    expect(classifyRole("1x Delay Tower")).toBe("delay_tower")
+  })
+
+  it("places the correct number of main PA units from a live plan, not just 1", () => {
+    const { placements } = mapAvItems({
+      items: [{ qty: 1, label: "L-Acoustics K3 Line Array (12 units)" }],
+      stage: STAGE,
+      crowd: CROWD,
+    })
+    const mains = byRole(placements, "main_pa")
+    const totalUnits = mains.reduce((sum, m) => sum + m.quantity, 0)
+    expect(totalUnits).toBe(12)
+  })
 })
 
 describe("main PA and subs", () => {

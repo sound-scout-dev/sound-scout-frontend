@@ -29,15 +29,29 @@ import {
 
 const QUANTITY_PATTERN = /^\s*(\d+)\s*x?\s*/i
 
+// Real AI-generated plans (see events.ai_infrastructure_plan) come back with
+// every item's structured qty hardcoded to 1 -- the actual count is embedded
+// in the label instead, e.g. "L-Acoustics K3 Line Array (12 units)" or
+// "Shure Axient Digital Wireless System (4 channels)". Anchored to a trailing
+// parenthetical specifically so it can't misfire on a spec number mid-label
+// like "19x15W RGBW LED Wash" (wattage, not a count) or "100A" inside an
+// unrelated parenthetical aside.
+const LABEL_QUANTITY_PATTERN = /\((\d+)\s*(?:units?|channels?|x)\)\s*$/i
+
 // Ordered most-specific first: "delay speaker" must not match as a main PA,
-// "subwoofer" must not match as a generic speaker.
+// "subwoofer" must not match as a generic speaker. led_screen is checked
+// BEFORE delay_tower specifically because "delay" alone is too broad a
+// keyword to be safe otherwise -- a real event plan (event_id=4 locally)
+// included "3m x 2m P3.9 Delay Screens (2 units)", a video relay screen
+// positioned partway back for a large crowd, which the bare "delay" keyword
+// misclassified as an audio delay tower before this reordering.
 const ROLE_KEYWORDS = [
+  ["led_screen", ["led wall", "led screen", "projector", "delay screen", "video wall", "screen"]],
   ["delay_tower", ["delay tower", "delay speaker", "delay stack", "delay"]],
   ["subwoofer", ["subwoofer", "sub bass", "subs", "sub "]],
   ["monitor", ["monitor", "wedge", "iem", "in-ear"]],
   ["foh", ["mixer", "console", "foh", "mixing desk", "digital desk"]],
   ["mic", ["microphone", "mic ", "mics", "di box"]],
-  ["led_screen", ["led wall", "led screen", "projector", "screen", "video wall"]],
   ["lighting", ["moving head", "led par", "par can", "wash light", "laser", "follow spot", "light"]],
   ["power", ["generator", "power distro", "distro", "ups", "cable ramp"]],
   ["staging", ["stage deck", "truss", "barrier", "scaffold", "riser"]],
@@ -58,15 +72,45 @@ export function classifyRole(text) {
   return "other"
 }
 
+// Accepts either flat free-text lines ("8x Line Array Speakers" -- the AI
+// service's raw budget_plan/premium_plan shape) or already-structured
+// {label, qty} objects (the shape the main app's event.plan.categories
+// items are in by the time a page gets them, per services/api.js's
+// getEventById).
 export function parseItems(rawItems) {
   return (rawItems || [])
-    .filter((item) => typeof item === "string" && item.trim())
-    .map((raw) => ({
-      raw: raw.trim(),
-      label: raw.replace(QUANTITY_PATTERN, "").trim() || raw.trim(),
-      quantity: extractQuantity(raw),
-      role: classifyRole(raw),
-    }))
+    .map((item) => {
+      if (typeof item === "string" && item.trim()) {
+        return {
+          raw: item.trim(),
+          label: item.replace(QUANTITY_PATTERN, "").trim() || item.trim(),
+          quantity: extractQuantity(item),
+          role: classifyRole(item),
+        }
+      }
+      if (item && typeof item === "object" && typeof item.label === "string" && item.label.trim()) {
+        const label = item.label.trim()
+        const structuredQty = Number(item.qty ?? item.quantity)
+
+        // The structured qty field is unreliable on real plans (always 1 --
+        // see LABEL_QUANTITY_PATTERN above), so a count embedded in the label
+        // itself, when present, wins over it.
+        const labelMatch = label.match(LABEL_QUANTITY_PATTERN)
+        const labelQty = labelMatch ? parseInt(labelMatch[1], 10) : null
+        const quantity = labelQty ||
+          (Number.isFinite(structuredQty) && structuredQty > 0 ? structuredQty : 1)
+        const cleanLabel = labelMatch ? label.slice(0, labelMatch.index).trim() : label
+
+        return {
+          raw: `${quantity}x ${cleanLabel}`,
+          label: cleanLabel,
+          quantity,
+          role: classifyRole(label),
+        }
+      }
+      return null
+    })
+    .filter(Boolean)
 }
 
 // Spreads `count` positions evenly across `spanM`, centered on x = 0.

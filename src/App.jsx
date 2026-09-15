@@ -11,6 +11,7 @@ import InstantRental from "./pages/InstantRental"
 import OrganizerDashboard from "./pages/organizer/OrganizerDashboard"
 import NewEvent from "./pages/organizer/NewEvent"
 import EventDetail from "./pages/organizer/EventDetail"
+import EventBlueprint from "./pages/organizer/EventBlueprint"
 import VendorDashboard from "./pages/vendor/VendorDashboard"
 import Profile from "./pages/Profile"
 
@@ -36,6 +37,7 @@ function App() {
           <Route path="/organizer/dashboard" element={<OrganizerDashboard />} />
           <Route path="/organizer/events/new" element={<NewEvent />} />
           <Route path="/organizer/events/:id" element={<EventDetail />} />
+          <Route path="/organizer/events/:id/blueprint" element={<EventBlueprint />} />
           <Route path="/organizer/profile" element={<Profile />} />
         </Route>
 

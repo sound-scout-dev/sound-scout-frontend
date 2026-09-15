@@ -177,7 +177,17 @@ function EventDetail() {
         <>
           <div className="mt-6 flex items-center justify-between">
             <h1 className="font-display text-2xl font-semibold text-ink-navy">Event details</h1>
-            <StatusBadge status={event.status} />
+            <div className="flex items-center gap-3">
+              {event.environment === "Outdoor" && (
+                <Link
+                  to={`/organizer/events/${id}/blueprint`}
+                  className="font-mono text-xs font-semibold text-circuit-teal underline-offset-2 hover:underline"
+                >
+                  Venue Blueprint
+                </Link>
+              )}
+              <StatusBadge status={event.status} />
+            </div>
           </div>
 
           {event.status === "planning" ? (
