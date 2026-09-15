@@ -163,6 +163,22 @@ describe("delay rings (the corrected spacing model)", () => {
     expect(warnings.join(" ")).toMatch(/no delay speakers/i)
   })
 
+  it("flags rings the plan doesn't stock as suggestions, not as quoted kit", () => {
+    // Drawing an advisory position identically to real equipment made the
+    // blueprint contradict its own "plan lists no delay speakers" warning.
+    const { placements } = mapAvItems({ items: ["8x Line Array Speakers"], stage: STAGE, crowd: CROWD })
+    const towers = byRole(placements, "delay_tower")
+    expect(towers.length).toBeGreaterThan(0)
+    expect(towers.every((t) => t.suggested === true)).toBe(true)
+  })
+
+  it("does not flag delay towers as suggested when the plan actually lists them", () => {
+    const { placements } = mapAvItems({ items: ["8x Line Array", "4x Delay Speakers"], stage: STAGE, crowd: CROWD })
+    const towers = byRole(placements, "delay_tower")
+    expect(towers.length).toBeGreaterThan(0)
+    expect(towers.every((t) => t.suggested === false)).toBe(true)
+  })
+
   it("skips a ring that falls outside the marked crowd polygon", () => {
     // Crowd polygon only spans y = 10..50, so the 60m ring is outside it.
     const polygon = [

@@ -105,6 +105,11 @@ export async function login({ email, password }) {
     region: session.user.region,
     phone: session.user.phone,
     is_verified: session.user.is_verified,
+    // Premium lives in the database, but dropping it here meant the session
+    // came back non-premium after every logout even though the subscription
+    // was still active.
+    is_premium: session.user.is_premium,
+    subscription_expires_at: session.user.subscription_expires_at,
     token: session.accessToken,
   }
 }
@@ -826,6 +831,12 @@ export async function submitAppFeedback({ triggerType, referenceId, rating, comm
 
 export async function subscribePremium() {
   return await request(`/users/subscribe-premium`, {
+    method: "POST"
+  })
+}
+
+export async function cancelPremium() {
+  return await request(`/users/cancel-premium`, {
     method: "POST"
   })
 }

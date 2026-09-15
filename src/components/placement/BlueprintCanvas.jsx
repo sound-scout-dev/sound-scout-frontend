@@ -1,4 +1,6 @@
 import { memo, useCallback, useMemo, useRef, useState } from "react"
+import { Download } from "lucide-react"
+import { downloadBlueprintPNG } from "../../utils/downloadBlueprint"
 
 // SVG user units ARE meters, so the 1m grid is literally 1 unit and every
 // coordinate from avMapper.js can be used without conversion. The venue frame's
@@ -79,7 +81,21 @@ const Marker = memo(function Marker({ item, selected, labelText, fontM, markerM,
       aria-label={`${item.label} at ${item.x_meters} by ${item.y_meters} meters`}
     >
       {selected && <circle r={markerM * 2.1} fill="none" stroke={style.fill} strokeWidth={fontM * 0.3} opacity={0.9} />}
-      <MarkerShape shape={style.shape} fill={style.fill} r={markerM} />
+      {/* Advisory positions (needed by the room but absent from the quote) are
+          drawn hollow and ringed so they read as a recommendation, not kit. */}
+      {item.suggested && (
+        <circle
+          r={markerM * 1.6}
+          fill="none"
+          stroke={style.fill}
+          strokeWidth={fontM * 0.18}
+          strokeDasharray={`${fontM * 0.45} ${fontM * 0.35}`}
+          opacity={0.85}
+        />
+      )}
+      <g opacity={item.suggested ? 0.45 : 1}>
+        <MarkerShape shape={style.shape} fill={style.fill} r={markerM} />
+      </g>
       {labelText && (
         <text
           y={markerM + fontM * 1.5}
@@ -89,6 +105,11 @@ const Marker = memo(function Marker({ item, selected, labelText, fontM, markerM,
           className="pointer-events-none select-none font-mono"
         >
           {labelText}
+          {item.suggested && (
+            <tspan x={0} dy={fontM * 1.15} opacity={0.7} fontSize={fontM * 0.85}>
+              (not in plan)
+            </tspan>
+          )}
         </text>
       )}
     </g>
@@ -104,12 +125,27 @@ function BlueprintCanvas({
   showLabels = true,
   showGrid = true,
   onSelect,
+  exportName = "venue-blueprint",
   className = "",
 }) {
   const [selectedId, setSelectedId] = useState(null)
   const [view, setView] = useState(null) // null = auto-fit
   const svgRef = useRef(null)
   const dragRef = useRef(null)
+  const [downloading, setDownloading] = useState(false)
+
+  const handleDownload = useCallback(async () => {
+    setDownloading(true)
+    try {
+      const dark = document.documentElement.classList.contains("dark")
+      await downloadBlueprintPNG(svgRef.current, `${exportName}.png`, {
+        background: dark ? "#09090b" : "#ffffff",
+        foreground: dark ? "#e4e4e7" : "#0B0F13",
+      })
+    } finally {
+      setDownloading(false)
+    }
+  }, [exportName])
 
   const stageWidthM = stage?.widthM > 0 ? stage.widthM : 8
   const stageDepthM = stage?.depthM > 0 ? stage.depthM : 6
@@ -231,6 +267,7 @@ function BlueprintCanvas({
       <svg
         ref={svgRef}
         viewBox={viewBox}
+        data-fit-viewbox={`${fitted.x} ${fitted.y} ${fitted.w} ${fitted.h}`}
         className="w-full touch-none rounded-md border border-slate/15 bg-paper text-ink-navy dark:bg-zinc-950 dark:text-zinc-100"
         style={{ aspectRatio: `${box.w} / ${box.h}`, maxHeight: "70vh" }}
         onWheel={handleWheel}
@@ -343,6 +380,14 @@ function BlueprintCanvas({
       </div>
 
       <div className="absolute bottom-3 right-3 flex gap-1.5">
+        <button
+          onClick={handleDownload}
+          disabled={downloading}
+          className="flex items-center gap-1 rounded border border-slate/25 bg-white/90 px-2.5 py-1 font-mono text-[10px] text-slate transition-colors hover:text-ink-navy disabled:opacity-60 dark:bg-zinc-900/90 dark:text-zinc-300 dark:hover:text-white"
+        >
+          <Download size={11} />
+          {downloading ? "Saving…" : "Download"}
+        </button>
         <button
           onClick={zoomToStage}
           className="rounded border border-slate/25 bg-white/90 px-2.5 py-1 font-mono text-[10px] text-slate transition-colors hover:text-ink-navy dark:bg-zinc-900/90 dark:text-zinc-300 dark:hover:text-white"

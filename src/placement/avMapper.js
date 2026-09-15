@@ -243,6 +243,10 @@ export function mapAvItems({ items, stage, crowd, temperatureC = DEFAULT_TEMPERA
   // tower on axis.
   const splitTowers = halfWidthM > 25
   const towerItem = byRole.delay_tower?.items[0] || { raw: "Delay tower (suggested)", label: "Delay tower" }
+  // Rings the crowd needs but the plan doesn't stock are advisory only; the
+  // canvas draws these differently so a suggestion is never mistaken for
+  // equipment that was actually quoted.
+  const towersAreSuggested = delayQty === 0
 
   for (let i = 0; i < towersToPlace; i++) {
     const ringM = rings.rings[i]
@@ -259,6 +263,7 @@ export function mapAvItems({ items, stage, crowd, temperatureC = DEFAULT_TEMPERA
         id: `delay_tower-${i + 1}${splitTowers ? (side === 0 ? "L" : "R") : ""}`,
         role: "delay_tower",
         label: `Delay ${i + 1}${splitTowers ? (side === 0 ? " L" : " R") : ""}`,
+        suggested: towersAreSuggested,
         sourceItem: towerItem.raw,
         quantity: 1,
         x_meters: round(x),

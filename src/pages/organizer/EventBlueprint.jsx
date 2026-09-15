@@ -7,6 +7,7 @@ import BlueprintCanvas from "../../components/placement/BlueprintCanvas"
 import { mapAvItems } from "../../placement/avMapper"
 import { getEventById, analyzeVenuePhoto, subscribePremium } from "../../services/api"
 import { useAuth } from "../../context/AuthContext"
+import PremiumCheckoutModal from "../../components/PremiumCheckoutModal"
 
 // Flattens event.plan.categories[].items[] (the shape every other page in
 // this app already works with -- see BidSubmissionModal, EventPlanSummary)
@@ -18,19 +19,21 @@ function flattenPlanItems(plan) {
 
 function UpgradeCard({ onUpgraded }) {
   const { updateUser } = useAuth()
-  const [subscribing, setSubscribing] = useState(false)
+  const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [error, setError] = useState("")
 
-  function handleUpgrade() {
-    setSubscribing(true)
+  function handleConfirmed() {
     setError("")
-    subscribePremium()
+    return subscribePremium()
       .then((res) => {
         updateUser({ is_premium: true, subscription_expires_at: res.subscription_expires_at })
+        setCheckoutOpen(false)
         onUpgraded()
       })
-      .catch(() => setError("Could not start your subscription. Please try again."))
-      .finally(() => setSubscribing(false))
+      .catch((err) => {
+        setError("Could not start your subscription. Please try again.")
+        throw err
+      })
   }
 
   return (
@@ -44,10 +47,14 @@ function UpgradeCard({ onUpgraded }) {
         placement plus exact speaker, sub, and delay-tower positions in meters.
       </p>
       {error && <p className="mt-3 font-mono text-xs text-alert-red">{error}</p>}
-      <Button className="mt-5" onClick={handleUpgrade} disabled={subscribing}>
-        {subscribing ? <Loader2 size={16} className="animate-spin" /> : null}
-        {subscribing ? "Upgrading…" : "Upgrade to Premium"}
+      <Button className="mt-5" onClick={() => setCheckoutOpen(true)}>
+        Upgrade to Premium
       </Button>
+      <PremiumCheckoutModal
+        isOpen={checkoutOpen}
+        onClose={() => setCheckoutOpen(false)}
+        onConfirmed={handleConfirmed}
+      />
     </div>
   )
 }
