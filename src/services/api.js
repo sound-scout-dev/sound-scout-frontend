@@ -304,7 +304,12 @@ export async function createEvent({ organizerId, name, eventType, crowdSize, ven
       name,
       event_type: eventType,
       crowd_count: Number(crowdSize),
-      venue_size_sqm: Number(venueSizeSqm),
+      // Venue size is optional in the form, but Number("") is 0 and the API
+      // rejects a non-positive size -- send null when it was left blank.
+      venue_size_sqm:
+        venueSizeSqm === "" || venueSizeSqm === null || venueSizeSqm === undefined
+          ? null
+          : Number(venueSizeSqm),
       budget_range: budgetRange,
       environment,
       requirements,
