@@ -181,9 +181,9 @@ function EventDetail() {
               {event.environment === "Outdoor" && (
                 <Link
                   to={`/organizer/events/${id}/blueprint`}
-                  className="font-mono text-xs font-semibold text-circuit-teal underline-offset-2 hover:underline"
+                  className="rounded-lg bg-circuit-teal px-3 py-1.5 font-mono text-xs font-semibold text-white shadow-sm transition-colors hover:bg-circuit-teal/90"
                 >
-                  Venue Blueprint
+                  AV Blueprint
                 </Link>
               )}
               <StatusBadge status={event.status} />

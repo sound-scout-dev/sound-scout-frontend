@@ -45,6 +45,37 @@ function getHeuristicPrice(categories) {
   return total
 }
 
+// The AI is asked for a list of tips but sometimes returns one prose string
+// (often "... : (1) do x (2) do y"). Rendering that with .map() throws, which
+// took down the whole plan step, so coerce it into a list here.
+function normalizeTips(rawTips) {
+  if (Array.isArray(rawTips)) return rawTips.filter(Boolean)
+  if (typeof rawTips !== "string" || !rawTips.trim()) return []
+
+  const [intro, ...numbered] = rawTips.split(/\(\d+\)\s*/)
+  if (numbered.length > 0) {
+    const tips = numbered.map((t) => t.trim().replace(/;$/, "")).filter(Boolean)
+    return intro.trim() ? [intro.trim().replace(/:$/, ""), ...tips] : tips
+  }
+  return [rawTips.trim()]
+}
+
+// The server only flags infeasibility against its own ML cost prediction, which
+// can differ from the item-derived price we actually show. Without this, a plan
+// visibly priced above the organizer's ceiling could render with no warning.
+function overBudgetWarning(plan, formValues) {
+  const budgetMax = Number(formValues.budgetMax)
+  const high = plan?.priceRange?.high
+  if (!budgetMax || !high || high <= budgetMax) return null
+
+  return (
+    `The most affordable setup we can build for ${Number(formValues.crowdSize).toLocaleString()} guests ` +
+    `comes to about LKR ${Math.round(plan.priceRange.low).toLocaleString()} – ${Math.round(high).toLocaleString()}, ` +
+    `which is above your maximum of LKR ${budgetMax.toLocaleString()}. ` +
+    `This is the minimum feasible spec for this scale — consider raising the budget or reducing the guest count.`
+  )
+}
+
 function parseRawPlan(rawPlanData, formValues, mlCost = 50000, isPremium = false) {
   if (!rawPlanData) return buildInfrastructurePlan(formValues);
 
@@ -209,8 +240,10 @@ function StepGenerating({ formValues, onComplete }) {
         setRealId(eventId)
         setBudgetPlan(parsedBudget)
         setPremiumPlan(parsedPremium)
-        setFeasibilityWarning(options.feasibility_warning || null)
-        setPriceCuttingTips(options.price_cutting_tips || [])
+        setFeasibilityWarning(
+          options.feasibility_warning || overBudgetWarning(parsedBudget, formValues)
+        )
+        setPriceCuttingTips(normalizeTips(options.price_cutting_tips))
         setUsingFallback(false)
         setError("")
         setLoading(false)
