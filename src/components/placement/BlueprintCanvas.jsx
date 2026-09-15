@@ -368,16 +368,41 @@ function BlueprintCanvas({
             </g>
           )
         })()}
+        {/* Key. Lives inside the SVG rather than as an HTML overlay so that a
+            downloaded plan is still readable away from the app. */}
+        {legendRoles.length > 0 && (() => {
+          const pad = fontM * 0.7
+          const row = fontM * 1.5
+          const swatch = fontM * 0.8
+          const width = fontM * 9
+          const height = pad * 2 + row * legendRoles.length + fontM * 1.2
+          const ox = box.x + box.w * 0.02
+          const oy = box.y + box.h * 0.02
+          return (
+            <g transform={`translate(${ox} ${oy})`} className="pointer-events-none select-none">
+              <rect
+                width={width} height={height} rx={fontM * 0.4}
+                fill="currentColor" fillOpacity={0.06}
+                stroke="currentColor" strokeOpacity={0.25} strokeWidth={strokeM * 0.4}
+              />
+              <text x={pad} y={pad + fontM} fontSize={fontM * 0.95} fill="currentColor" className="font-mono" opacity={0.75}>
+                KEY
+              </text>
+              {legendRoles.map((role, i) => (
+                <g key={role} transform={`translate(${pad} ${pad + fontM * 1.9 + i * row})`}>
+                  <rect width={swatch} height={swatch} rx={swatch * 0.25} fill={ROLE_STYLES[role].fill} />
+                  <text
+                    x={swatch + fontM * 0.5} y={swatch * 0.9}
+                    fontSize={fontM * 0.9} fill="currentColor" className="font-mono"
+                  >
+                    {ROLE_STYLES[role].legend}
+                  </text>
+                </g>
+              ))}
+            </g>
+          )
+        })()}
       </svg>
-
-      <div className="pointer-events-none absolute left-3 top-3 flex flex-wrap gap-x-3 gap-y-1 rounded border border-slate/15 bg-white/85 px-2.5 py-1.5 backdrop-blur-sm dark:bg-zinc-900/85">
-        {legendRoles.map((role) => (
-          <span key={role} className="flex items-center gap-1.5 font-mono text-[10px] text-slate dark:text-zinc-400">
-            <span className="inline-block h-2 w-2 rounded-sm" style={{ background: ROLE_STYLES[role].fill }} />
-            {ROLE_STYLES[role].legend}
-          </span>
-        ))}
-      </div>
 
       <div className="absolute bottom-3 right-3 flex gap-1.5">
         <button

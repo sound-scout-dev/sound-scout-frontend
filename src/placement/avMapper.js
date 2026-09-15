@@ -54,7 +54,7 @@ const ROLE_KEYWORDS = [
   ["mic", ["microphone", "mic ", "mics", "di box"]],
   ["lighting", ["moving head", "led par", "par can", "wash light", "laser", "follow spot", "light"]],
   ["power", ["generator", "power distro", "distro", "ups", "cable ramp"]],
-  ["staging", ["stage deck", "truss", "barrier", "scaffold", "riser"]],
+  ["staging", ["stage deck", "truss", "barrier", "scaffold", "riser", "platform", "rigging", "goalpost"]],
   ["main_pa", ["line array", "array", "pa system", "main pa", "top box", "loudspeaker", "speaker"]],
 ]
 
@@ -111,6 +111,18 @@ export function parseItems(rawItems) {
       return null
     })
     .filter(Boolean)
+}
+
+// A row of one marker per fixture is unreadable past a certain count, but the
+// plan's totals still have to be honoured -- so cap the number of positions and
+// spread the quantity across them as evenly as possible.
+const MAX_ROW_MARKERS = 12
+
+function distribute(total, maxBuckets) {
+  const n = Math.max(1, Math.min(total, maxBuckets))
+  const base = Math.floor(total / n)
+  let remainder = total - base * n
+  return Array.from({ length: n }, () => base + (remainder-- > 0 ? 1 : 0))
 }
 
 // Spreads `count` positions evenly across `spanM`, centered on x = 0.
@@ -225,7 +237,9 @@ export function mapAvItems({ items, stage, crowd, temperatureC = DEFAULT_TEMPERA
   // so an empty list doesn't produce phantom towers.
   const ringsNeeded = parsed.length > 0 ? rings.rings.length : 0
   const delayQty = byRole.delay_tower?.quantity ?? 0
-  const towersToPlace = Math.min(ringsNeeded, delayQty || ringsNeeded)
+  // Only ever plot equipment the plan actually lists. A shortfall against what
+  // the crowd depth needs is reported as a warning, never drawn as a marker.
+  const towersToPlace = Math.min(ringsNeeded, delayQty)
 
   if (ringsNeeded > 0 && delayQty === 0) {
     warnings.push(
@@ -242,11 +256,7 @@ export function mapAvItems({ items, stage, crowd, temperatureC = DEFAULT_TEMPERA
   // Wide crowds get a tower each side of the centerline; narrow ones a single
   // tower on axis.
   const splitTowers = halfWidthM > 25
-  const towerItem = byRole.delay_tower?.items[0] || { raw: "Delay tower (suggested)", label: "Delay tower" }
-  // Rings the crowd needs but the plan doesn't stock are advisory only; the
-  // canvas draws these differently so a suggestion is never mistaken for
-  // equipment that was actually quoted.
-  const towersAreSuggested = delayQty === 0
+  const towerItem = byRole.delay_tower?.items[0]
 
   for (let i = 0; i < towersToPlace; i++) {
     const ringM = rings.rings[i]
@@ -263,7 +273,6 @@ export function mapAvItems({ items, stage, crowd, temperatureC = DEFAULT_TEMPERA
         id: `delay_tower-${i + 1}${splitTowers ? (side === 0 ? "L" : "R") : ""}`,
         role: "delay_tower",
         label: `Delay ${i + 1}${splitTowers ? (side === 0 ? " L" : " R") : ""}`,
-        suggested: towersAreSuggested,
         sourceItem: towerItem.raw,
         quantity: 1,
         x_meters: round(x),
@@ -321,10 +330,14 @@ export function mapAvItems({ items, stage, crowd, temperatureC = DEFAULT_TEMPERA
   const lightGroup = byRole.lighting
   if (lightGroup) {
     const item = lightGroup.items[0]
+    const spots = distribute(lightGroup.quantity, MAX_ROW_MARKERS)
     placements.push(
       ...place(item, "lighting",
-        spreadAcross(Math.min(lightGroup.quantity, 8), stageWidthM * 0.9).map((x, i) => ({
-          x, y: -stageDepthM * 0.5, label: `Lighting ${i + 1}`,
+        spreadAcross(spots.length, stageWidthM * 0.9).map((x, i) => ({
+          x,
+          y: -stageDepthM * 0.5,
+          quantity: spots[i],
+          label: spots[i] > 1 ? `Lighting ${i + 1} (${spots[i]}x)` : `Lighting ${i + 1}`,
         }))
       )
     )
@@ -345,9 +358,68 @@ export function mapAvItems({ items, stage, crowd, temperatureC = DEFAULT_TEMPERA
     )
   }
 
+  // --- Microphones and DI boxes: performer positions across the stage, upstage
+  // of the wedges so the two rows stay readable.
+  const micGroup = byRole.mic
+  if (micGroup) {
+    const item = micGroup.items[0]
+    const spots = distribute(micGroup.quantity, MAX_ROW_MARKERS)
+    placements.push(
+      ...place(item, "mic",
+        spreadAcross(spots.length, stageWidthM * 0.7).map((x, i) => ({
+          x,
+          y: -stageDepthM * 0.45,
+          quantity: spots[i],
+          label: spots[i] > 1 ? `Mic ${i + 1} (${spots[i]}x)` : `Mic ${i + 1}`,
+        }))
+      )
+    )
+  }
+
+  // --- Staging, trussing and barriers: structural, so mark the deck itself
+  // rather than inventing scattered points for it.
+  const stagingGroup = byRole.staging
+  if (stagingGroup) {
+    const item = stagingGroup.items[0]
+    placements.push(
+      ...place(item, "staging", [{
+        x: 0,
+        y: -stageDepthM * 0.78,
+        quantity: stagingGroup.quantity,
+        label: `Staging / Truss (${stagingGroup.quantity}x)`,
+      }])
+    )
+  }
+
+  // --- Anything the keyword table doesn't recognise (cabling packages, hazers,
+  // spares) still belongs on the plan; park it in the offstage store so the map
+  // accounts for every line in the equipment list.
+  const otherGroup = byRole.other
+  if (otherGroup) {
+    placements.push(
+      ...otherGroup.items.map((item, i) => ({
+        id: `other-${i + 1}`,
+        role: "other",
+        label: item.label,
+        sourceItem: item.raw,
+        quantity: item.quantity,
+        x_meters: round(halfStage + 6),
+        y_meters: round(-stageDepthM - 3 - i * 2.5),
+      }))
+    )
+  }
+
   const coverageWarning = rings.rings.length === 0 && farM - nearM > 60
   if (coverageWarning) {
     warnings.push(`Crowd is ${Math.round(farM - nearM)}m deep but no delay ring fits before the back edge -- check the scale estimate.`)
+  }
+
+  // Every parsed line should be accounted for somewhere on the plan; if a role
+  // ever stops being placed, say so rather than quietly dropping equipment.
+  const placedRoles = new Set(placements.map((p) => p.role))
+  const missing = Object.keys(byRole).filter((r) => !placedRoles.has(r) && r !== "delay_tower")
+  if (missing.length > 0) {
+    warnings.push(`Not shown on the plan: ${missing.join(", ")}.`)
   }
 
   return { placements, rings, warnings, byRole }

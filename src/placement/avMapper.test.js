@@ -163,20 +163,17 @@ describe("delay rings (the corrected spacing model)", () => {
     expect(warnings.join(" ")).toMatch(/no delay speakers/i)
   })
 
-  it("flags rings the plan doesn't stock as suggestions, not as quoted kit", () => {
-    // Drawing an advisory position identically to real equipment made the
-    // blueprint contradict its own "plan lists no delay speakers" warning.
-    const { placements } = mapAvItems({ items: ["8x Line Array Speakers"], stage: STAGE, crowd: CROWD })
-    const towers = byRole(placements, "delay_tower")
-    expect(towers.length).toBeGreaterThan(0)
-    expect(towers.every((t) => t.suggested === true)).toBe(true)
+  it("plots no delay towers at all when the plan doesn't list any", () => {
+    // The plan is the source of truth for what gets drawn -- a shortfall is
+    // reported in the warnings, never invented as a marker on the map.
+    const { placements, warnings } = mapAvItems({ items: ["8x Line Array Speakers"], stage: STAGE, crowd: CROWD })
+    expect(byRole(placements, "delay_tower")).toHaveLength(0)
+    expect(warnings.join(" ")).toMatch(/no delay speakers/i)
   })
 
-  it("does not flag delay towers as suggested when the plan actually lists them", () => {
+  it("plots delay towers when the plan does list them", () => {
     const { placements } = mapAvItems({ items: ["8x Line Array", "4x Delay Speakers"], stage: STAGE, crowd: CROWD })
-    const towers = byRole(placements, "delay_tower")
-    expect(towers.length).toBeGreaterThan(0)
-    expect(towers.every((t) => t.suggested === false)).toBe(true)
+    expect(byRole(placements, "delay_tower").length).toBeGreaterThan(0)
   })
 
   it("skips a ring that falls outside the marked crowd polygon", () => {
@@ -191,6 +188,34 @@ describe("delay rings (the corrected spacing model)", () => {
     })
     for (const t of byRole(placements, "delay_tower")) {
       expect(isPointInPolygon({ x: t.x_meters, y: t.y_meters }, polygon)).toBe(true)
+    }
+  })
+})
+
+describe("every plan line reaches the map", () => {
+  it("places mics, staging and unrecognised items instead of dropping them", () => {
+    const { placements, warnings } = mapAvItems({
+      items: [
+        "8x Line Array Speakers",
+        "4x Shure SM58 Microphones",
+        "1x 8m x 6m Deck Stage Platform",
+        "1x Cabling & Power Package for Audio Setup",
+      ],
+      stage: STAGE,
+      crowd: CROWD,
+    })
+    expect(byRole(placements, "mic").length).toBeGreaterThan(0)
+    expect(byRole(placements, "staging").length).toBeGreaterThan(0)
+    expect(byRole(placements, "other").length).toBeGreaterThan(0)
+    expect(warnings.join(" ")).not.toMatch(/not shown on the plan/i)
+  })
+
+  it("warns rather than silently dropping a role it cannot place", () => {
+    const { placements, byRole: grouped } = mapAvItems({ items: ["8x Line Array Speakers"], stage: STAGE, crowd: CROWD })
+    const placedRoles = new Set(placements.map((p) => p.role))
+    for (const role of Object.keys(grouped)) {
+      if (role === "delay_tower") continue
+      expect(placedRoles.has(role)).toBe(true)
     }
   })
 })
